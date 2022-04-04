@@ -22,9 +22,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(ParticleSystemBundle {
             particle_system: ParticleSystem {
-                max_particles: 50_000,
+                max_particles: 10_000,
                 default_sprite: asset_server.load("px.png"),
-                spawn_rate_per_second: 1000.0.into(),
+                spawn_rate_per_second: 500.0.into(),
                 initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
                 acceleration: ValueOverTime::Sin(SinWave::new()),
                 lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
@@ -37,11 +37,11 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 system_duration_seconds: 10.0,
                 scale: 2.0.into(),
                 bursts: vec![
-                    ParticleBurst::new(0.0, 5000),
-                    ParticleBurst::new(2.0, 5000),
-                    ParticleBurst::new(4.0, 5000),
-                    ParticleBurst::new(6.0, 5000),
-                    ParticleBurst::new(8.0, 5000),
+                    ParticleBurst::new(0.0, 1000),
+                    ParticleBurst::new(2.0, 1000),
+                    ParticleBurst::new(4.0, 1000),
+                    ParticleBurst::new(6.0, 1000),
+                    ParticleBurst::new(8.0, 1000),
                 ],
                 ..ParticleSystem::default()
             },

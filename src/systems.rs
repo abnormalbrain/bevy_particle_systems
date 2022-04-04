@@ -99,16 +99,14 @@ pub fn partcle_spawner(
             let mut spawn_point = *transform;
             let radian: f32 = rng.gen_range(0.0..1.0) * particle_system.emitter_shape
                 + particle_system.emitter_angle;
-            let direction = Vec3::new(
-                radian.cos(),
-                radian.sin(),
-                particle_system
-                    .z_value_override
-                    .as_ref()
-                    .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng)),
-            );
+            let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
 
             spawn_point.translation += direction * particle_system.spawn_radius.get_value(&mut rng);
+            spawn_point.translation.z = particle_system
+                .z_value_override
+                .as_ref()
+                .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
+                
             match particle_system.space {
                 ParticleSpace::World => {
                     commands

@@ -1,3 +1,7 @@
+//! This example demonstrates the difference between using particles in local and global space.
+//!
+//! The red colored particles operate in global space. Once they have been spawned they move independently.
+//! The green particles operate in local space. You can see that their movement is affected by the movement of the spawn point as well.
 use bevy::{
     core::Time,
     math::Vec3,
@@ -10,9 +14,7 @@ use bevy::{
 use bevy_particles::{
     components::{ParticleSpace, ParticleSystem, ParticleSystemBundle, Playing},
     plugin::ParticleSystemPlugin,
-    values::{
-        ColorOverTime, ColorPoint, Gradient, JitteredValue, Lerpable, SinWave, ValueOverTime,
-    },
+    values::{ColorOverTime, ColorPoint, Gradient, JitteredValue, Lerpable},
 };
 
 #[derive(Debug, Component)]
@@ -38,28 +40,29 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn_bundle(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: 1.0,
+                emitter_shape: std::f32::consts::PI * 0.25,
+                emitter_angle: 0.0,
                 default_sprite: asset_server.load("px.png"),
                 spawn_rate_per_second: 35.0.into(),
-                initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
-                acceleration: ValueOverTime::Sin(SinWave::new()),
+                initial_velocity: JitteredValue::jittered(25.0, 0.0..5.0),
+                acceleration: 0.0.into(),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::WHITE, 0.0),
+                    ColorPoint::new(Color::RED, 0.0),
                     ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,
                 system_duration_seconds: 10.0,
-                scale: 4.0.into(),
-                space: ParticleSpace::Local,
+                space: ParticleSpace::World,
+                scale: 5.0.into(),
                 ..ParticleSystem::default()
             },
-            transform: Transform::from_xyz(5.0, 5.0, 0.0),
+            transform: Transform::from_xyz(50.0, 50.0, 0.0),
             ..ParticleSystemBundle::default()
         })
         .insert(Playing)
         .insert(Targets {
-            targets: vec![Vec3::new(50.0, 50.0, 0.0), Vec3::new(50.0, -50.0, 0.0)],
+            targets: vec![Vec3::new(50.0, 100.0, 0.0), Vec3::new(50.0, -100.0, 0.0)],
             index: 0,
             time: 0.0,
         });
@@ -68,28 +71,29 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn_bundle(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: 1.0,
+                emitter_shape: std::f32::consts::PI * 0.25,
+                emitter_angle: std::f32::consts::PI,
                 default_sprite: asset_server.load("px.png"),
                 spawn_rate_per_second: 35.0.into(),
-                initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
-                acceleration: ValueOverTime::Sin(SinWave::new()),
+                initial_velocity: JitteredValue::jittered(25.0, 0.0..5.0),
+                acceleration: 0.0.into(),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::WHITE, 0.0),
+                    ColorPoint::new(Color::GREEN, 0.0),
                     ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,
                 system_duration_seconds: 10.0,
-                scale: 4.0.into(),
-                space: ParticleSpace::World,
+                space: ParticleSpace::Local,
+                scale: 5.0.into(),
                 ..ParticleSystem::default()
             },
-            transform: Transform::from_xyz(5.0, 5.0, 0.0),
+            transform: Transform::from_xyz(-50.0, 50.0, 0.0),
             ..ParticleSystemBundle::default()
         })
         .insert(Playing)
         .insert(Targets {
-            targets: vec![Vec3::new(-50.0, 50.0, 0.0), Vec3::new(-50.0, -50.0, 0.0)],
+            targets: vec![Vec3::new(-50.0, 100.0, 0.0), Vec3::new(-50.0, -100.0, 0.0)],
             index: 0,
             time: 0.0,
         });

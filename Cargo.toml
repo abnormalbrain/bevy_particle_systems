@@ -2,9 +2,15 @@
 name = "bevy_particles"
 version = "0.1.0"
 edition = "2021"
+authors = ["Abnormal Brain Studios"]
+license = "MIT"
+description = "A particle system plugin for Bevy"
+repository = "https://github.com/abnormalbrain/bevy_particles"
+keywords = ["game", "gamedev", "bevy"]
+categories = ["game-development"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.6.1"
+bevy = { version = "0.6.1" }
 rand = "0.8.5"
