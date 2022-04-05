@@ -1,7 +1,7 @@
 //! This example demonstrates how time scaling impacts particle systems.
 //!
 //! The red particles do not follow scaled time, while the green do.
-//! Time scale can be controls with the 1-5 keys. The 0 key sets the Time Scale to 0.0 
+//! Time scale can be controls with the 1-5 keys. The 0 key sets the Time Scale to 0.0
 //! which effectively pauses the system.
 use bevy::{
     input::Input,
@@ -12,9 +12,8 @@ use bevy::{
     DefaultPlugins,
 };
 use bevy_particles::{
-    components::{ParticleSpace, ParticleSystem, ParticleSystemBundle, Playing, TimeScale},
-    plugin::ParticleSystemPlugin,
-    values::{ColorOverTime, ColorPoint, Gradient, JitteredValue},
+    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing, TimeScale,
 };
 fn main() {
     App::new()

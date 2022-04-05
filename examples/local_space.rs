@@ -12,9 +12,8 @@ use bevy::{
     DefaultPlugins,
 };
 use bevy_particles::{
-    components::{ParticleSpace, ParticleSystem, ParticleSystemBundle, Playing},
-    plugin::ParticleSystemPlugin,
-    values::{ColorOverTime, ColorPoint, Gradient, JitteredValue, Lerpable},
+    ColorOverTime, ColorPoint, Gradient, JitteredValue, Lerpable, ParticleSpace, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
 
 #[derive(Debug, Component)]

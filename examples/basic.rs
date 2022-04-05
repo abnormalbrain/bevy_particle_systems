@@ -1,15 +1,16 @@
 use bevy::{
+    core_pipeline::ClearColor,
     prelude::{App, AssetServer, Color, Commands, OrthographicCameraBundle, Res},
     DefaultPlugins,
 };
 use bevy_particles::{
-    components::{ParticleBurst, ParticleSystem, ParticleSystemBundle, Playing},
-    plugin::ParticleSystemPlugin,
-    values::{ColorOverTime, ColorPoint, Gradient, JitteredValue, SinWave, ValueOverTime},
+    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing, SinWave, ValueOverTime,
 };
 
 fn main() {
     App::new()
+        .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(DefaultPlugins)
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
@@ -26,7 +27,11 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 default_sprite: asset_server.load("px.png"),
                 spawn_rate_per_second: 500.0.into(),
                 initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
-                acceleration: ValueOverTime::Sin(SinWave::new()),
+                acceleration: ValueOverTime::Sin(SinWave {
+                    amplitude: 5.0,
+                    period: 5.0,
+                    ..SinWave::default()
+                }),
                 lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
                     ColorPoint::new(Color::PURPLE, 0.0),

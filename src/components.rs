@@ -12,11 +12,20 @@ use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 /// Bursts do not count as part of the per-second spawn rate.
 #[derive(Debug, Clone, Copy)]
 pub struct ParticleBurst {
+    /// The time during the life cycle of a system that the burst should occur.
+    ///
+    /// This value should be strictly less than the particle systems ``system_duration_seconds`` or it will
+    /// not fire.
     pub time: f32,
+    /// The number of particles to fire at the specified time.
+    ///
+    /// All particles in a burst are not counted towards the spawn rate, but are counted towards the system maximum.
+    /// They follow all other parameters and behaviors of the spawning system.
     pub count: usize,
 }
 
 impl ParticleBurst {
+    /// Creates a new [`ParticleBurst`] at a specified time of the given number of particles.
     pub fn new(time: f32, count: usize) -> Self {
         Self { time, count }
     }
@@ -132,7 +141,11 @@ impl Default for ParticleSystem {
 /// children of the [`ParticleSystem`] itself.
 #[derive(Debug, Component)]
 pub struct Particle {
+    /// The entity on which the spawning [`ParticleSystem`] resides.
     pub parent_system: Entity,
+    /// The total lifetime of the particle.
+    ///
+    /// When the [`Lifetime`] component value reaches this value, the particle is considered dead and will be despawned.
     pub max_lifetime: f32,
 }
 
@@ -158,6 +171,9 @@ pub struct Velocity(pub f32);
 pub struct Direction(pub Vec3);
 
 impl Direction {
+    /// Creates a new [`Direction`] based on a [`Vec3`].
+    ///
+    /// ``ignore_z`` should generally be set to true for 2d use cases, so trajectories ignore the z dimension and a particle stays at a consistent depth.
     pub fn new(mut direction: Vec3, ignore_z: bool) -> Self {
         if ignore_z {
             direction.z = 0.0;
@@ -173,8 +189,15 @@ pub struct Playing;
 /// Tracks running state of the [`ParticleSystem`] on the same entity.
 #[derive(Debug, Component, Default)]
 pub struct RunningState {
+    /// Tracks the current amount of time since the start of the system.
+    ///
+    /// This is reset when the running time surpases the ``system_duration_seconds``.
     pub running_time: f32,
+    /// The truncated current second.
     pub current_second: f32,
+    /// The number of particles already spawned during ``current_second``.
+    ///
+    /// This number is reset when ``current_second`` rolls over.
     pub spawned_this_second: usize,
 }
 
@@ -186,13 +209,40 @@ pub struct ParticleCount(pub usize);
 #[derive(Debug, Component, Default)]
 pub struct BurstIndex(pub usize);
 
+/// A spawnable bundle for a [`ParticleSystem`] containing all of the necssary components.
+///
+/// ``particle_system`` and ``transform`` should generally be the only attributes that need to be overridden.
 #[derive(Debug, Default, Bundle)]
 pub struct ParticleSystemBundle {
+    /// The particle system parameters dictating the spawning and behavior of particles.
     pub particle_system: ParticleSystem,
+
+    /// The location of the [`ParticleSystem`]
+    ///
+    /// If the particle system is being added to an entity that already has a transform, specify that transform here.
+    ///
+    /// If the particle system is added as a child to another entity, this will be a relative transform, and will move with the parent entity.
+    /// How particles move is independent of this and will be dictated by the particle systems [`ParticleSpace`].
     pub transform: Transform,
+
+    /// The global transform of the particle system.
+    ///
+    /// This should generally be left at the default.
     pub global_transform: GlobalTransform,
+
+    /// The tracking component for current live particle count.
+    ///
+    /// This should generally be left at the default.
     pub particle_count: ParticleCount,
+
+    /// The running time tracking component for the particle system.
+    ///
+    /// This should generally be left at the default.
     pub running_state: RunningState,
+
+    /// The current burst index tracking component.
+    ///
+    /// This should generally be left at the default.
     pub burst_index: BurstIndex,
 }
 

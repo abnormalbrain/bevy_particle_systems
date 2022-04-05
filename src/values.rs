@@ -38,7 +38,12 @@ use rand::{prelude::ThreadRng, Rng};
 /// ```
 #[derive(Debug, Clone)]
 pub struct JitteredValue {
+    /// The base value that specified jitter will be added to.
     pub value: f32,
+
+    /// A [`Range`] of possible random jitter to be added to ``value`` at evaluation time.
+    ///
+    /// ``jitter_range`` start value can be negative to allow some values to be less than the base as well.
     pub jitter_range: Option<Range<f32>>,
 }
 
@@ -96,6 +101,7 @@ impl From<f32> for JitteredValue {
 /// assert_eq!(Color::WHITE.lerp(Color::BLACK, 0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
 /// ```
 pub trait Lerpable<T> {
+    /// Linearly interpolate between the current value and the ``other`` value by ``pct`` percent.
     fn lerp(&self, other: T, pct: f32) -> T;
 }
 
@@ -136,6 +142,7 @@ fn lerp(a: f32, b: f32, pct: f32) -> f32 {
 /// assert!(0.0_f64.roughly_equal(0.00000000000000001));
 /// ```
 pub trait RoughlyEqual<T> {
+    /// Evalues whether the current value is roughly equal to ``other`` within the types maximum allowable difference.
     fn roughly_equal(&self, other: T) -> bool;
 }
 
@@ -158,11 +165,19 @@ impl RoughlyEqual<f64> for f64 {
 /// ``point`` should be between `0.0` and `1.0` inclusive.
 #[derive(Debug, Clone, Copy)]
 pub struct ColorPoint {
+    /// Defines the [`Color`] value at a specified point in time.
     pub color: Color,
+
+    /// Defines the point in time at which exactly this [`Color`] will be the presented value.
+    ///
+    /// The returned color of an evaluation of the gradient will be lerped between the two closest [`ColorPoint`]s based on their ``point`` value.
     pub point: f32,
 }
 
 impl ColorPoint {
+    /// Create a new [`ColorPoint`] of the specified [`Color`] at the given ``point``.
+    ///
+    /// ``point`` should be between `0.0` and `1.0` inclusive.
     pub fn new(color: Color, point: f32) -> Self {
         Self { color, point }
     }
@@ -272,11 +287,14 @@ impl Gradient {
 }
 
 /// Defines how a color changes over time
-/// 
+///
 /// Colors can either be constant, or follow a [`crate::values::Gradient`].
 #[derive(Debug, Clone)]
 pub enum ColorOverTime {
+    /// Specifies that a color should remain a constant color over time.
     Constant(Color),
+
+    /// Specifies that a color will follow a gradient of two or more colors over time.
     Gradient(Gradient),
 }
 
@@ -299,6 +317,9 @@ impl From<Vec<ColorPoint>> for ColorOverTime {
 }
 
 impl ColorOverTime {
+    /// Evaluate a color at the specified lifetime percentage.
+    ///
+    /// ``pct`` should be between `0.0` and `1.0` inclusive.
     pub fn at_lifetime_pct(&self, pct: f32) -> Color {
         match self {
             Self::Constant(color) => *color,
@@ -331,8 +352,15 @@ impl ColorOverTime {
 /// ```
 #[derive(Debug, Clone)]
 pub enum ValueOverTime {
+    /// Specifies the value should be linearly interpolated between two values over time.
     Lerp(Lerp),
+
+    /// Specifies that the value should follow a sinusoidal wave over time.
+    ///
+    /// The value will complete [`SinWave::period`] full waves over its lifetime.
     Sin(SinWave),
+
+    /// Specifies that the value should remain constant.
     Constant(f32),
 }
 
@@ -365,11 +393,14 @@ impl ValueOverTime {
 /// Defines a value that will linearly move between ``a`` and ``b`` over its configured lifetime.
 #[derive(Debug, Clone)]
 pub struct Lerp {
+    /// The starting value, returned when ``pct`` is `0.0`.
     pub a: f32,
+    /// The ending value, returned when ``pct`` is `1.0`.
     pub b: f32,
 }
 
 impl Lerp {
+    /// Create a new [`Lerp`] to move between ``a`` and ``b`` values over time.
     pub const fn new(a: f32, b: f32) -> Self {
         Self { a, b }
     }
@@ -384,24 +415,26 @@ impl Default for Lerp {
 /// Defines a value that will move in a sinusoidal wave pattern over it's configured lifetime.
 #[derive(Debug, Clone)]
 pub struct SinWave {
+    /// The amplitude of the wave as time progresses.
+    ///
+    /// This determines how far above and below the baseline (default of `0.0`, modified with ``vertical_shift``) the wave will go.
     pub amplitude: f32,
+    /// The number of times a full wave will complete over the lifetime.
+    ///
+    /// If the both the ``amplitude`` and ``period`` are `1.0`, the wave will hit both `1.0` and `-1.0` once over its lifetime return to `0.0` at the end.
     pub period: f32,
+    /// How far left or right to shift the starting point of the wave.
     pub phase_shift: f32,
+    /// How far vertically to shift the wave.
+    ///
+    /// If a wave should not have a negative value, this must be at least ``amplitude``, which causes the maximum value to be `2 * amplitude`.
     pub vertical_shift: f32,
 }
 
 impl SinWave {
+    /// Create a new default wave with one full wave of 0 -> 1 -> 0 -> -1 -> 0
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn with_values(amplitude: f32, period: f32, phase_shift: f32, vertical_shift: f32) -> Self {
-        Self {
-            amplitude,
-            period,
-            phase_shift,
-            vertical_shift,
-        }
     }
 }
 

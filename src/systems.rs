@@ -1,7 +1,7 @@
 use bevy::{
     core::Time,
     math::Vec3,
-    prelude::{BuildChildren, Commands, Entity, Query, Res, Transform, With},
+    prelude::{BuildChildren, Commands, Entity, GlobalTransform, Query, Res, Transform, With},
     sprite::{Sprite, SpriteBundle},
     tasks::ComputeTaskPool,
 };
@@ -20,6 +20,7 @@ pub fn partcle_spawner(
         (
             Entity,
             &Transform,
+            &GlobalTransform,
             &ParticleSystem,
             &mut ParticleCount,
             &mut RunningState,
@@ -35,6 +36,7 @@ pub fn partcle_spawner(
     for (
         entity,
         transform,
+        global_transform,
         particle_system,
         mut particle_count,
         mut running_state,
@@ -102,7 +104,12 @@ pub fn partcle_spawner(
         }
 
         for _ in 0..to_spawn + extra {
-            let mut spawn_point = *transform;
+            let mut spawn_point = match particle_system.space {
+                ParticleSpace::Local => *transform,
+                ParticleSpace::World => Transform::from_translation(global_transform.translation)
+                    .with_rotation(global_transform.rotation)
+                    .with_scale(global_transform.scale),
+            };
             let radian: f32 = rng.gen_range(0.0..1.0) * particle_system.emitter_shape
                 + particle_system.emitter_angle;
             let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
