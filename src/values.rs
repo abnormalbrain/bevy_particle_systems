@@ -123,7 +123,7 @@ impl Lerpable<Color> for Color {
     }
 }
 
-/// Lerp between two floats by ``pct`.
+/// Lerp between two floats by ``pct``.
 ///
 /// ``pct`` must be between `0.0` and `1.0` inclusive.
 fn lerp(a: f32, b: f32, pct: f32) -> f32 {

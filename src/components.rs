@@ -246,23 +246,12 @@ pub struct ParticleSystemBundle {
     pub burst_index: BurstIndex,
 }
 
-#[derive(Debug, Bundle)]
+#[derive(Debug, Bundle, Default)]
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
     pub velocity: Velocity,
     pub direction: Direction,
-}
-
-impl Default for ParticleBundle {
-    fn default() -> Self {
-        Self {
-            particle: Particle::default(),
-            lifetime: Lifetime::default(),
-            velocity: Velocity::default(),
-            direction: Direction::default(),
-        }
-    }
 }
 
 /// Specifies the time scaling for all particle systems.

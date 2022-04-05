@@ -1,4 +1,5 @@
 #![warn(future_incompatible, missing_docs, clippy::pedantic)]
+#![allow(clippy::must_use_candidate, clippy::return_self_not_must_use, clippy::needless_pass_by_value)]
 //! A particle system plugin for [bevy](https://bevyengine.org)
 //!
 //! Currently sprite based and focused on 2D.

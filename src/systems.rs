@@ -15,6 +15,13 @@ use crate::{
     values::ColorOverTime,
 };
 
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::type_complexity,
+    clippy::too_many_lines
+)]
 pub fn partcle_spawner(
     mut particle_systems: Query<
         (
@@ -248,7 +255,7 @@ pub(crate) fn particle_transform(
                 transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));
             }
         },
-    )
+    );
 }
 
 pub(crate) fn particle_cleanup(
