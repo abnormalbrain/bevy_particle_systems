@@ -8,15 +8,76 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.59.0
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Install rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+        override: true
+        profile: minimal
+    
+    - run: cargo check --all-targets
+    - run: cargo test --no-default-features
+    - run: cargo test
+    - run: cargo test --all-features
+    - run: cargo test --all-features -- --ignored
+
+  code-style:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: clippy, rustfmt
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-features --all-targets
+
+  documentation:
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+      - run: cargo doc --all-features --no-deps
+
+  unwanted-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+      - run: cargo install cargo-deny --locked
+      - run: cargo deny check
+
+  unused-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+      - run: cargo install cargo-udeps --locked
+      - run: cargo udeps
