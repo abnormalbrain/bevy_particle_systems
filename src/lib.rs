@@ -70,9 +70,9 @@ pub use values::*;
 ///
 /// ```no_run
 /// # use bevy::prelude::*;
-/// 
+///
 /// use bevy_particles::ParticleSystemPlugin;
-/// 
+///
 /// fn main() {
 ///   App::new()
 ///     .add_plugins(DefaultPlugins)
