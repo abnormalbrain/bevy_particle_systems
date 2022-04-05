@@ -10,7 +10,7 @@ use rand::prelude::*;
 use crate::{
     components::{
         BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleCount, ParticleSpace,
-        ParticleSystem, Playing, RunningState, Velocity,
+        ParticleSystem, Playing, RunningState, TimeScale, Velocity,
     },
     values::ColorOverTime,
 };
@@ -28,6 +28,7 @@ pub fn partcle_spawner(
         With<Playing>,
     >,
     time: Res<Time>,
+    time_scale: Res<Option<TimeScale>>,
     mut commands: Commands,
 ) {
     let mut rng = rand::thread_rng();
@@ -40,7 +41,12 @@ pub fn partcle_spawner(
         mut burst_index,
     ) in particle_systems.iter_mut()
     {
-        running_state.running_time += time.delta_seconds();
+        let time_scale = if particle_system.use_scaled_time {
+            time_scale.map_or(1.0, |t| t.0)
+        } else {
+            1.0
+        };
+        running_state.running_time += time.delta_seconds() * time_scale;
 
         if running_state.running_time.floor() > running_state.current_second + 0.5 {
             running_state.current_second = running_state.running_time.floor();
@@ -106,7 +112,7 @@ pub fn partcle_spawner(
                 .z_value_override
                 .as_ref()
                 .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
-                
+
             match particle_system.space {
                 ParticleSpace::World => {
                     commands
@@ -163,12 +169,22 @@ pub fn partcle_spawner(
 }
 
 pub(crate) fn particle_lifetime(
-    mut lifetime_query: Query<&mut Lifetime>,
+    mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
     compute_task_pool: Res<ComputeTaskPool>,
+    time_scale: Res<Option<TimeScale>>,
+    particle_system_query: Query<&ParticleSystem>,
 ) {
-    lifetime_query.par_for_each_mut(&compute_task_pool, 512, |mut lifetime| {
-        lifetime.0 += time.delta_seconds();
+    lifetime_query.par_for_each_mut(&compute_task_pool, 512, |(mut lifetime, particle)| {
+        let mut scale_value = 1.0;
+        if let Some(t) = time_scale.as_ref() {
+            if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
+                if particle_system.use_scaled_time {
+                    scale_value = t.0;
+                }
+            }
+        }
+        lifetime.0 += time.delta_seconds() * scale_value;
     });
 }
 
@@ -204,6 +220,7 @@ pub(crate) fn particle_transform(
     )>,
     particle_system_query: Query<&ParticleSystem>,
     time: Res<Time>,
+    time_scale: Res<Option<TimeScale>>,
     compute_task_pool: Res<ComputeTaskPool>,
 ) {
     particle_query.par_for_each_mut(
@@ -211,9 +228,16 @@ pub(crate) fn particle_transform(
         512,
         |(particle, lifetime, direction, mut velocity, mut transform)| {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
+                let mut scale_value = 1.0;
+                if particle_system.use_scaled_time {
+                    if let Some(t) = time_scale.as_ref() {
+                        scale_value = t.0;
+                    }
+                }
                 let lifetime_pct = lifetime.0 / particle.max_lifetime;
                 velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct);
-                transform.translation += direction.0 * velocity.0 * time.delta_seconds();
+                transform.translation +=
+                    direction.0 * velocity.0 * time.delta_seconds() * scale_value;
                 transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));
             }
         },

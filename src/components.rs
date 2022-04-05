@@ -2,7 +2,7 @@
 
 use bevy::{
     math::Vec3,
-    prelude::{Component, Entity, GlobalTransform, Handle, Image, Transform, Bundle},
+    prelude::{Bundle, Component, Entity, GlobalTransform, Handle, Image, Transform},
 };
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
@@ -93,6 +93,8 @@ pub struct ParticleSystem {
     pub bursts: Vec<ParticleBurst>,
     /// What coordinate space particles should use.
     pub space: ParticleSpace,
+    /// `true` indicates that the system will use scaled time if it is present, `false` will result in always using real time.
+    pub use_scaled_time: bool,
 }
 
 impl Default for ParticleSystem {
@@ -114,6 +116,7 @@ impl Default for ParticleSystem {
             z_value_override: None,
             bursts: Vec::default(),
             space: ParticleSpace::World,
+            use_scaled_time: true,
         }
     }
 }
@@ -209,5 +212,18 @@ impl Default for ParticleBundle {
             velocity: Velocity::default(),
             direction: Direction::default(),
         }
+    }
+}
+
+/// Specifies the time scaling for all particle systems.
+///
+/// This can be used to speed up the particle system if the speed of time of the game changes.
+/// The contained value is used as a multiplier for the frame delta time.
+#[derive(Debug, Clone, Copy)]
+pub struct TimeScale(pub f32);
+
+impl Default for TimeScale {
+    fn default() -> Self {
+        Self(1.0)
     }
 }
