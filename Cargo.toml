@@ -13,5 +13,5 @@ categories = ["game-development"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.6.1" }
+bevy = { version = "0.6.1", default-features=false, features = ["render", "png", "bevy_winit"] }
 rand = "0.8.5"

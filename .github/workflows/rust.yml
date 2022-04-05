@@ -58,18 +58,6 @@ jobs:
           profile: minimal
       - run: cargo doc --all-features --no-deps
 
-  unwanted-dependencies:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-      - run: cargo install cargo-deny --locked
-      - run: cargo deny check
-
   unused-dependencies:
     runs-on: ubuntu-latest
     steps:
