@@ -1,6 +1,9 @@
 # bevy_particle_systems
 
 ---
+[![Crates.io](https://img.shields.io/crates/v/bevy_particle_systems?style=for-the-badge)](https://crates.io/crates/bevy_particle_systems)
+[![docs](https://docs.rs/bevy_particle_systems/badge.svg)](https://docs.rs/bevy_particle_systems/)
+[![MIT](https://img.shields.io/crates/l/bevy_particle_systems?style=for-the-badge)](./LICENSE)
 
 A particle system plugin for [bevy](https://bevyengine.org)
 
