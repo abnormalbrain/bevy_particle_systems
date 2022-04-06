@@ -1,4 +1,4 @@
-# bevy_particles
+# bevy_particle_systems
 
 ---
 
@@ -12,7 +12,7 @@ Currently sprite based and focused on 2D.
 
 ```no_run
 use bevy::prelude::*;
-use bevy_particles::ParticleSystemPlugin;
+use bevy_particle_systems::ParticleSystemPlugin;
 
 fn main() {
     App::new()
@@ -29,7 +29,7 @@ fn spawn_particle_system() { /* ... */ }
 2. Spawn a particle system whenever necessary.
 ```
 use bevy::prelude::*;
-use bevy_particles::*;
+use bevy_particle_systems::*;
 
 fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands

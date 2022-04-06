@@ -14,7 +14,7 @@ use rand::{prelude::ThreadRng, Rng};
 ///
 /// The following code returns a constant value.
 /// ```
-/// # use bevy_particles::values::JitteredValue;
+/// # use bevy_particle_systems::values::JitteredValue;
 /// let mut rng = rand::thread_rng();
 /// let jittered_value: JitteredValue = 5.0.into();
 /// for _ in 0..10 {
@@ -27,7 +27,7 @@ use rand::{prelude::ThreadRng, Rng};
 /// The following example would have ``get_value`` return values betten `5.0` and `15.0`.
 ///
 /// ```
-/// # use bevy_particles::values::JitteredValue;
+/// # use bevy_particle_systems::values::JitteredValue;
 /// let mut rng = rand::thread_rng();
 /// let jittered_value = JitteredValue::jittered(10.0, -5.0..5.0);
 /// for _ in 0..10 {
@@ -95,7 +95,7 @@ impl From<f32> for JitteredValue {
 /// ## Examples
 ///
 /// ```
-/// # use bevy_particles::values::Lerpable;
+/// # use bevy_particle_systems::values::Lerpable;
 /// # use bevy::prelude::Color;
 /// assert_eq!(0.0_f32.lerp(1.0, 0.5), 0.5);
 /// assert_eq!(Color::WHITE.lerp(Color::BLACK, 0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
@@ -136,7 +136,7 @@ fn lerp(a: f32, b: f32, pct: f32) -> f32 {
 ///
 /// ## Examples
 /// ```
-/// # use bevy_particles::values::RoughlyEqual;
+/// # use bevy_particle_systems::values::RoughlyEqual;
 /// assert!(0.0_f32.roughly_equal(0.0000001));
 /// assert!(!0.0_f32.roughly_equal(0.000001));
 /// assert!(0.0_f64.roughly_equal(0.00000000000000001));
@@ -191,7 +191,7 @@ impl ColorPoint {
 /// ## Examples
 /// ```
 /// # use bevy::prelude::Color;
-/// # use bevy_particles::values::{ColorPoint, Gradient};
+/// # use bevy_particle_systems::values::{ColorPoint, Gradient};
 /// let gradient = Gradient::new(vec![ColorPoint::new(Color::BLACK, 0.0), ColorPoint::new(Color::WHITE, 1.0)]);
 /// assert_eq!(gradient.get_color(0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
 ///
@@ -335,7 +335,7 @@ impl ColorOverTime {
 ///
 /// ## Examples
 /// ```
-/// # use bevy_particles::values::{Lerp, RoughlyEqual, SinWave, ValueOverTime};
+/// # use bevy_particle_systems::values::{Lerp, RoughlyEqual, SinWave, ValueOverTime};
 /// // Results in a Lerp value
 /// let l: ValueOverTime = (0.0_f32..1.0).into();
 /// assert_eq!(l.at_lifetime_pct(0.5), 0.5);

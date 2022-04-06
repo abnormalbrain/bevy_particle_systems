@@ -14,7 +14,7 @@
 //!
 //! ```no_run
 //! use bevy::prelude::*;
-//! use bevy_particles::ParticleSystemPlugin;
+//! use bevy_particle_systems::ParticleSystemPlugin;
 //!
 //! fn main() {
 //!     App::new()
@@ -31,7 +31,7 @@
 //! 2. Spawn a particle system whenever necessary.
 //! ```
 //! # use bevy::prelude::*;
-//! # use bevy_particles::*;
+//! # use bevy_particle_systems::*;
 //!
 //! fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>) {
 //!     commands
@@ -76,7 +76,7 @@ pub use values::*;
 /// ```no_run
 /// # use bevy::prelude::*;
 ///
-/// use bevy_particles::ParticleSystemPlugin;
+/// use bevy_particle_systems::ParticleSystemPlugin;
 ///
 /// fn main() {
 ///   App::new()
