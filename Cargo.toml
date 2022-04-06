@@ -1,16 +1,14 @@
 [package]
-name = "bevy_particles"
+name = "bevy_particle_systems"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.59"
 authors = ["Abnormal Brain Studios"]
 license = "MIT"
 description = "A particle system plugin for Bevy"
-repository = "https://github.com/abnormalbrain/bevy_particles"
+repository = "https://github.com/abnormalbrain/bevy_particle_systems"
 keywords = ["game", "gamedev", "bevy"]
 categories = ["game-development"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bevy = { version = "0.6.1", default-features=false, features = ["render", "png", "bevy_winit", "x11"] }

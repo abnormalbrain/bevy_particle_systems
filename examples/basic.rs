@@ -3,7 +3,7 @@ use bevy::{
     prelude::{App, AssetServer, Color, Commands, OrthographicCameraBundle, Res},
     DefaultPlugins,
 };
-use bevy_particles::{
+use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, SinWave, ValueOverTime,
 };

@@ -11,7 +11,7 @@ use bevy::{
     },
     DefaultPlugins,
 };
-use bevy_particles::{
+use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, TimeScale,
 };
