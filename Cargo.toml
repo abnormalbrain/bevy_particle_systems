@@ -1,6 +1,6 @@
 [package]
 name = "bevy_particle_systems"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.59"
 authors = ["Abnormal Brain Studios"]
