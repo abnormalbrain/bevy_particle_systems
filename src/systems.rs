@@ -70,7 +70,11 @@ pub fn partcle_spawner(
                 burst_index.0 = 0;
             } else {
                 if particle_count.0 == 0 {
-                    commands.entity(entity).despawn();
+                    if particle_system.despawn_on_finish {
+                        commands.entity(entity).despawn();
+                    } else {
+                        commands.entity(entity).remove::<Playing>();
+                    }
                 }
                 continue;
             }

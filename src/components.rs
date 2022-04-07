@@ -17,6 +17,7 @@ pub struct ParticleBurst {
     /// This value should be strictly less than the particle systems ``system_duration_seconds`` or it will
     /// not fire.
     pub time: f32,
+
     /// The number of particles to fire at the specified time.
     ///
     /// All particles in a burst are not counted towards the spawn rate, but are counted towards the system maximum.
@@ -44,66 +45,92 @@ pub enum ParticleSpace {
 ///
 /// A [`ParticleSystem`] will emit particles until it reaches the ``system_duration_seconds`` or forever if ``looping`` is true, so long as the
 /// entity with the [`ParticleSystem`] also has a [`Playing`] component.
+///
+/// If a [`ParticleSystem`] component is removed before all particles have finished their lifetime, the associated particles will all despawn themselves
+/// on the next frame.
 #[derive(Debug, Component, Clone)]
 pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
+
     /// The sprite used for each particle.
     pub default_sprite: Handle<Image>,
+
     /// The number of particles to spawn per second.
     ///
     /// This uses a [`ValueOverTime`] so that the spawn rate can vary over the lifetime of the system.
     pub spawn_rate_per_second: ValueOverTime,
+
     /// The raidus around the particle systems location that particles will spawn in.
     ///
     /// Setting this to zero will make all particles start at the same position.
     /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
     /// center position. Jitter will allow particles to spawn in a range.
     pub spawn_radius: JitteredValue,
+
     /// The shape of the emitter, defined in radian.
     ///
     /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
     /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
     /// in a semi-circle.
     pub emitter_shape: f32,
+
     /// The rotation angle of the emitter, defined in radian.
     ///
     /// Zero indicates straight up in the Y direction. [`std::f32::consts::PI`] indicates straight down in the Y direction.
     pub emitter_angle: f32,
+
     /// The initial movement velocity of a particle.
     ///
     /// This value can be constant, or have added jitter to have particles move at varying speeds.
     pub initial_velocity: JitteredValue,
+
     /// The acceleration of each particle.
     ///
     /// This value can change over time. Zero makes the particle move at its ``initial_velocity`` for its lifetime.
     pub acceleration: ValueOverTime,
+
     /// The lifetime of each particle, in seconds.
     ///
     /// This value can have jitter, causing lifetimes to vary per particle.
     pub lifetime: JitteredValue,
+
     /// The color of each particle over time.
     ///
     /// Color is used to modify the ``default_sprite``. A constant value of [`bevy::prelude::Color::WHITE`] will make the sprite appear with no modifications.
     ///
     /// This can vary over time and be used to modify alpha as well.
     pub color: ColorOverTime,
+
     /// The scale or size of the particle over time.
     ///
     /// Changing this value over time shrinks or grows the particle accordingly.
     pub scale: ValueOverTime,
+
     /// Whether or not the system will start over automatically.
     pub looping: bool,
+
     /// How long the system will emit particles for.
     pub system_duration_seconds: f32,
+
     /// Set a fixed/constant z value (useful for 2D to set a fixed z-depth).
     pub z_value_override: Option<JitteredValue>,
+
     /// A series of bursts of particles at configured times.
     pub bursts: Vec<ParticleBurst>,
+
     /// What coordinate space particles should use.
     pub space: ParticleSpace,
+
     /// `true` indicates that the system will use scaled time if it is present, `false` will result in always using real time.
     pub use_scaled_time: bool,
+
+    /// Indicates that the entity the [`ParticleSystem`] is on should be despawned when the system completes and has no more particles.
+    ///
+    /// Defaults to `false`.
+    ///
+    /// Note that this will never trigger on a system that has ``looping`` set to `true`.
+    pub despawn_on_finish: bool,
 }
 
 impl Default for ParticleSystem {
@@ -126,6 +153,7 @@ impl Default for ParticleSystem {
             bursts: Vec::default(),
             space: ParticleSpace::World,
             use_scaled_time: true,
+            despawn_on_finish: false,
         }
     }
 }
@@ -143,6 +171,7 @@ impl Default for ParticleSystem {
 pub struct Particle {
     /// The entity on which the spawning [`ParticleSystem`] resides.
     pub parent_system: Entity,
+
     /// The total lifetime of the particle.
     ///
     /// When the [`Lifetime`] component value reaches this value, the particle is considered dead and will be despawned.
@@ -193,8 +222,10 @@ pub struct RunningState {
     ///
     /// This is reset when the running time surpases the ``system_duration_seconds``.
     pub running_time: f32,
+
     /// The truncated current second.
     pub current_second: f32,
+
     /// The number of particles already spawned during ``current_second``.
     ///
     /// This number is reset when ``current_second`` rolls over.
