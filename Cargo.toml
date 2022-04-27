@@ -11,5 +11,5 @@ keywords = ["game", "gamedev", "bevy"]
 categories = ["game-development"]
 
 [dependencies]
-bevy = { version = "0.6.1", default-features=false, features = ["render", "png", "bevy_winit", "x11"] }
+bevy = { version = "0.7.0", default-features=false, features = ["render", "png", "bevy_winit", "x11"] }
 rand = "0.8.5"
