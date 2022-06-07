@@ -151,6 +151,10 @@ pub fn partcle_spawner(
                             ..ParticleBundle::default()
                         })
                         .insert_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: particle_system.color.at_lifetime_pct(0.0),
+                                ..Sprite::default()
+                            },
                             transform: spawn_point,
                             texture: particle_system.default_sprite.clone(),
                             ..SpriteBundle::default()
@@ -174,6 +178,10 @@ pub fn partcle_spawner(
                                 ..ParticleBundle::default()
                             })
                             .insert_bundle(SpriteBundle {
+                                sprite: Sprite {
+                                    color: particle_system.color.at_lifetime_pct(0.0),
+                                    ..Sprite::default()
+                                },
                                 transform: spawn_point,
                                 texture: particle_system.default_sprite.clone(),
                                 ..SpriteBundle::default()
