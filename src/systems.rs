@@ -130,6 +130,8 @@ pub fn partcle_spawner(
                 .z_value_override
                 .as_ref()
                 .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
+            let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
+            spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
 
             match particle_system.space {
                 ParticleSpace::World => {
@@ -149,6 +151,10 @@ pub fn partcle_spawner(
                             ..ParticleBundle::default()
                         })
                         .insert_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: particle_system.color.at_lifetime_pct(0.0),
+                                ..Sprite::default()
+                            },
                             transform: spawn_point,
                             texture: particle_system.default_sprite.clone(),
                             ..SpriteBundle::default()
@@ -172,6 +178,10 @@ pub fn partcle_spawner(
                                 ..ParticleBundle::default()
                             })
                             .insert_bundle(SpriteBundle {
+                                sprite: Sprite {
+                                    color: particle_system.color.at_lifetime_pct(0.0),
+                                    ..Sprite::default()
+                                },
                                 transform: spawn_point,
                                 texture: particle_system.default_sprite.clone(),
                                 ..SpriteBundle::default()
