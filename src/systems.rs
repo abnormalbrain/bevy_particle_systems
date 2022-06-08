@@ -122,7 +122,7 @@ pub fn partcle_spawner(
                     .with_rotation(global_transform.rotation)
                     .with_scale(global_transform.scale),
             };
-            let radian: f32 = rng.gen_range(0.0..1.0) * particle_system.emitter_shape
+            let radian: f32 = rng.gen_range(-0.5..0.5) * particle_system.emitter_shape
                 + particle_system.emitter_angle;
             let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
 
