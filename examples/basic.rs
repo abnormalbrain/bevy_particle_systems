@@ -40,6 +40,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ])),
                 looping: true,
                 system_duration_seconds: 10.0,
+                max_distance: Some(300.0),
                 scale: 2.0.into(),
                 bursts: vec![
                     ParticleBurst::new(0.0, 1000),

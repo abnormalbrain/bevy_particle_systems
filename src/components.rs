@@ -113,6 +113,9 @@ pub struct ParticleSystem {
     /// How long the system will emit particles for.
     pub system_duration_seconds: f32,
 
+    /// A maximum distance a particle can travel before being despawend.
+    pub max_distance: Option<f32>,
+
     /// Set a fixed/constant z value (useful for 2D to set a fixed z-depth).
     pub z_value_override: Option<JitteredValue>,
 
@@ -149,6 +152,7 @@ impl Default for ParticleSystem {
             scale: 1.0.into(),
             looping: true,
             system_duration_seconds: 5.0,
+            max_distance: None,
             z_value_override: None,
             bursts: Vec::default(),
             space: ParticleSpace::World,
@@ -176,6 +180,10 @@ pub struct Particle {
     ///
     /// When the [`Lifetime`] component value reaches this value, the particle is considered dead and will be despawned.
     pub max_lifetime: f32,
+
+    /// The maximum distance traveled for the particle.
+    /// When the [`DistanceTraveled`] component value reaches this value, the particle is considered dead and will be despawned.
+    pub max_distance: Option<f32>,
 }
 
 impl Default for Particle {
@@ -183,6 +191,7 @@ impl Default for Particle {
         Self {
             parent_system: Entity::from_raw(0),
             max_lifetime: f32::default(),
+            max_distance: None,
         }
     }
 }
@@ -190,6 +199,10 @@ impl Default for Particle {
 /// Contains how long a particle has been alive, in seconds.
 #[derive(Debug, Component, Default)]
 pub struct Lifetime(pub f32);
+
+/// Contains how far, in world units, a particle has moved since spawning.
+#[derive(Debug, Component, Default)]
+pub struct DistanceTraveled(pub f32);
 
 /// Defines the current velocity of an individual particle entity.
 #[derive(Debug, Component, Default)]
@@ -283,6 +296,7 @@ pub(crate) struct ParticleBundle {
     pub lifetime: Lifetime,
     pub velocity: Velocity,
     pub direction: Direction,
+    pub distance: DistanceTraveled,
 }
 
 /// Specifies the time scaling for all particle systems.
