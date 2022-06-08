@@ -13,6 +13,7 @@ use crate::{
         ParticleSystem, Playing, RunningState, TimeScale, Velocity,
     },
     values::ColorOverTime,
+    DistanceTraveled,
 };
 
 #[allow(
@@ -140,6 +141,7 @@ pub fn partcle_spawner(
                             particle: Particle {
                                 parent_system: entity,
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
+                                max_distance: particle_system.max_distance,
                             },
                             velocity: Velocity(
                                 particle_system.initial_velocity.get_value(&mut rng),
@@ -167,6 +169,7 @@ pub fn partcle_spawner(
                                 particle: Particle {
                                     parent_system: entity,
                                     max_lifetime: particle_system.lifetime.get_value(&mut rng),
+                                    max_distance: particle_system.max_distance,
                                 },
                                 velocity: Velocity(
                                     particle_system.initial_velocity.get_value(&mut rng),
@@ -243,6 +246,7 @@ pub(crate) fn particle_transform(
         &Particle,
         &Lifetime,
         &Direction,
+        &mut DistanceTraveled,
         &mut Velocity,
         &mut Transform,
     )>,
@@ -254,7 +258,7 @@ pub(crate) fn particle_transform(
     particle_query.par_for_each_mut(
         &compute_task_pool,
         512,
-        |(particle, lifetime, direction, mut velocity, mut transform)| {
+        |(particle, lifetime, direction, mut distance, mut velocity, mut transform)| {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
                 let mut scale_value = 1.0;
                 if particle_system.use_scaled_time {
@@ -264,21 +268,27 @@ pub(crate) fn particle_transform(
                 }
                 let lifetime_pct = lifetime.0 / particle.max_lifetime;
                 velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct);
+                let initial_position = transform.translation;
+
                 transform.translation +=
                     direction.0 * velocity.0 * time.delta_seconds() * scale_value;
                 transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));
+
+                distance.0 += transform.translation.distance(initial_position);
             }
         },
     );
 }
 
 pub(crate) fn particle_cleanup(
-    particle_query: Query<(Entity, &Particle, &Lifetime)>,
+    particle_query: Query<(Entity, &Particle, &Lifetime, &DistanceTraveled)>,
     mut particle_count_query: Query<&mut ParticleCount>,
     mut commands: Commands,
 ) {
-    for (entity, particle, lifetime) in particle_query.iter() {
-        if lifetime.0 >= particle.max_lifetime {
+    for (entity, particle, lifetime, distance) in particle_query.iter() {
+        if lifetime.0 >= particle.max_lifetime
+            || (particle.max_distance.is_some() && distance.0 >= particle.max_distance.unwrap())
+        {
             if let Ok(mut particle_count) = particle_count_query.get_mut(particle.parent_system) {
                 if particle_count.0 > 0 {
                     particle_count.0 -= 1;
