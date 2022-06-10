@@ -87,9 +87,9 @@ pub fn partcle_spawner(
 
         let pct = running_state.running_time / particle_system.system_duration_seconds;
         let remaining_particles = (particle_system.max_particles - particle_count.0) as f32;
-
+        let current_spawn_rate = particle_system.spawn_rate_per_second.at_lifetime_pct(pct);
         let mut to_spawn = ((running_state.running_time - running_state.running_time.floor())
-            * particle_system.spawn_rate_per_second.at_lifetime_pct(pct)
+            * current_spawn_rate
             - running_state.spawned_this_second as f32)
             .floor()
             .min(remaining_particles)
@@ -107,6 +107,7 @@ pub fn partcle_spawner(
         if to_spawn == 0
             && running_state.spawned_this_second == 0
             && particle_count.0 < particle_system.max_particles
+            && current_spawn_rate > 0.0
         {
             to_spawn = 1;
         }
