@@ -268,7 +268,7 @@ pub(crate) fn particle_transform(
                     }
                 }
                 let lifetime_pct = lifetime.0 / particle.max_lifetime;
-                velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct);
+                velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
                 let initial_position = transform.translation;
 
                 transform.translation +=

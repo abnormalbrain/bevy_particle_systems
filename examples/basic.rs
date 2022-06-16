@@ -1,6 +1,8 @@
 use bevy::{
     core_pipeline::ClearColor,
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::{App, AssetServer, Color, Commands, OrthographicCameraBundle, Res},
+    window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
 };
 use bevy_particle_systems::{
@@ -11,6 +13,12 @@ use bevy_particle_systems::{
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(WindowDescriptor {
+            present_mode: PresentMode::Immediate,
+            ..WindowDescriptor::default()
+        })
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
@@ -28,7 +36,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 spawn_rate_per_second: 500.0.into(),
                 initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
                 acceleration: ValueOverTime::Sin(SinWave {
-                    amplitude: 5.0,
+                    amplitude: 150.0,
                     period: 5.0,
                     ..SinWave::default()
                 }),
