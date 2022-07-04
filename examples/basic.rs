@@ -1,6 +1,6 @@
 use bevy::{
     core_pipeline::ClearColor,
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::{App, AssetServer, Color, Commands, OrthographicCameraBundle, Res},
     window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
@@ -17,6 +17,7 @@ fn main() {
             present_mode: PresentMode::Immediate,
             ..WindowDescriptor::default()
         })
+        .add_plugin(EntityCountDiagnosticsPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
@@ -31,9 +32,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(ParticleSystemBundle {
             particle_system: ParticleSystem {
-                max_particles: 10_000,
+                max_particles: 50_000,
                 default_sprite: asset_server.load("px.png"),
-                spawn_rate_per_second: 500.0.into(),
+                spawn_rate_per_second: 1000.0.into(),
                 initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
                 acceleration: ValueOverTime::Sin(SinWave {
                     amplitude: 150.0,
