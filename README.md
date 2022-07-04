@@ -26,7 +26,7 @@ INFO bevy diagnostic: entity_count                    : 10133.000000  (avg 10139
 
 1. Add the [`ParticleSystemPlugin`] plugin.
 
-```no_run
+```rust
 use bevy::prelude::*;
 use bevy_particle_systems::ParticleSystemPlugin;
 
@@ -43,7 +43,7 @@ fn spawn_particle_system() { /* ... */ }
 ```
 
 2. Spawn a particle system whenever necessary.
-```
+```rust
 use bevy::prelude::*;
 use bevy_particle_systems::*;
 
