@@ -1,9 +1,10 @@
 //! Defines bevy Components used by the particle system.
 
-use bevy::{
-    math::Vec3,
-    prelude::{Bundle, Component, Entity, GlobalTransform, Handle, Image, Transform},
-};
+use bevy_asset::Handle;
+use bevy_ecs::prelude::{Bundle, Component, Entity};
+use bevy_math::Vec3;
+use bevy_render::prelude::{Image, VisibilityBundle};
+use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 
@@ -97,7 +98,7 @@ pub struct ParticleSystem {
 
     /// The color of each particle over time.
     ///
-    /// Color is used to modify the ``default_sprite``. A constant value of [`bevy::prelude::Color::WHITE`] will make the sprite appear with no modifications.
+    /// Color is used to modify the ``default_sprite``. A constant value of [`bevy_render::prelude::Color::WHITE`] will make the sprite appear with no modifications.
     ///
     /// This can vary over time and be used to modify alpha as well.
     pub color: ColorOverTime,
@@ -288,6 +289,10 @@ pub struct ParticleSystemBundle {
     ///
     /// This should generally be left at the default.
     pub burst_index: BurstIndex,
+
+    /// Required for child particles to be visible when running in Local space.
+    #[bundle]
+    pub visibility: VisibilityBundle,
 }
 
 #[derive(Debug, Bundle, Default)]

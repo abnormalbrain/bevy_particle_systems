@@ -1,10 +1,9 @@
-use bevy::{
-    core::Time,
-    math::Vec3,
-    prelude::{BuildChildren, Commands, Entity, GlobalTransform, Query, Res, Transform, With},
-    sprite::{Sprite, SpriteBundle},
-    tasks::ComputeTaskPool,
-};
+use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
+use bevy_hierarchy::BuildChildren;
+use bevy_math::Vec3;
+use bevy_sprite::prelude::{Sprite, SpriteBundle};
+use bevy_time::Time;
+use bevy_transform::prelude::{GlobalTransform, Transform};
 use rand::prelude::*;
 
 use crate::{
@@ -27,7 +26,6 @@ pub fn partcle_spawner(
     mut particle_systems: Query<
         (
             Entity,
-            &Transform,
             &GlobalTransform,
             &ParticleSystem,
             &mut ParticleCount,
@@ -43,7 +41,6 @@ pub fn partcle_spawner(
     let mut rng = rand::thread_rng();
     for (
         entity,
-        transform,
         global_transform,
         particle_system,
         mut particle_count,
@@ -118,10 +115,8 @@ pub fn partcle_spawner(
 
         for _ in 0..to_spawn + extra {
             let mut spawn_point = match particle_system.space {
-                ParticleSpace::Local => *transform,
-                ParticleSpace::World => Transform::from_translation(global_transform.translation)
-                    .with_rotation(global_transform.rotation)
-                    .with_scale(global_transform.scale),
+                ParticleSpace::Local => Transform::default(),
+                ParticleSpace::World => Transform::from(*global_transform),
             };
             let radian: f32 = rng.gen_range(-0.5..0.5) * particle_system.emitter_shape
                 + particle_system.emitter_angle;
@@ -203,11 +198,10 @@ pub fn partcle_spawner(
 pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
-    compute_task_pool: Res<ComputeTaskPool>,
     time_scale: Res<Option<TimeScale>>,
     particle_system_query: Query<&ParticleSystem>,
 ) {
-    lifetime_query.par_for_each_mut(&compute_task_pool, 512, |(mut lifetime, particle)| {
+    lifetime_query.par_for_each_mut(512, |(mut lifetime, particle)| {
         let mut scale_value = 1.0;
         if let Some(t) = time_scale.as_ref() {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
@@ -223,23 +217,18 @@ pub(crate) fn particle_lifetime(
 pub(crate) fn particle_color(
     mut particle_query: Query<(&Particle, &Lifetime, &mut Sprite)>,
     particle_system_query: Query<&ParticleSystem>,
-    compute_task_pool: Res<ComputeTaskPool>,
 ) {
-    particle_query.par_for_each_mut(
-        &compute_task_pool,
-        512,
-        |(particle, lifetime, mut sprite)| {
-            if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-                match &particle_system.color {
-                    ColorOverTime::Constant(color) => sprite.color = *color,
-                    ColorOverTime::Gradient(gradient) => {
-                        let pct = lifetime.0 / particle.max_lifetime;
-                        sprite.color = gradient.get_color(pct);
-                    }
+    particle_query.par_for_each_mut(512, |(particle, lifetime, mut sprite)| {
+        if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
+            match &particle_system.color {
+                ColorOverTime::Constant(color) => sprite.color = *color,
+                ColorOverTime::Gradient(gradient) => {
+                    let pct = lifetime.0 / particle.max_lifetime;
+                    sprite.color = gradient.get_color(pct);
                 }
             }
-        },
-    );
+        }
+    });
 }
 
 pub(crate) fn particle_transform(
@@ -254,10 +243,8 @@ pub(crate) fn particle_transform(
     particle_system_query: Query<&ParticleSystem>,
     time: Res<Time>,
     time_scale: Res<Option<TimeScale>>,
-    compute_task_pool: Res<ComputeTaskPool>,
 ) {
     particle_query.par_for_each_mut(
-        &compute_task_pool,
         512,
         |(particle, lifetime, direction, mut distance, mut velocity, mut transform)| {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {

@@ -1,6 +1,6 @@
 [package]
 name = "bevy_particle_systems"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.59"
 authors = ["Abnormal Brain Studios"]
@@ -11,5 +11,16 @@ keywords = ["game", "gamedev", "bevy"]
 categories = ["game-development"]
 
 [dependencies]
-bevy = { version = "0.7.0", default-features=false, features = ["render", "png", "bevy_winit", "x11"] }
+bevy_app = "0.8"
+bevy_asset = "0.8"
+bevy_ecs = "0.8"
+bevy_hierarchy = "0.8"
+bevy_math = "0.8"
+bevy_render = "0.8"
+bevy_sprite = "0.8"
+bevy_time = "0.8"
+bevy_transform = "0.8"
 rand = "0.8"
+
+[dev-dependencies]
+bevy = { version = "0.8", default-features=false, features = ["bevy_asset", "render", "png", "bevy_winit", "x11"] }

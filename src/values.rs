@@ -1,7 +1,7 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
-use bevy::prelude::Color;
+use bevy_render::prelude::Color;
 use rand::{prelude::ThreadRng, Rng};
 
 /// A value that has random jitter within a configured range added to it when read.
@@ -243,7 +243,7 @@ impl Gradient {
     ///
     /// ``pct`` will be clamped between 0.0 and 1.0.
     ///
-    /// Returns [`bevy::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
+    /// Returns [`bevy_render::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
     /// that the gradient is misconfigured.
     pub fn get_color(&self, pct: f32) -> Color {
         let clamped_pct = pct.clamp(0.0, 1.0);

@@ -5,12 +5,10 @@
 //! which effectively pauses the system.
 use bevy::{
     input::Input,
-    prelude::{
-        App, AssetServer, Color, Commands, KeyCode, OrthographicCameraBundle, Res, ResMut,
-        Transform,
-    },
+    prelude::{App, Camera2dBundle, Color, Commands, KeyCode, Res, ResMut, Transform},
     DefaultPlugins,
 };
+use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, TimeScale,
@@ -26,7 +24,7 @@ fn main() {
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 
     commands
         .spawn_bundle(ParticleSystemBundle {

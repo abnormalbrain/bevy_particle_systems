@@ -13,13 +13,13 @@ Currently sprite based and focused on 2D.
 
 ![](https://github.com/abnormalbrain/bevy_particle_systems/blob/main/assets/example.gif)
  
-The above was captured running a release build of the `basic` example, `cargo run --example basic --release`, and ran at 110-120 FPS on a
+The above was captured running a release build of the `basic` example, `cargo run --example basic --release`, and ran at 140-150 FPS on a
 2019 Intel i9 MacBook Pro, rendering about 10k particles.
 
 ```
-INFO bevy diagnostic: frame_time                      :    0.017692s (avg 0.008550s)
-INFO bevy diagnostic: fps                             :  116.957521  (avg 121.015118)
-INFO bevy diagnostic: entity_count                    : 10133.000000  (avg 10139.800000)
+INFO bevy diagnostic: frame_time                      :    0.006995s (avg 0.006966s)
+INFO bevy diagnostic: fps                             :  142.956068  (avg 143.654887)
+INFO bevy diagnostic: entity_count                    : 10132.000000  (avg 10149.350000)
 ```
 
 ## Usage
@@ -71,3 +71,10 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
     .insert(Playing);
 }
 ```
+
+## Bevy Versions
+
+|`bevy_particle_systems`|`bevy`|
+|:--|:--|
+|0.5|0.8|
+|0.4|0.7|

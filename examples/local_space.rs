@@ -3,18 +3,17 @@
 //! The red colored particles operate in global space. Once they have been spawned they move independently.
 //! The green particles operate in local space. You can see that their movement is affected by the movement of the spawn point as well.
 use bevy::{
-    core::Time,
     math::Vec3,
-    prelude::{
-        App, AssetServer, Color, Commands, Component, OrthographicCameraBundle, Query, Res,
-        Transform, With,
-    },
+    prelude::{App, Camera2dBundle, Color, Commands, Component, Query, Res, Transform, With},
     DefaultPlugins,
 };
+use bevy_asset::AssetServer;
+use bevy_math::Quat;
 use bevy_particle_systems::{
-    ColorOverTime, ColorPoint, Gradient, JitteredValue, Lerpable, ParticleSpace, ParticleSystem,
+    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
+use bevy_time::Time;
 
 #[derive(Debug, Component)]
 pub struct Targets {
@@ -28,12 +27,12 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
-        .add_system(mover_system)
+        .add_system(circler)
         .run();
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 
     commands
         .spawn_bundle(ParticleSystemBundle {
@@ -60,11 +59,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..ParticleSystemBundle::default()
         })
         .insert(Playing)
-        .insert(Targets {
-            targets: vec![Vec3::new(50.0, 100.0, 0.0), Vec3::new(50.0, -100.0, 0.0)],
-            index: 0,
-            time: 0.0,
-        });
+        .insert(Circler::new(Vec3::new(50.0, 0.0, 0.0), 50.0));
 
     commands
         .spawn_bundle(ParticleSystemBundle {
@@ -91,37 +86,29 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..ParticleSystemBundle::default()
         })
         .insert(Playing)
-        .insert(Targets {
-            targets: vec![Vec3::new(-50.0, 100.0, 0.0), Vec3::new(-50.0, -100.0, 0.0)],
-            index: 0,
-            time: 0.0,
-        });
+        .insert(Circler::new(Vec3::new(-50.0, 0.0, 0.0), 50.0));
 }
 
-pub fn mover_system(
+#[derive(Component)]
+pub struct Circler {
+    pub center: Vec3,
+    pub radius: f32,
+}
+
+impl Circler {
+    pub fn new(center: Vec3, radius: f32) -> Self {
+        Self { center, radius }
+    }
+}
+
+pub fn circler(
     time: Res<Time>,
-    mut particle_system_query: Query<(&mut Targets, &mut Transform), With<ParticleSystem>>,
+    mut particle_system_query: Query<(&Circler, &mut Transform), With<ParticleSystem>>,
 ) {
-    let delta = time.delta_seconds();
-    for (mut targets, mut transform) in particle_system_query.iter_mut() {
-        let to = targets.targets[targets.index];
-        let from_index = if targets.index == 0 {
-            targets.targets.len() - 1
-        } else {
-            targets.index - 1
-        };
-        let from = targets.targets[from_index];
-        targets.time = (targets.time + delta).clamp(0.0, 3.0);
-
-        let pct = targets.time / 3.0;
-        transform.translation = Vec3::new(from.x.lerp(to.x, pct), from.y.lerp(to.y, pct), 0.0);
-
-        if targets.time == 3.0 {
-            targets.index += 1;
-            if targets.index >= targets.targets.len() {
-                targets.index = 0;
-            }
-            targets.time = 0.0;
-        }
+    let rad = time.seconds_since_startup() as f32;
+    let quat = Quat::from_rotation_z(rad).normalize();
+    let dir = quat * Vec3::Y;
+    for (circler, mut transform) in &mut particle_system_query {
+        transform.translation = circler.center + dir * circler.radius;
     }
 }
