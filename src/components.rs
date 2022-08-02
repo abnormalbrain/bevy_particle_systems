@@ -3,8 +3,8 @@
 use bevy_asset::Handle;
 use bevy_ecs::prelude::{Bundle, Component, Entity};
 use bevy_math::Vec3;
+use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_transform::prelude::{GlobalTransform, Transform};
-use bevy_render::prelude::Image;
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 
@@ -289,6 +289,10 @@ pub struct ParticleSystemBundle {
     ///
     /// This should generally be left at the default.
     pub burst_index: BurstIndex,
+
+    /// Required for child particles to be visible when running in Local space.
+    #[bundle]
+    pub visibility: VisibilityBundle,
 }
 
 #[derive(Debug, Bundle, Default)]

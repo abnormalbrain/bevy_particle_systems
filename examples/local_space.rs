@@ -86,7 +86,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..ParticleSystemBundle::default()
         })
         .insert(Playing)
-        .insert(Circler::new(Vec3::new(0.0, 0.0, 0.0), 50.0));
+        .insert(Circler::new(Vec3::new(-50.0, 0.0, 0.0), 50.0));
 }
 
 #[derive(Component)]

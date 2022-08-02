@@ -181,7 +181,7 @@ pub fn partcle_spawner(
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
                                 },
-                                transform: spawn_point.with_scale(Vec3::splat(10.0)),
+                                transform: spawn_point,
                                 texture: particle_system.default_sprite.clone(),
                                 ..SpriteBundle::default()
                             });
