@@ -74,7 +74,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
 
 ## Bevy Versions
 
-|bevy_particle_systems|bevy|
-----
+|`bevy_particle_systems`|`bevy`|
+|:--|:--|
 |0.4|0.7|
 |0.5|0.8|
