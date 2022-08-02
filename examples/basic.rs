@@ -1,10 +1,10 @@
 use bevy::{
-    core_pipeline::ClearColor,
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::{App, AssetServer, Color, Commands, OrthographicCameraBundle, Res},
+    prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
     window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
 };
+use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, SinWave, ValueOverTime,
@@ -27,7 +27,7 @@ fn main() {
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 
     commands
         .spawn_bundle(ParticleSystemBundle {

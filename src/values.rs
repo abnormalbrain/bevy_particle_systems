@@ -1,7 +1,7 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
-use bevy::prelude::Color;
+use bevy_render::prelude::Color;
 use rand::{prelude::ThreadRng, Rng};
 
 /// A value that has random jitter within a configured range added to it when read.

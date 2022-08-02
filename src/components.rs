@@ -1,9 +1,10 @@
 //! Defines bevy Components used by the particle system.
 
-use bevy::{
-    math::Vec3,
-    prelude::{Bundle, Component, Entity, GlobalTransform, Handle, Image, Transform},
-};
+use bevy_asset::Handle;
+use bevy_ecs::prelude::{Bundle, Component, Entity};
+use bevy_math::Vec3;
+use bevy_transform::prelude::{GlobalTransform, Transform};
+use bevy_render::prelude::Image;
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 
