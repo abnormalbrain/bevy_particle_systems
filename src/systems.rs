@@ -1,9 +1,9 @@
-use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
-use bevy_hierarchy::BuildChildren;
-use bevy_math::Vec3;
-use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_time::Time;
-use bevy_transform::prelude::{GlobalTransform, Transform};
+use bevy::prelude::{Commands, Entity, Query, Res, With};
+use bevy::hierarchy::BuildChildren;
+use bevy::math::Vec3;
+use bevy::sprite::prelude::{Sprite, SpriteBundle};
+use bevy::time::Time;
+use bevy::transform::prelude::{GlobalTransform, Transform};
 use rand::prelude::*;
 
 use crate::{
@@ -35,7 +35,7 @@ pub fn partcle_spawner(
         With<Playing>,
     >,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
+    time_scale: Option<Res<TimeScale>>,
     mut commands: Commands,
 ) {
     let mut rng = rand::thread_rng();
@@ -49,7 +49,7 @@ pub fn partcle_spawner(
     ) in particle_systems.iter_mut()
     {
         let time_scale = if particle_system.use_scaled_time {
-            time_scale.map_or(1.0, |t| t.0)
+            time_scale.as_ref().map_or(1.0, |t| t.0)
         } else {
             1.0
         };
@@ -198,7 +198,7 @@ pub fn partcle_spawner(
 pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
+    time_scale: Option<Res<TimeScale>>,
     particle_system_query: Query<&ParticleSystem>,
 ) {
     lifetime_query.par_for_each_mut(512, |(mut lifetime, particle)| {
@@ -242,7 +242,7 @@ pub(crate) fn particle_transform(
     )>,
     particle_system_query: Query<&ParticleSystem>,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
+    time_scale: Option<Res<TimeScale>>,
 ) {
     particle_query.par_for_each_mut(
         512,

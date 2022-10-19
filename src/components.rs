@@ -1,10 +1,6 @@
 //! Defines bevy Components used by the particle system.
 
-use bevy_asset::Handle;
-use bevy_ecs::prelude::{Bundle, Component, Entity};
-use bevy_math::Vec3;
-use bevy_render::prelude::{Image, VisibilityBundle};
-use bevy_transform::prelude::{GlobalTransform, Transform};
+use bevy::prelude::{{Image, Component, Handle}, Entity, Transform, GlobalTransform, Vec3, Bundle, VisibilityBundle, Resource};
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 
@@ -291,7 +287,6 @@ pub struct ParticleSystemBundle {
     pub burst_index: BurstIndex,
 
     /// Required for child particles to be visible when running in Local space.
-    #[bundle]
     pub visibility: VisibilityBundle,
 }
 
@@ -308,7 +303,7 @@ pub(crate) struct ParticleBundle {
 ///
 /// This can be used to speed up the particle system if the speed of time of the game changes.
 /// The contained value is used as a multiplier for the frame delta time.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Resource)]
 pub struct TimeScale(pub f32);
 
 impl Default for TimeScale {

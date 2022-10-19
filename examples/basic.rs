@@ -4,7 +4,7 @@ use bevy::{
     window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
 };
-use bevy_asset::AssetServer;
+use bevy::asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, SinWave, ValueOverTime,
