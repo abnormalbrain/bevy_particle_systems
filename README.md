@@ -1,6 +1,7 @@
 # bevy_particle_systems
 
 ---
+
 [![Crates.io](https://img.shields.io/crates/v/bevy_particle_systems)](https://crates.io/crates/bevy_particle_systems)
 [![docs](https://docs.rs/bevy_particle_systems/badge.svg)](https://docs.rs/bevy_particle_systems/)
 [![MIT](https://img.shields.io/crates/l/bevy_particle_systems)](./LICENSE)
@@ -12,9 +13,10 @@ Currently sprite based and focused on 2D.
 ## Example
 
 ![](https://github.com/abnormalbrain/bevy_particle_systems/blob/main/assets/example.gif)
- 
-The above was captured running a release build of the `basic` example, `cargo run --example basic --release`, and ran at 140-150 FPS on a
-2019 Intel i9 MacBook Pro, rendering about 10k particles.
+
+The above was captured running a release build of the `basic` example,
+`cargo run --example basic --release`, and ran at 140-150 FPS on a 2019 Intel i9
+MacBook Pro, rendering about 10k particles.
 
 ```
 INFO bevy diagnostic: frame_time                      :    0.006995s (avg 0.006966s)
@@ -43,6 +45,7 @@ fn spawn_particle_system() { /* ... */ }
 ```
 
 2. Spawn a particle system whenever necessary.
+
 ```rust
 use bevy::prelude::*;
 use bevy_particle_systems::*;
@@ -50,7 +53,7 @@ use bevy_particle_systems::*;
 fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
     // Add the bundle specifying the particle system itself.
-    .spawn_bundle(ParticleSystemBundle {
+    .spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             max_particles: 10_000,
             default_sprite: asset_server.load("my_particle.png"),
@@ -74,7 +77,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
 
 ## Bevy Versions
 
-|`bevy_particle_systems`|`bevy`|
-|:--|:--|
-|0.5|0.8|
-|0.4|0.7|
+| `bevy_particle_systems` | `bevy` |
+| :---------------------- | :----- |
+| 0.5                     | 0.8    |
+| 0.4                     | 0.7    |

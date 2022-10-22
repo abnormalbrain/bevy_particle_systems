@@ -1,6 +1,6 @@
 [package]
 name = "bevy_particle_systems"
-version = "0.5.0"
+version = "0.6.0-dev"
 edition = "2021"
 rust-version = "1.59"
 authors = ["Abnormal Brain Studios"]
@@ -15,6 +15,7 @@ rand = "0.8"
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy.git"
-branch = "main"
+rev = "543465b721048355e34eb6078923645747c1d44b"
+
 default-features=false
 features = ["bevy_asset", "render", "png", "bevy_winit", "x11"]

@@ -133,7 +133,7 @@ pub fn partcle_spawner(
             match particle_system.space {
                 ParticleSpace::World => {
                     commands
-                        .spawn_bundle(ParticleBundle {
+                        .spawn(ParticleBundle {
                             particle: Particle {
                                 parent_system: entity,
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
@@ -148,7 +148,7 @@ pub fn partcle_spawner(
                             ),
                             ..ParticleBundle::default()
                         })
-                        .insert_bundle(SpriteBundle {
+                        .insert(SpriteBundle {
                             sprite: Sprite {
                                 color: particle_system.color.at_lifetime_pct(0.0),
                                 ..Sprite::default()
@@ -161,7 +161,7 @@ pub fn partcle_spawner(
                 ParticleSpace::Local => {
                     commands.entity(entity).with_children(|parent| {
                         parent
-                            .spawn_bundle(ParticleBundle {
+                            .spawn(ParticleBundle {
                                 particle: Particle {
                                     parent_system: entity,
                                     max_lifetime: particle_system.lifetime.get_value(&mut rng),
@@ -176,7 +176,7 @@ pub fn partcle_spawner(
                                 ),
                                 ..ParticleBundle::default()
                             })
-                            .insert_bundle(SpriteBundle {
+                            .insert(SpriteBundle {
                                 sprite: Sprite {
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()

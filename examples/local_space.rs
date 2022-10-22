@@ -7,13 +7,13 @@ use bevy::{
     prelude::{App, Camera2dBundle, Color, Commands, Component, Query, Res, Transform, With},
     DefaultPlugins,
 };
-use bevy_asset::AssetServer;
-use bevy_math::Quat;
+use bevy::asset::AssetServer;
+use bevy::math::Quat;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
-use bevy_time::Time;
+use bevy::time::Time;
 
 #[derive(Debug, Component)]
 pub struct Targets {
@@ -32,10 +32,10 @@ fn main() {
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
@@ -62,7 +62,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Circler::new(Vec3::new(50.0, 0.0, 0.0), 50.0));
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
