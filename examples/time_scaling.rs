@@ -3,12 +3,12 @@
 //! The red particles do not follow scaled time, while the green do.
 //! Time scale can be controls with the 1-5 keys. The 0 key sets the Time Scale to 0.0
 //! which effectively pauses the system.
+use bevy::asset::AssetServer;
 use bevy::{
     input::Input,
     prelude::{App, Camera2dBundle, Color, Commands, KeyCode, Res, ResMut, Transform},
     DefaultPlugins,
 };
-use bevy::asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, TimeScale,

@@ -1,6 +1,6 @@
-use bevy::prelude::{Commands, Entity, Query, Res, With};
 use bevy::hierarchy::BuildChildren;
 use bevy::math::Vec3;
+use bevy::prelude::{Commands, Entity, Query, Res, With};
 use bevy::sprite::prelude::{Sprite, SpriteBundle};
 use bevy::time::Time;
 use bevy::transform::prelude::{GlobalTransform, Transform};

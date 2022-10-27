@@ -2,18 +2,18 @@
 //!
 //! The red colored particles operate in global space. Once they have been spawned they move independently.
 //! The green particles operate in local space. You can see that their movement is affected by the movement of the spawn point as well.
+use bevy::asset::AssetServer;
+use bevy::math::Quat;
+use bevy::time::Time;
 use bevy::{
     math::Vec3,
     prelude::{App, Camera2dBundle, Color, Commands, Component, Query, Res, Transform, With},
     DefaultPlugins,
 };
-use bevy::asset::AssetServer;
-use bevy::math::Quat;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
-use bevy::time::Time;
 
 #[derive(Debug, Component)]
 pub struct Targets {

@@ -1,10 +1,10 @@
+use bevy::asset::AssetServer;
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
     window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
 };
-use bevy::asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, SinWave, ValueOverTime,

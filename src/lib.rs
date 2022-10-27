@@ -62,7 +62,7 @@ pub mod components;
 mod systems;
 pub mod values;
 
-use bevy::prelude::{App, Plugin,*};
+use bevy::prelude::{App, Plugin, *};
 pub use components::*;
 use systems::{
     partcle_spawner, particle_cleanup, particle_color, particle_lifetime, particle_transform,
