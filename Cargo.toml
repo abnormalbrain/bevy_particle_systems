@@ -15,7 +15,7 @@ rand = "0.8"
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy.git"
-rev = "543465b721048355e34eb6078923645747c1d44b"
+rev = "4bcf49b2ea6fb5f42388b0e15d204020053ee5c7"
 
 default-features=false
 features = ["bevy_asset", "render", "png", "bevy_winit", "x11"]
