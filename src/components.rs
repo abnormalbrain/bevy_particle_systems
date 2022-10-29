@@ -78,7 +78,7 @@ pub struct ParticleSystem {
 
     /// The rotation angle of the emitter, defined in radian.
     ///
-    /// Zero indicates straight up in the Y direction. [`std::f32::consts::PI`] indicates straight down in the Y direction.
+    /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
     pub emitter_angle: f32,
 
     /// The initial movement velocity of a particle.
