@@ -2,7 +2,6 @@ use bevy::asset::AssetServer;
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
-    window::{PresentMode, WindowDescriptor},
     DefaultPlugins,
 };
 use bevy_particle_systems::{
