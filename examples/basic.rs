@@ -13,10 +13,6 @@ use bevy_particle_systems::{
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(WindowDescriptor {
-            present_mode: PresentMode::Immediate,
-            ..WindowDescriptor::default()
-        })
         .add_plugin(EntityCountDiagnosticsPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
