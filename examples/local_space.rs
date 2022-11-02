@@ -105,7 +105,7 @@ pub fn circler(
     time: Res<Time>,
     mut particle_system_query: Query<(&Circler, &mut Transform), With<ParticleSystem>>,
 ) {
-    let rad = time.seconds_since_startup() as f32;
+    let rad = time.elapsed_seconds() as f32;
     let quat = Quat::from_rotation_z(rad).normalize();
     let dir = quat * Vec3::Y;
     for (circler, mut transform) in &mut particle_system_query {
