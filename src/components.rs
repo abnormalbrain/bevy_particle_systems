@@ -62,7 +62,7 @@ pub struct ParticleSystem {
     /// This uses a [`ValueOverTime`] so that the spawn rate can vary over the lifetime of the system.
     pub spawn_rate_per_second: ValueOverTime,
 
-    /// The raidus around the particle systems location that particles will spawn in.
+    /// The radius around the particle systems location that particles will spawn in.
     ///
     /// Setting this to zero will make all particles start at the same position.
     /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
@@ -114,7 +114,7 @@ pub struct ParticleSystem {
     /// How long the system will emit particles for.
     pub system_duration_seconds: f32,
 
-    /// A maximum distance a particle can travel before being despawend.
+    /// A maximum distance a particle can travel before being despawned.
     pub max_distance: Option<f32>,
 
     /// Set a fixed/constant z value (useful for 2D to set a fixed z-depth).
@@ -170,7 +170,7 @@ impl Default for ParticleSystem {
 /// If the ``parent_entity`` no longer exists or does not contain a [`ParticleSystem`] the particle will
 /// be despawned immediately.
 ///
-/// The parent should be linked here explicitly because particles may oprate in world space, and not be actual
+/// The parent should be linked here explicitly because particles may operate in world space, and not be actual
 /// children of the [`ParticleSystem`] itself.
 #[derive(Debug, Component)]
 pub struct Particle {
@@ -254,7 +254,7 @@ pub struct ParticleCount(pub usize);
 #[derive(Debug, Component, Default)]
 pub struct BurstIndex(pub usize);
 
-/// A spawnable bundle for a [`ParticleSystem`] containing all of the necssary components.
+/// A spawnable bundle for a [`ParticleSystem`] containing all of the necessary components.
 ///
 /// ``particle_system`` and ``transform`` should generally be the only attributes that need to be overridden.
 #[derive(Debug, Default, Bundle)]
