@@ -9,7 +9,7 @@ use rand::prelude::*;
 use crate::{
     components::{
         BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleCount, ParticleSpace,
-        ParticleSystem, Playing, RunningState, TimeScale, Velocity,
+        ParticleSystem, Playing, RunningState, Velocity,
     },
     values::ColorOverTime,
     DistanceTraveled,
@@ -35,7 +35,6 @@ pub fn partcle_spawner(
         With<Playing>,
     >,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
     mut commands: Commands,
 ) {
     let mut rng = rand::thread_rng();
@@ -48,12 +47,11 @@ pub fn partcle_spawner(
         mut burst_index,
     ) in particle_systems.iter_mut()
     {
-        let time_scale = if particle_system.use_scaled_time {
-            time_scale.map_or(1.0, |t| t.0)
+        if particle_system.use_scaled_time {
+            running_state.running_time += time.delta_seconds();
         } else {
-            1.0
-        };
-        running_state.running_time += time.delta_seconds() * time_scale;
+            running_state.running_time += time.raw_delta_seconds();
+        }
 
         if running_state.running_time.floor() > running_state.current_second + 0.5 {
             running_state.current_second = running_state.running_time.floor();
@@ -133,7 +131,7 @@ pub fn partcle_spawner(
             match particle_system.space {
                 ParticleSpace::World => {
                     commands
-                        .spawn_bundle(ParticleBundle {
+                        .spawn(ParticleBundle {
                             particle: Particle {
                                 parent_system: entity,
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
@@ -148,7 +146,7 @@ pub fn partcle_spawner(
                             ),
                             ..ParticleBundle::default()
                         })
-                        .insert_bundle(SpriteBundle {
+                        .insert(SpriteBundle {
                             sprite: Sprite {
                                 color: particle_system.color.at_lifetime_pct(0.0),
                                 ..Sprite::default()
@@ -161,7 +159,7 @@ pub fn partcle_spawner(
                 ParticleSpace::Local => {
                     commands.entity(entity).with_children(|parent| {
                         parent
-                            .spawn_bundle(ParticleBundle {
+                            .spawn(ParticleBundle {
                                 particle: Particle {
                                     parent_system: entity,
                                     max_lifetime: particle_system.lifetime.get_value(&mut rng),
@@ -176,7 +174,7 @@ pub fn partcle_spawner(
                                 ),
                                 ..ParticleBundle::default()
                             })
-                            .insert_bundle(SpriteBundle {
+                            .insert(SpriteBundle {
                                 sprite: Sprite {
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
@@ -198,19 +196,16 @@ pub fn partcle_spawner(
 pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
     particle_system_query: Query<&ParticleSystem>,
 ) {
     lifetime_query.par_for_each_mut(512, |(mut lifetime, particle)| {
-        let mut scale_value = 1.0;
-        if let Some(t) = time_scale.as_ref() {
-            if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-                if particle_system.use_scaled_time {
-                    scale_value = t.0;
-                }
+        if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
+            if particle_system.use_scaled_time {
+                lifetime.0 += time.delta_seconds();
+            } else {
+                lifetime.0 += time.raw_delta_seconds();
             }
         }
-        lifetime.0 += time.delta_seconds() * scale_value;
     });
 }
 
@@ -242,25 +237,23 @@ pub(crate) fn particle_transform(
     )>,
     particle_system_query: Query<&ParticleSystem>,
     time: Res<Time>,
-    time_scale: Res<Option<TimeScale>>,
 ) {
     particle_query.par_for_each_mut(
         512,
         |(particle, lifetime, direction, mut distance, mut velocity, mut transform)| {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-                let mut scale_value = 1.0;
-                if particle_system.use_scaled_time {
-                    if let Some(t) = time_scale.as_ref() {
-                        scale_value = t.0;
-                    }
-                }
                 let lifetime_pct = lifetime.0 / particle.max_lifetime;
-                velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
-                    * time.delta_seconds();
                 let initial_position = transform.translation;
+                if particle_system.use_scaled_time {
+                    velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
+                        * time.delta_seconds();
+                    transform.translation += direction.0 * velocity.0 * time.delta_seconds();
+                } else {
+                    velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
+                        * time.raw_delta_seconds();
+                    transform.translation += direction.0 * velocity.0 * time.raw_delta_seconds();
+                }
 
-                transform.translation +=
-                    direction.0 * velocity.0 * time.delta_seconds() * scale_value;
                 transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));
 
                 distance.0 += transform.translation.distance(initial_position);

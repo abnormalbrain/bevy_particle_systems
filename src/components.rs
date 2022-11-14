@@ -126,7 +126,7 @@ pub struct ParticleSystem {
     /// What coordinate space particles should use.
     pub space: ParticleSpace,
 
-    /// `true` indicates that the system will use scaled time if it is present, `false` will result in always using real time.
+    /// Dictates whether this system respects Bevy's global time scaling by using [`bevy_time::Time::delta_seconds`] when true, or [`bevy_time::Time::raw_delta_seconds`] when false.
     pub use_scaled_time: bool,
 
     /// Indicates that the entity the [`ParticleSystem`] is on should be despawned when the system completes and has no more particles.
@@ -291,28 +291,14 @@ pub struct ParticleSystemBundle {
     pub burst_index: BurstIndex,
 
     /// Required for child particles to be visible when running in Local space.
-    #[bundle]
     pub visibility: VisibilityBundle,
 }
 
-#[derive(Debug, Bundle, Default)]
+#[derive(Debug, Default, Bundle)]
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
     pub velocity: Velocity,
     pub direction: Direction,
     pub distance: DistanceTraveled,
-}
-
-/// Specifies the time scaling for all particle systems.
-///
-/// This can be used to speed up the particle system if the speed of time of the game changes.
-/// The contained value is used as a multiplier for the frame delta time.
-#[derive(Debug, Clone, Copy)]
-pub struct TimeScale(pub f32);
-
-impl Default for TimeScale {
-    fn default() -> Self {
-        Self(1.0)
-    }
 }
