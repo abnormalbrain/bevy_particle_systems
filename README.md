@@ -50,7 +50,7 @@ use bevy_particle_systems::*;
 fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
     // Add the bundle specifying the particle system itself.
-    .spawn_bundle(ParticleSystemBundle {
+    .spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             max_particles: 10_000,
             default_sprite: asset_server.load("my_particle.png"),
@@ -76,5 +76,6 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
 
 |`bevy_particle_systems`|`bevy`|
 |:--|:--|
+|0.6|0.9|
 |0.5|0.8|
 |0.4|0.7|
