@@ -126,7 +126,7 @@ pub struct ParticleSystem {
     /// What coordinate space particles should use.
     pub space: ParticleSpace,
 
-    /// Dictates whether this system respects Bevy's global time scaling by using [`Time::delta_seconds`] when true, or [`Time::raw_delta_seconds`] when false.
+    /// Dictates whether this system respects Bevy's global time scaling by using [`bevy_time::Time::delta_seconds`] when true, or [`bevy_time::Time::raw_delta_seconds`] when false.
     pub use_scaled_time: bool,
 
     /// Indicates that the entity the [`ParticleSystem`] is on should be despawned when the system completes and has no more particles.
