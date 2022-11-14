@@ -1,9 +1,10 @@
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
-    window::{PresentMode, WindowDescriptor},
+    window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
+use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
@@ -13,24 +14,26 @@ use bevy_particle_systems::{
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(WindowDescriptor {
-            present_mode: PresentMode::Immediate,
-            ..WindowDescriptor::default()
-        })
         .add_plugin(EntityCountDiagnosticsPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                present_mode: PresentMode::AutoNoVsync,
+                ..Default::default()
+            },
+            ..Default::default()
+        }))
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
         .run();
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 50_000,
                 default_sprite: asset_server.load("px.png"),

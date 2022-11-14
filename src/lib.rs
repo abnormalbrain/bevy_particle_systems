@@ -95,7 +95,6 @@ impl Plugin for ParticleSystemPlugin {
             .add_system(particle_lifetime)
             .add_system(particle_color)
             .add_system(particle_transform)
-            .add_system(particle_cleanup)
-            .init_resource::<Option<TimeScale>>();
+            .add_system(particle_cleanup);
     }
 }

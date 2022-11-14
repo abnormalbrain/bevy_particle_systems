@@ -32,10 +32,10 @@ fn main() {
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
@@ -62,7 +62,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Circler::new(Vec3::new(50.0, 0.0, 0.0), 50.0));
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
@@ -105,7 +105,7 @@ pub fn circler(
     time: Res<Time>,
     mut particle_system_query: Query<(&Circler, &mut Transform), With<ParticleSystem>>,
 ) {
-    let rad = time.seconds_since_startup() as f32;
+    let rad = time.elapsed_seconds() as f32;
     let quat = Quat::from_rotation_z(rad).normalize();
     let dir = quat * Vec3::Y;
     for (circler, mut transform) in &mut particle_system_query {

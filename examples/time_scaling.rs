@@ -11,23 +11,23 @@ use bevy::{
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, Playing, TimeScale,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
+use bevy_time::Time;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
-        .insert_resource(Some(TimeScale::default()))
         .add_system(time_scale_changer)
         .run();
 }
 
 fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
@@ -54,7 +54,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Playing);
 
     commands
-        .spawn_bundle(ParticleSystemBundle {
+        .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
@@ -80,15 +80,15 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Playing);
 }
 
-fn time_scale_changer(keys: Res<Input<KeyCode>>, mut time_scale: ResMut<Option<TimeScale>>) {
+fn time_scale_changer(keys: Res<Input<KeyCode>>, mut time: ResMut<Time>) {
     for key_code in keys.get_just_pressed() {
         match key_code {
-            KeyCode::Key1 => *time_scale = Some(TimeScale(1.0)),
-            KeyCode::Key2 => *time_scale = Some(TimeScale(2.0)),
-            KeyCode::Key3 => *time_scale = Some(TimeScale(4.0)),
-            KeyCode::Key4 => *time_scale = Some(TimeScale(8.0)),
-            KeyCode::Key5 => *time_scale = Some(TimeScale(10.0)),
-            KeyCode::Key0 => *time_scale = Some(TimeScale(0.0)),
+            KeyCode::Key1 => time.set_relative_speed(1.0),
+            KeyCode::Key2 => time.set_relative_speed(2.0),
+            KeyCode::Key3 => time.set_relative_speed(4.0),
+            KeyCode::Key4 => time.set_relative_speed(8.0),
+            KeyCode::Key5 => time.set_relative_speed(10.0),
+            KeyCode::Key0 => time.set_relative_speed(0.0),
             _ => {}
         }
     }

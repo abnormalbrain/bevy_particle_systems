@@ -291,28 +291,14 @@ pub struct ParticleSystemBundle {
     pub burst_index: BurstIndex,
 
     /// Required for child particles to be visible when running in Local space.
-    #[bundle]
     pub visibility: VisibilityBundle,
 }
 
-#[derive(Debug, Bundle, Default)]
+#[derive(Debug, Default, Bundle)]
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
     pub velocity: Velocity,
     pub direction: Direction,
     pub distance: DistanceTraveled,
-}
-
-/// Specifies the time scaling for all particle systems.
-///
-/// This can be used to speed up the particle system if the speed of time of the game changes.
-/// The contained value is used as a multiplier for the frame delta time.
-#[derive(Debug, Clone, Copy)]
-pub struct TimeScale(pub f32);
-
-impl Default for TimeScale {
-    fn default() -> Self {
-        Self(1.0)
-    }
 }
