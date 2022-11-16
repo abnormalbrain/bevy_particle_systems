@@ -96,5 +96,8 @@ impl Plugin for ParticleSystemPlugin {
             .add_system(particle_color)
             .add_system(particle_transform)
             .add_system(particle_cleanup);
+
+        #[cfg(feature = "bevy_reflect")]
+        app.register_type::<ParticleSystem>();
     }
 }
