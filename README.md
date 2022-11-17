@@ -55,7 +55,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
             max_particles: 10_000,
             default_sprite: asset_server.load("my_particle.png"),
             spawn_rate_per_second: 25.0.into(),
-            initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
+            initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
             color: ColorOverTime::Gradient(Gradient::new(vec![
                 ColorPoint::new(Color::WHITE, 0.0),
