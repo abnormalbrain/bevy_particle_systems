@@ -81,14 +81,14 @@ pub struct ParticleSystem {
     /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
     pub emitter_angle: f32,
 
-    /// The initial movement velocity of a particle.
+    /// The initial movement speed of a particle.
     ///
     /// This value can be constant, or have added jitter to have particles move at varying speeds.
-    pub initial_velocity: JitteredValue,
+    pub initial_speed: JitteredValue,
 
     /// The acceleration of each particle.
     ///
-    /// This value can change over time. Zero makes the particle move at its ``initial_velocity`` for its lifetime.
+    /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
     pub acceleration: ValueOverTime,
 
     /// The lifetime of each particle, in seconds.
@@ -146,7 +146,7 @@ impl Default for ParticleSystem {
             spawn_radius: 0.0.into(),
             emitter_shape: std::f32::consts::TAU,
             emitter_angle: 0.0,
-            initial_velocity: 1.0.into(),
+            initial_speed: 1.0.into(),
             acceleration: 0.0.into(),
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
@@ -205,9 +205,9 @@ pub struct Lifetime(pub f32);
 #[derive(Debug, Component, Default)]
 pub struct DistanceTraveled(pub f32);
 
-/// Defines the current velocity of an individual particle entity.
+/// Defines the current speed of an individual particle entity.
 #[derive(Debug, Component, Default)]
-pub struct Velocity(pub f32);
+pub struct Speed(pub f32);
 
 /// Defines the direction a particle is currently traveling.
 #[derive(Debug, Component, Default)]
@@ -298,7 +298,7 @@ pub struct ParticleSystemBundle {
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
-    pub velocity: Velocity,
+    pub speed: Speed,
     pub direction: Direction,
     pub distance: DistanceTraveled,
 }

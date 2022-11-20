@@ -9,7 +9,7 @@ use rand::prelude::*;
 use crate::{
     components::{
         BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleCount, ParticleSpace,
-        ParticleSystem, Playing, RunningState, Velocity,
+        ParticleSystem, Playing, RunningState, Speed,
     },
     values::ColorOverTime,
     DistanceTraveled,
@@ -137,9 +137,7 @@ pub fn partcle_spawner(
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
                                 max_distance: particle_system.max_distance,
                             },
-                            velocity: Velocity(
-                                particle_system.initial_velocity.get_value(&mut rng),
-                            ),
+                            speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                             direction: Direction::new(
                                 direction,
                                 particle_system.z_value_override.is_some(),
@@ -165,9 +163,7 @@ pub fn partcle_spawner(
                                     max_lifetime: particle_system.lifetime.get_value(&mut rng),
                                     max_distance: particle_system.max_distance,
                                 },
-                                velocity: Velocity(
-                                    particle_system.initial_velocity.get_value(&mut rng),
-                                ),
+                                speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                                 direction: Direction::new(
                                     direction,
                                     particle_system.z_value_override.is_some(),
@@ -232,7 +228,7 @@ pub(crate) fn particle_transform(
         &Lifetime,
         &Direction,
         &mut DistanceTraveled,
-        &mut Velocity,
+        &mut Speed,
         &mut Transform,
     )>,
     particle_system_query: Query<&ParticleSystem>,
@@ -240,18 +236,18 @@ pub(crate) fn particle_transform(
 ) {
     particle_query.par_for_each_mut(
         512,
-        |(particle, lifetime, direction, mut distance, mut velocity, mut transform)| {
+        |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
             if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
                 let lifetime_pct = lifetime.0 / particle.max_lifetime;
                 let initial_position = transform.translation;
                 if particle_system.use_scaled_time {
-                    velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
+                    speed.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
                         * time.delta_seconds();
-                    transform.translation += direction.0 * velocity.0 * time.delta_seconds();
+                    transform.translation += direction.0 * speed.0 * time.delta_seconds();
                 } else {
-                    velocity.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
+                    speed.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
                         * time.raw_delta_seconds();
-                    transform.translation += direction.0 * velocity.0 * time.raw_delta_seconds();
+                    transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
                 }
 
                 transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));

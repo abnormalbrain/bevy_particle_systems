@@ -38,7 +38,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 max_particles: 50_000,
                 default_sprite: asset_server.load("px.png"),
                 spawn_rate_per_second: 1000.0.into(),
-                initial_velocity: JitteredValue::jittered(3.0, -1.0..1.0),
+                initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
                 acceleration: ValueOverTime::Sin(SinWave {
                     amplitude: 150.0,
                     period: 5.0,
