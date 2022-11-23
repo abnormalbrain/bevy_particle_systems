@@ -95,9 +95,10 @@ impl Plugin for ParticleSystemPlugin {
             .add_system(particle_lifetime)
             .add_system(particle_color)
             .add_system(particle_transform)
-            .add_system(particle_cleanup);
-
-        #[cfg(feature = "bevy_reflect")]
-        app.register_type::<ParticleSystem>();
+            .add_system(particle_cleanup)
+            .register_type::<ParticleSystem>()
+            .register_type::<ParticleCount>()
+            .register_type::<RunningState>()
+            .register_type::<BurstIndex>();
     }
 }
