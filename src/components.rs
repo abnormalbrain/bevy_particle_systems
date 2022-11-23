@@ -50,6 +50,7 @@ pub enum ParticleSpace {
 ///
 /// If a [`ParticleSystem`] component is removed before all particles have finished their lifetime, the associated particles will all despawn themselves
 /// on the next frame.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Component, Clone, Reflect)]
 #[reflect(Component)]
 pub struct ParticleSystem {
@@ -137,6 +138,11 @@ pub struct ParticleSystem {
     ///
     /// Note that this will never trigger on a system that has ``looping`` set to `true`.
     pub despawn_on_finish: bool,
+
+    /// Indicates whether alive particles should be despawned when the system itself is despawned.
+    ///
+    /// When this is `false` (the default), particles will live out their lifetime even if the system has been despawned.
+    pub despawn_particles_with_system: bool,
 }
 
 impl Default for ParticleSystem {
@@ -161,6 +167,7 @@ impl Default for ParticleSystem {
             space: ParticleSpace::World,
             use_scaled_time: true,
             despawn_on_finish: false,
+            despawn_particles_with_system: false,
         }
     }
 }
@@ -185,8 +192,32 @@ pub struct Particle {
     pub max_lifetime: f32,
 
     /// The maximum distance traveled for the particle.
+    ///
     /// When the [`DistanceTraveled`] component value reaches this value, the particle is considered dead and will be despawned.
     pub max_distance: Option<f32>,
+
+    /// Whether the particle will respect scaled time in its transformations.
+    ///
+    /// This is copied from [`ParticleSystem::use_scaled_time`] on spawn.
+    pub use_scaled_time: bool,
+
+    /// The color of this particle over time.
+    ///
+    /// This is copied from [`ParticleSystem::color`] on spawn.
+    pub color: ColorOverTime,
+
+    /// The scale or size of this particle over time.
+    ///
+    /// This is copied from [`ParticleSystem::scale`] on spawn.
+    pub scale: ValueOverTime,
+
+    /// The acceleration of this particle.
+    ///
+    /// This is copied from [`ParticleSystem::acceleration`] on spawn.
+    pub acceleration: ValueOverTime,
+
+    /// Indicates whether the particle should be cleaned up when the parent system is despawned
+    pub despawn_with_parent: bool,
 }
 
 impl Default for Particle {
@@ -195,6 +226,11 @@ impl Default for Particle {
             parent_system: Entity::from_raw(0),
             max_lifetime: f32::default(),
             max_distance: None,
+            use_scaled_time: true,
+            color: ColorOverTime::default(),
+            scale: 1.0.into(),
+            acceleration: 0.0.into(),
+            despawn_with_parent: false,
         }
     }
 }

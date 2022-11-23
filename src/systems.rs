@@ -136,6 +136,11 @@ pub fn partcle_spawner(
                                 parent_system: entity,
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
                                 max_distance: particle_system.max_distance,
+                                use_scaled_time: particle_system.use_scaled_time,
+                                color: particle_system.color.clone(),
+                                scale: particle_system.scale.clone(),
+                                acceleration: particle_system.acceleration.clone(),
+                                despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
                             speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                             direction: Direction::new(
@@ -162,6 +167,12 @@ pub fn partcle_spawner(
                                     parent_system: entity,
                                     max_lifetime: particle_system.lifetime.get_value(&mut rng),
                                     max_distance: particle_system.max_distance,
+                                    use_scaled_time: particle_system.use_scaled_time,
+                                    color: particle_system.color.clone(),
+                                    scale: particle_system.scale.clone(),
+                                    acceleration: particle_system.acceleration.clone(),
+                                    despawn_with_parent: particle_system
+                                        .despawn_particles_with_system,
                                 },
                                 speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                                 direction: Direction::new(
@@ -192,31 +203,23 @@ pub fn partcle_spawner(
 pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
-    particle_system_query: Query<&ParticleSystem>,
 ) {
     lifetime_query.par_for_each_mut(512, |(mut lifetime, particle)| {
-        if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-            if particle_system.use_scaled_time {
-                lifetime.0 += time.delta_seconds();
-            } else {
-                lifetime.0 += time.raw_delta_seconds();
-            }
+        if particle.use_scaled_time {
+            lifetime.0 += time.delta_seconds();
+        } else {
+            lifetime.0 += time.raw_delta_seconds();
         }
     });
 }
 
-pub(crate) fn particle_color(
-    mut particle_query: Query<(&Particle, &Lifetime, &mut Sprite)>,
-    particle_system_query: Query<&ParticleSystem>,
-) {
+pub(crate) fn particle_color(mut particle_query: Query<(&Particle, &Lifetime, &mut Sprite)>) {
     particle_query.par_for_each_mut(512, |(particle, lifetime, mut sprite)| {
-        if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-            match &particle_system.color {
-                ColorOverTime::Constant(color) => sprite.color = *color,
-                ColorOverTime::Gradient(gradient) => {
-                    let pct = lifetime.0 / particle.max_lifetime;
-                    sprite.color = gradient.get_color(pct);
-                }
+        match &particle.color {
+            ColorOverTime::Constant(color) => sprite.color = *color,
+            ColorOverTime::Gradient(gradient) => {
+                let pct = lifetime.0 / particle.max_lifetime;
+                sprite.color = gradient.get_color(pct);
             }
         }
     });
@@ -231,29 +234,26 @@ pub(crate) fn particle_transform(
         &mut Speed,
         &mut Transform,
     )>,
-    particle_system_query: Query<&ParticleSystem>,
     time: Res<Time>,
 ) {
     particle_query.par_for_each_mut(
         512,
         |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
-            if let Ok(particle_system) = particle_system_query.get(particle.parent_system) {
-                let lifetime_pct = lifetime.0 / particle.max_lifetime;
-                let initial_position = transform.translation;
-                if particle_system.use_scaled_time {
-                    speed.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
-                        * time.delta_seconds();
-                    transform.translation += direction.0 * speed.0 * time.delta_seconds();
-                } else {
-                    speed.0 += particle_system.acceleration.at_lifetime_pct(lifetime_pct)
-                        * time.raw_delta_seconds();
-                    transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
-                }
-
-                transform.scale = Vec3::splat(particle_system.scale.at_lifetime_pct(lifetime_pct));
-
-                distance.0 += transform.translation.distance(initial_position);
+            let lifetime_pct = lifetime.0 / particle.max_lifetime;
+            let initial_position = transform.translation;
+            if particle.use_scaled_time {
+                speed.0 +=
+                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
+                transform.translation += direction.0 * speed.0 * time.delta_seconds();
+            } else {
+                speed.0 +=
+                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
+                transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
             }
+
+            transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
+
+            distance.0 += transform.translation.distance(initial_position);
         },
     );
 }
@@ -272,6 +272,10 @@ pub(crate) fn particle_cleanup(
                     particle_count.0 -= 1;
                 }
             }
+            commands.entity(entity).despawn();
+        } else if particle.despawn_with_parent
+            && commands.get_entity(particle.parent_system).is_none()
+        {
             commands.entity(entity).despawn();
         }
     }
