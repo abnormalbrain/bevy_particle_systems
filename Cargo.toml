@@ -10,10 +10,6 @@ repository = "https://github.com/abnormalbrain/bevy_particle_systems"
 keywords = ["game", "gamedev", "bevy"]
 categories = ["game-development"]
 
-[features]
-default = ["bevy_reflect"]
-bevy_reflect = ["dep:bevy_reflect"]
-
 [dependencies]
 bevy_app = "0.9"
 bevy_asset = "0.9"
@@ -24,7 +20,7 @@ bevy_render = "0.9"
 bevy_sprite = "0.9"
 bevy_time = "0.9"
 bevy_transform = "0.9"
-bevy_reflect = { version = "0.9", optional = true }
+bevy_reflect = "0.9"
 rand = "0.8"
 
 [dev-dependencies]

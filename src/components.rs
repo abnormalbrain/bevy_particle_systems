@@ -1,11 +1,8 @@
 //! Defines bevy Components used by the particle system.
 
 use bevy_asset::Handle;
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::prelude::ReflectComponent;
-use bevy_ecs::prelude::{Bundle, Component, Entity};
+use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::Vec3;
-#[cfg(feature = "bevy_reflect")]
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_transform::prelude::{GlobalTransform, Transform};
@@ -15,8 +12,7 @@ use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
 ///
 /// Bursts do not count as part of the per-second spawn rate.
-#[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "bevy_reflect", derive(Reflect, FromReflect))]
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
 pub struct ParticleBurst {
     /// The time during the life cycle of a system that the burst should occur.
     ///
@@ -39,8 +35,7 @@ impl ParticleBurst {
 }
 
 /// Defines what space a particle should operate in.
-#[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "bevy_reflect", derive(Reflect, FromReflect))]
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
 pub enum ParticleSpace {
     /// Indicates particles should move relative to a parent.
     Local,
@@ -55,9 +50,8 @@ pub enum ParticleSpace {
 ///
 /// If a [`ParticleSystem`] component is removed before all particles have finished their lifetime, the associated particles will all despawn themselves
 /// on the next frame.
-#[derive(Debug, Component, Clone)]
-#[cfg_attr(feature = "bevy_reflect", derive(Reflect))]
-#[cfg_attr(feature = "bevy_reflect", reflect(Component))]
+#[derive(Debug, Component, Clone, Reflect)]
+#[reflect(Component)]
 pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
