@@ -50,6 +50,7 @@ pub enum ParticleSpace {
 ///
 /// If a [`ParticleSystem`] component is removed before all particles have finished their lifetime, the associated particles will all despawn themselves
 /// on the next frame.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Component, Clone, Reflect)]
 #[reflect(Component)]
 pub struct ParticleSystem {
