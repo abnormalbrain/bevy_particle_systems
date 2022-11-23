@@ -1,8 +1,9 @@
 //! Defines bevy Components used by the particle system.
 
 use bevy_asset::Handle;
-use bevy_ecs::prelude::{Bundle, Component, Entity};
+use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::Vec3;
+use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
@@ -11,7 +12,7 @@ use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
 ///
 /// Bursts do not count as part of the per-second spawn rate.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
 pub struct ParticleBurst {
     /// The time during the life cycle of a system that the burst should occur.
     ///
@@ -34,7 +35,7 @@ impl ParticleBurst {
 }
 
 /// Defines what space a particle should operate in.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
 pub enum ParticleSpace {
     /// Indicates particles should move relative to a parent.
     Local,
@@ -49,7 +50,8 @@ pub enum ParticleSpace {
 ///
 /// If a [`ParticleSystem`] component is removed before all particles have finished their lifetime, the associated particles will all despawn themselves
 /// on the next frame.
-#[derive(Debug, Component, Clone)]
+#[derive(Debug, Component, Clone, Reflect)]
+#[reflect(Component)]
 pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
@@ -230,7 +232,8 @@ impl Direction {
 pub struct Playing;
 
 /// Tracks running state of the [`ParticleSystem`] on the same entity.
-#[derive(Debug, Component, Default)]
+#[derive(Debug, Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct RunningState {
     /// Tracks the current amount of time since the start of the system.
     ///
@@ -247,11 +250,13 @@ pub struct RunningState {
 }
 
 /// Tracks the current particle count for the [`ParticleSystem`] on the same entity.
-#[derive(Debug, Component, Default)]
+#[derive(Debug, Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct ParticleCount(pub usize);
 
 /// Tracks the current index for particle bursts for the [`ParticleSystem`] on the same entity.
-#[derive(Debug, Component, Default)]
+#[derive(Debug, Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct BurstIndex(pub usize);
 
 /// A spawnable bundle for a [`ParticleSystem`] containing all of the necessary components.

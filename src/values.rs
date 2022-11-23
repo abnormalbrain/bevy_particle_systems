@@ -1,6 +1,7 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
+use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
 use rand::{prelude::ThreadRng, Rng};
 
@@ -36,7 +37,7 @@ use rand::{prelude::ThreadRng, Rng};
 ///     assert!(value >= 5.0);
 /// }
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct JitteredValue {
     /// The base value that specified jitter will be added to.
     pub value: f32,
@@ -163,7 +164,7 @@ impl RoughlyEqual<f64> for f64 {
 /// Defines a color at a specific point in a gradient.
 ///
 /// ``point`` should be between `0.0` and `1.0` inclusive.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
 pub struct ColorPoint {
     /// Defines the [`Color`] value at a specified point in time.
     pub color: Color,
@@ -202,7 +203,7 @@ impl ColorPoint {
 /// let alpha_gradient = Gradient::new(vec![ColorPoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), ColorPoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
 /// assert_eq!(alpha_gradient.get_color(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct Gradient(Vec<ColorPoint>);
 
 impl Gradient {
@@ -289,7 +290,7 @@ impl Gradient {
 /// Defines how a color changes over time
 ///
 /// Colors can either be constant, or follow a [`crate::values::Gradient`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub enum ColorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Color),
@@ -350,7 +351,7 @@ impl ColorOverTime {
 /// assert!(s.at_lifetime_pct(0.5).roughly_equal(0.0));
 /// assert!(s.at_lifetime_pct(0.75).roughly_equal(-1.0));
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub enum ValueOverTime {
     /// Specifies the value should be linearly interpolated between two values over time.
     Lerp(Lerp),
@@ -391,7 +392,7 @@ impl ValueOverTime {
 }
 
 /// Defines a value that will linearly move between ``a`` and ``b`` over its configured lifetime.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct Lerp {
     /// The starting value, returned when ``pct`` is `0.0`.
     pub a: f32,
@@ -413,7 +414,7 @@ impl Default for Lerp {
 }
 
 /// Defines a value that will move in a sinusoidal wave pattern over it's configured lifetime.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct SinWave {
     /// The amplitude of the wave as time progresses.
     ///
