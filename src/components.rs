@@ -229,7 +229,7 @@ impl Default for Particle {
             color: ColorOverTime::default(),
             scale: 1.0.into(),
             acceleration: 0.0.into(),
-            despawn_with_parent: false, 
+            despawn_with_parent: false,
         }
     }
 }
