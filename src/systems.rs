@@ -1,7 +1,10 @@
+use bevy_asset::Handle;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
+use bevy_render::prelude::Image;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 use rand::prelude::*;
@@ -22,7 +25,7 @@ use crate::{
     clippy::type_complexity,
     clippy::too_many_lines
 )]
-pub fn partcle_spawner(
+pub fn particle_spawner(
     mut particle_systems: Query<
         (
             Entity,
@@ -130,7 +133,7 @@ pub fn partcle_spawner(
 
             match particle_system.space {
                 ParticleSpace::World => {
-                    commands
+                    let mut entity_commands = commands
                         .spawn(ParticleBundle {
                             particle: Particle {
                                 parent_system: entity,
@@ -148,20 +151,41 @@ pub fn partcle_spawner(
                                 particle_system.z_value_override.is_some(),
                             ),
                             ..ParticleBundle::default()
-                        })
-                        .insert(SpriteBundle {
-                            sprite: Sprite {
-                                color: particle_system.color.at_lifetime_pct(0.0),
-                                ..Sprite::default()
-                            },
-                            transform: spawn_point,
-                            texture: particle_system.default_sprite.clone(),
-                            ..SpriteBundle::default()
                         });
+
+                    if Some(image_handle) = particle_system.default_sprite.as_ref() {
+                        entity_commands.insert(
+                            SpriteBundle {
+                                sprite: Sprite {
+                                    color: particle_system.color.at_lifetime_pct(0.0),
+                                    ..Sprite::default()
+                                },
+                                transform: spawn_point,
+                                texture: image_handle.clone(),
+                                ..SpriteBundle::default()
+                            }
+                        );
+                    }
+                    if Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
+                        if Some(atlas_index) = particle_system.texture_atlas_index {
+                            entity_commands.insert(
+                                SpriteSheetBundle {
+                                    sprite: TextureAtlasSprite {
+                                        color: particle_system.color.at_lifetime_pct(0.0),
+                                        index: atlas_index,
+                                        ..TextureAtlasSprite::default()
+                                    },
+                                    transform: spawn_point,
+                                    texture_atlas: atlas_handle.clone(),
+                                    ..SpriteSheetBundle::default()
+                                }
+                            );
+                        }
+                    }
                 }
                 ParticleSpace::Local => {
                     commands.entity(entity).with_children(|parent| {
-                        parent
+                        let mut entity_commands = parent
                             .spawn(ParticleBundle {
                                 particle: Particle {
                                     parent_system: entity,
@@ -180,16 +204,37 @@ pub fn partcle_spawner(
                                     particle_system.z_value_override.is_some(),
                                 ),
                                 ..ParticleBundle::default()
-                            })
-                            .insert(SpriteBundle {
-                                sprite: Sprite {
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    ..Sprite::default()
-                                },
-                                transform: spawn_point,
-                                texture: particle_system.default_sprite.clone(),
-                                ..SpriteBundle::default()
                             });
+
+                        if Some(image_handle) = particle_system.default_sprite.as_ref() {
+                            entity_commands.insert(
+                                SpriteBundle {
+                                    sprite: Sprite {
+                                        color: particle_system.color.at_lifetime_pct(0.0),
+                                        ..Sprite::default()
+                                    },
+                                    transform: spawn_point,
+                                    texture: image_handle.clone(),
+                                    ..SpriteBundle::default()
+                                }
+                            );
+                        }
+                        if Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
+                            if Some(atlas_index) = particle_system.texture_atlas_index {
+                                entity_commands.insert(
+                                    SpriteSheetBundle {
+                                        sprite: TextureAtlasSprite {
+                                            color: particle_system.color.at_lifetime_pct(0.0),
+                                            index: atlas_index,
+                                            ..TextureAtlasSprite::default()
+                                        },
+                                        transform: spawn_point,
+                                        texture_atlas: atlas_handle.clone(),
+                                        ..SpriteSheetBundle::default()
+                                    }
+                                );
+                            }
+                        }
                     });
                 }
             }

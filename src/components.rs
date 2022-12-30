@@ -5,6 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::Vec3;
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
+use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
@@ -58,7 +59,18 @@ pub struct ParticleSystem {
     pub max_particles: usize,
 
     /// The sprite used for each particle.
-    pub default_sprite: Handle<Image>,
+    ///
+    /// Cannot be used at the same time as `texture_atlas`
+    pub default_sprite: Option<Handle<Image>>,
+
+    /// The texture atlas to be used for particle sprites
+    ///
+    /// Cannot be used at the same time as `default_sprite`
+    pub texture_atlas: Option<Handle<TextureAtlas>>,
+
+    // TODO: enable choosing the index with jitter or over time?
+    /// The index of the sprite in the texture atlas
+    pub texture_atlas_index: Option<usize>,
 
     /// The number of particles to spawn per second.
     ///
