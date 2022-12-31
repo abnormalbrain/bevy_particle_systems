@@ -161,7 +161,9 @@ impl Default for ParticleSystem {
     fn default() -> Self {
         Self {
             max_particles: 100,
-            default_sprite: Handle::default(),
+            default_sprite: Some(Handle::default()),
+            texture_atlas: None,
+            texture_atlas_index: None,
             spawn_rate_per_second: 5.0.into(),
             spawn_radius: 0.0.into(),
             emitter_shape: std::f32::consts::TAU,
