@@ -32,7 +32,7 @@ use rand::{prelude::ThreadRng, Rng};
 /// ```
 
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub enum RandomValue<T: Reflect> {
+pub enum RandomValue<T: Reflect + Clone + FromReflect> {
     /// A constant value
     Constant(T),
 
@@ -44,25 +44,25 @@ pub enum RandomValue<T: Reflect> {
     RandomChoice(Vec<T>),
 }
 
-impl<T: Reflect> From<T> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
     fn from(t: T) -> Self {
         RandomValue::Constant(t)
     }
 }
 
-impl<T: Reflect> From<Range<T>> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T> {
     fn from(r: Range<T>) -> Self {
         RandomValue::RandomRange(r)
     }
 }
 
-impl<T: Reflect> From<Vec<T>> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> From<Vec<T>> for RandomValue<T> {
     fn from(v: Vec<T>) -> Self {
         RandomValue::RandomChoice(v)
     }
 }
 
-impl<T: Reflect> RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
     /// Get a value from the set of possible values
     pub fn get_value(&self, rng: &mut ThreadRng) -> T {
         match self {
