@@ -153,7 +153,7 @@ pub fn particle_spawner(
                             ..ParticleBundle::default()
                         });
 
-                    if Some(image_handle) = particle_system.default_sprite.as_ref() {
+                    if let Some(image_handle) = particle_system.default_sprite.as_ref() {
                         entity_commands.insert(
                             SpriteBundle {
                                 sprite: Sprite {
@@ -166,8 +166,8 @@ pub fn particle_spawner(
                             }
                         );
                     }
-                    if Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
-                        if Some(atlas_index) = particle_system.texture_atlas_index {
+                    if let Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
+                        if let Some(atlas_index) = particle_system.texture_atlas_index {
                             entity_commands.insert(
                                 SpriteSheetBundle {
                                     sprite: TextureAtlasSprite {
@@ -206,7 +206,7 @@ pub fn particle_spawner(
                                 ..ParticleBundle::default()
                             });
 
-                        if Some(image_handle) = particle_system.default_sprite.as_ref() {
+                        if let Some(image_handle) = particle_system.default_sprite.as_ref() {
                             entity_commands.insert(
                                 SpriteBundle {
                                     sprite: Sprite {
@@ -219,8 +219,8 @@ pub fn particle_spawner(
                                 }
                             );
                         }
-                        if Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
-                            if Some(atlas_index) = particle_system.texture_atlas_index {
+                        if let Some(atlas_handle) = particle_system.texture_atlas.as_ref() {
+                            if let Some(atlas_index) = particle_system.texture_atlas_index {
                                 entity_commands.insert(
                                     SpriteSheetBundle {
                                         sprite: TextureAtlasSprite {
