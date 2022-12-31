@@ -31,9 +31,8 @@ use rand::{prelude::ThreadRng, Rng};
 /// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
 /// ```
 
-// TODO: derive Reflect/FromReflect if only if T derives Reflect.
-#[derive(Debug, Clone)]
-pub enum RandomValue<T> {
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum RandomValue<T: Reflect> {
     /// A constant value
     Constant(T),
 
@@ -45,31 +44,34 @@ pub enum RandomValue<T> {
     RandomChoice(Vec<T>),
 }
 
-impl<T> From<T> for RandomValue<T> {
+impl<T: Reflect> From<T> for RandomValue<T> {
     fn from(t: T) -> Self {
         RandomValue::Constant(t)
     }
 }
 
-impl<T> From<Range<T>> for RandomValue<T> {
+impl<T: Reflect> From<Range<T>> for RandomValue<T> {
     fn from(r: Range<T>) -> Self {
         RandomValue::RandomRange(r)
     }
 }
 
-impl<T> From<Vec<T>> for RandomValue<T> {
+impl<T: Reflect> From<Vec<T>> for RandomValue<T> {
     fn from(v: Vec<T>) -> Self {
         RandomValue::RandomChoice(v)
     }
 }
 
-impl<T> RandomValue<T> {
+impl<T: Reflect> RandomValue<T> {
     /// Get a value from the set of possible values
     pub fn get_value(&self, rng: &mut ThreadRng) -> T {
         match self {
-            Self::Constant(t) => t,
-            Self::RandomRange(r) => rng.gen_range(r),
-            Self::RandomChoice(v) => v.choose(rng),
+            Self::Constant(t) => t.clone(),
+            Self::RandomRange(r) => rng.gen_range(r.clone()),
+            Self::RandomChoice(v) => {
+                assert!(!v.is_empty(), "cannot choose RandomValue::RandomChoice from empty vec !");
+                v.choose(rng).unwrap().clone()
+            },
         }
     }
 }

@@ -152,7 +152,7 @@ pub fn particle_spawner(
                         ..ParticleBundle::default()
                     });
 
-                    match particle_system.texture.as_ref() {
+                    match &particle_system.texture {
                         &ParticleTexture::Sprite(image_handle) => {
                             entity_commands.insert(SpriteBundle {
                                 sprite: Sprite {
@@ -202,7 +202,7 @@ pub fn particle_spawner(
                             ..ParticleBundle::default()
                         });
 
-                        match particle_system.texture.as_ref() {
+                        match &particle_system.texture {
                             &ParticleTexture::Sprite(image_handle) => {
                                 entity_commands.insert(SpriteBundle {
                                     sprite: Sprite {
