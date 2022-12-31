@@ -60,11 +60,15 @@ impl<T: Reflect + Clone + FromReflect> From<Vec<T>> for RandomValue<T> {
 
 impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
     /// Get a value from the set of possible values
+    ///
+    /// # Panics
+    ///
+    /// Will panic if there are no values to choose from
     pub fn get_value(&self, rng: &mut ThreadRng) -> T {
         match self {
             Self::Constant(t) => t.clone(),
             Self::RandomChoice(v) => {
-                assert!(!v.is_empty(), "cannot choose RandomValue::RandomChoice from empty vec !");
+                assert!(!v.is_empty(), "RandomValue::RandomChoice has no values to choose from!");
                 v.choose(rng).unwrap().clone()
             },
         }

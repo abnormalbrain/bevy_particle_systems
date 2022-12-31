@@ -1,8 +1,6 @@
-use bevy_asset::Handle;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
-use bevy_render::prelude::Image;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
@@ -153,7 +151,7 @@ pub fn particle_spawner(
                     });
 
                     match &particle_system.texture {
-                        &ParticleTexture::Sprite(image_handle) => {
+                        ParticleTexture::Sprite(image_handle) => {
                             entity_commands.insert(SpriteBundle {
                                 sprite: Sprite {
                                     color: particle_system.color.at_lifetime_pct(0.0),
@@ -164,9 +162,9 @@ pub fn particle_spawner(
                                 ..SpriteBundle::default()
                             });
                         }
-                        &ParticleTexture::TextureAtlas {
+                        ParticleTexture::TextureAtlas {
                             atlas: atlas_handle,
-                            index: index,
+                            index,
                         } => {
                             entity_commands.insert(SpriteSheetBundle {
                                 sprite: TextureAtlasSprite {
@@ -203,7 +201,7 @@ pub fn particle_spawner(
                         });
 
                         match &particle_system.texture {
-                            &ParticleTexture::Sprite(image_handle) => {
+                            ParticleTexture::Sprite(image_handle) => {
                                 entity_commands.insert(SpriteBundle {
                                     sprite: Sprite {
                                         color: particle_system.color.at_lifetime_pct(0.0),
@@ -214,9 +212,9 @@ pub fn particle_spawner(
                                     ..SpriteBundle::default()
                                 });
                             }
-                            &ParticleTexture::TextureAtlas {
+                            ParticleTexture::TextureAtlas {
                                 atlas: atlas_handle,
-                                index: index,
+                                index,
                             } => {
                                 entity_commands.insert(SpriteSheetBundle {
                                     sprite: TextureAtlasSprite {
