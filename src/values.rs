@@ -46,7 +46,9 @@ impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
 }
 
 impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T>
-where Range<T>: Iterator<Item = T> {
+where
+    Range<T>: Iterator<Item = T>,
+{
     fn from(r: Range<T>) -> Self {
         RandomValue::RandomChoice(r.collect())
     }
@@ -68,9 +70,12 @@ impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
         match self {
             Self::Constant(t) => t.clone(),
             Self::RandomChoice(v) => {
-                assert!(!v.is_empty(), "RandomValue::RandomChoice has no values to choose from!");
+                assert!(
+                    !v.is_empty(),
+                    "RandomValue::RandomChoice has no values to choose from!"
+                );
                 v.choose(rng).unwrap().clone()
-            },
+            }
         }
     }
 }
