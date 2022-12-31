@@ -53,7 +53,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 looping: true,
                 system_duration_seconds: 10.0,
                 space: ParticleSpace::World,
-                scale: 5.0.into(),
+                scale: 8.0.into(),
+                rotation_speed: 2.0.into(),
                 ..ParticleSystem::default()
             },
             transform: Transform::from_xyz(50.0, 50.0, 0.0),
@@ -80,7 +81,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 looping: true,
                 system_duration_seconds: 10.0,
                 space: ParticleSpace::Local,
-                scale: 5.0.into(),
+                scale: 8.0.into(),
+                rotation_speed: JitteredValue::jittered(0.0, -6.0..0.0),
                 ..ParticleSystem::default()
             },
             transform: Transform::from_xyz(-50.0, 50.0, 0.0),

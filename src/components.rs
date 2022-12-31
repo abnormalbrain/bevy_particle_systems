@@ -126,6 +126,12 @@ pub struct ParticleSystem {
     /// Changing this value over time shrinks or grows the particle accordingly.
     pub scale: ValueOverTime,
 
+    /// The rotation of a particle around the `z` access at spawn in radian.
+    pub initial_rotation: JitteredValue,
+
+    /// The speed at which the particle rotates in radian per second.
+    pub rotation_speed: JitteredValue,
+
     /// Whether or not the system will start over automatically.
     pub looping: bool,
 
@@ -174,6 +180,8 @@ impl Default for ParticleSystem {
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
             scale: 1.0.into(),
+            initial_rotation: 0.0.into(),
+            rotation_speed: 0.0.into(),
             looping: true,
             system_duration_seconds: 5.0,
             max_distance: None,
@@ -231,6 +239,11 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::acceleration`] on spawn.
     pub acceleration: ValueOverTime,
 
+    /// The speed, in radian per second, at which the particle rotates.
+    ///
+    /// This is chosen from [`ParticleSystem::rotation_speed`] on spawn.
+    pub rotation_speed: f32,
+
     /// Indicates whether the particle should be cleaned up when the parent system is despawned
     pub despawn_with_parent: bool,
 }
@@ -244,6 +257,7 @@ impl Default for Particle {
             use_scaled_time: true,
             color: ColorOverTime::default(),
             scale: 1.0.into(),
+            rotation_speed: 0.0,
             acceleration: 0.0.into(),
             despawn_with_parent: false,
         }

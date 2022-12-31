@@ -88,8 +88,7 @@ pub fn particle_spawner(
             * current_spawn_rate
             - running_state.spawned_this_second as f32)
             .floor()
-            .min(remaining_particles)
-            .max(0.0) as usize;
+            .clamp(0.0, remaining_particles) as usize;
 
         let mut extra = 0;
         if !particle_system.bursts.is_empty() {
@@ -128,6 +127,7 @@ pub fn particle_spawner(
                 .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
+            spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
 
             match particle_system.space {
                 ParticleSpace::World => {
@@ -139,6 +139,7 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             color: particle_system.color.clone(),
                             scale: particle_system.scale.clone(),
+                            rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                             acceleration: particle_system.acceleration.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
@@ -189,6 +190,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 color: particle_system.color.clone(),
                                 scale: particle_system.scale.clone(),
+                                rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                                 acceleration: particle_system.acceleration.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
@@ -290,6 +292,7 @@ pub(crate) fn particle_transform(
             }
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
+            transform.rotate_z(particle.rotation_speed * time.delta_seconds());
 
             distance.0 += transform.translation.distance(initial_position);
         },
