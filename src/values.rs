@@ -64,7 +64,7 @@ impl<T> From<Vec<T>> for RandomValue<T> {
 
 impl<T> RandomValue<T> {
     /// Get a value from the set of possible values
-    pub fn get_value<T>(&self, rng: &mut ThreadRng) -> T {
+    pub fn get_value(&self, rng: &mut ThreadRng) -> T {
         match self {
             Self::Constant(t) => t,
             Self::RandomRange(r) => rng.gen_range(r),

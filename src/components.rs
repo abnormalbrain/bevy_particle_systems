@@ -45,7 +45,7 @@ pub enum ParticleSpace {
 }
 
 /// Defines what texture to use for a particle
-#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleTexture {
     /// Indicates particles should use a given image texture
     Sprite(Handle<Image>),
