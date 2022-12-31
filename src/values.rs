@@ -31,13 +31,14 @@ use rand::{prelude::ThreadRng, Rng};
 /// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
 /// ```
 
-#[derive(Debug, Clone, Reflect, FromReflect)]
-pub enum RandomValue<T: Reflect> {
+// TODO: derive Reflect/FromReflect if only if T derives Reflect.
+#[derive(Debug, Clone)]
+pub enum RandomValue<T> {
     /// A constant value
     Constant(T),
 
     /// A [`Range`] of possible values to choose from randomly
-    /// TODO: must T derive PartialOrd?
+    // TODO: must T derive PartialOrd?
     RandomRange(Range<T>),
 
     /// A set of possible values to choose from randomly
