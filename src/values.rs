@@ -50,7 +50,7 @@ impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
     }
 }
 
-impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect + PartialOrd> From<Range<T>> for RandomValue<T> {
     fn from(r: Range<T>) -> Self {
         RandomValue::RandomRange(r)
     }
