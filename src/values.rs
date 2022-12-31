@@ -45,7 +45,8 @@ impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
     }
 }
 
-impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T>
+where Range<T>: Iterator<Item = T> {
     fn from(r: Range<T>) -> Self {
         RandomValue::RandomChoice(r.collect())
     }
