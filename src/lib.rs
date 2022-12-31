@@ -65,7 +65,7 @@ pub mod values;
 use bevy_app::prelude::{App, Plugin};
 pub use components::*;
 use systems::{
-    particle_spawner, particle_cleanup, particle_color, particle_lifetime, particle_transform,
+    particle_cleanup, particle_color, particle_lifetime, particle_spawner, particle_transform,
 };
 pub use values::*;
 

@@ -8,7 +8,7 @@ use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
-use crate::values::{ColorOverTime, JitteredValue, ValueOverTime};
+use crate::values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime};
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
 ///
@@ -44,6 +44,20 @@ pub enum ParticleSpace {
     World,
 }
 
+/// Defines what texture to use for a particle
+#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
+pub enum ParticleTexture {
+    /// Indicates particles should use a given image texture
+    Sprite(Handle<Image>),
+    /// Indicates particles should use a given texture atlas
+    TextureAtlas {
+        /// The handle to the texture atlas
+        atlas: Handle<TextureAtlas>,
+        /// The index in the atlas can constant, or be chosen randomly
+        index: RandomValue<usize>,
+    },
+}
+
 /// Defines the parameters of how a system and its particles behave.
 ///
 /// A [`ParticleSystem`] will emit particles until it reaches the ``system_duration_seconds`` or forever if ``looping`` is true, so long as the
@@ -58,19 +72,8 @@ pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
 
-    /// The sprite used for each particle.
-    ///
-    /// Cannot be used at the same time as `texture_atlas`
-    pub default_sprite: Option<Handle<Image>>,
-
-    /// The texture atlas to be used for particle sprites
-    ///
-    /// Cannot be used at the same time as `default_sprite`
-    pub texture_atlas: Option<Handle<TextureAtlas>>,
-
-    // TODO: enable choosing the index with jitter or over time?
-    /// The index of the sprite in the texture atlas
-    pub texture_atlas_index: Option<usize>,
+    /// The texture used for each particle.
+    pub texture: ParticleTexture,
 
     /// The number of particles to spawn per second.
     ///
@@ -161,9 +164,7 @@ impl Default for ParticleSystem {
     fn default() -> Self {
         Self {
             max_particles: 100,
-            default_sprite: Some(Handle::default()),
-            texture_atlas: None,
-            texture_atlas_index: None,
+            texture: ParticleTexture::Sprite(Handle::default()),
             spawn_rate_per_second: 5.0.into(),
             spawn_radius: 0.0.into(),
             emitter_shape: std::f32::consts::TAU,
