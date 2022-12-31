@@ -2,6 +2,7 @@ use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 use rand::prelude::*;
@@ -12,7 +13,7 @@ use crate::{
         ParticleSystem, Playing, RunningState, Speed,
     },
     values::ColorOverTime,
-    DistanceTraveled,
+    DistanceTraveled, ParticleTexture,
 };
 
 #[allow(
@@ -22,7 +23,7 @@ use crate::{
     clippy::type_complexity,
     clippy::too_many_lines
 )]
-pub fn partcle_spawner(
+pub fn particle_spawner(
     mut particle_systems: Query<
         (
             Entity,
@@ -130,8 +131,57 @@ pub fn partcle_spawner(
 
             match particle_system.space {
                 ParticleSpace::World => {
-                    commands
-                        .spawn(ParticleBundle {
+                    let mut entity_commands = commands.spawn(ParticleBundle {
+                        particle: Particle {
+                            parent_system: entity,
+                            max_lifetime: particle_system.lifetime.get_value(&mut rng),
+                            max_distance: particle_system.max_distance,
+                            use_scaled_time: particle_system.use_scaled_time,
+                            color: particle_system.color.clone(),
+                            scale: particle_system.scale.clone(),
+                            acceleration: particle_system.acceleration.clone(),
+                            despawn_with_parent: particle_system.despawn_particles_with_system,
+                        },
+                        speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
+                        direction: Direction::new(
+                            direction,
+                            particle_system.z_value_override.is_some(),
+                        ),
+                        ..ParticleBundle::default()
+                    });
+
+                    match &particle_system.texture {
+                        ParticleTexture::Sprite(image_handle) => {
+                            entity_commands.insert(SpriteBundle {
+                                sprite: Sprite {
+                                    color: particle_system.color.at_lifetime_pct(0.0),
+                                    ..Sprite::default()
+                                },
+                                transform: spawn_point,
+                                texture: image_handle.clone(),
+                                ..SpriteBundle::default()
+                            });
+                        }
+                        ParticleTexture::TextureAtlas {
+                            atlas: atlas_handle,
+                            index,
+                        } => {
+                            entity_commands.insert(SpriteSheetBundle {
+                                sprite: TextureAtlasSprite {
+                                    color: particle_system.color.at_lifetime_pct(0.0),
+                                    index: index.get_value(&mut rng),
+                                    ..TextureAtlasSprite::default()
+                                },
+                                transform: spawn_point,
+                                texture_atlas: atlas_handle.clone(),
+                                ..SpriteSheetBundle::default()
+                            });
+                        }
+                    }
+                }
+                ParticleSpace::Local => {
+                    commands.entity(entity).with_children(|parent| {
+                        let mut entity_commands = parent.spawn(ParticleBundle {
                             particle: Particle {
                                 parent_system: entity,
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
@@ -148,48 +198,36 @@ pub fn partcle_spawner(
                                 particle_system.z_value_override.is_some(),
                             ),
                             ..ParticleBundle::default()
-                        })
-                        .insert(SpriteBundle {
-                            sprite: Sprite {
-                                color: particle_system.color.at_lifetime_pct(0.0),
-                                ..Sprite::default()
-                            },
-                            transform: spawn_point,
-                            texture: particle_system.default_sprite.clone(),
-                            ..SpriteBundle::default()
                         });
-                }
-                ParticleSpace::Local => {
-                    commands.entity(entity).with_children(|parent| {
-                        parent
-                            .spawn(ParticleBundle {
-                                particle: Particle {
-                                    parent_system: entity,
-                                    max_lifetime: particle_system.lifetime.get_value(&mut rng),
-                                    max_distance: particle_system.max_distance,
-                                    use_scaled_time: particle_system.use_scaled_time,
-                                    color: particle_system.color.clone(),
-                                    scale: particle_system.scale.clone(),
-                                    acceleration: particle_system.acceleration.clone(),
-                                    despawn_with_parent: particle_system
-                                        .despawn_particles_with_system,
-                                },
-                                speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
-                                direction: Direction::new(
-                                    direction,
-                                    particle_system.z_value_override.is_some(),
-                                ),
-                                ..ParticleBundle::default()
-                            })
-                            .insert(SpriteBundle {
-                                sprite: Sprite {
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    ..Sprite::default()
-                                },
-                                transform: spawn_point,
-                                texture: particle_system.default_sprite.clone(),
-                                ..SpriteBundle::default()
-                            });
+
+                        match &particle_system.texture {
+                            ParticleTexture::Sprite(image_handle) => {
+                                entity_commands.insert(SpriteBundle {
+                                    sprite: Sprite {
+                                        color: particle_system.color.at_lifetime_pct(0.0),
+                                        ..Sprite::default()
+                                    },
+                                    transform: spawn_point,
+                                    texture: image_handle.clone(),
+                                    ..SpriteBundle::default()
+                                });
+                            }
+                            ParticleTexture::TextureAtlas {
+                                atlas: atlas_handle,
+                                index,
+                            } => {
+                                entity_commands.insert(SpriteSheetBundle {
+                                    sprite: TextureAtlasSprite {
+                                        color: particle_system.color.at_lifetime_pct(0.0),
+                                        index: index.get_value(&mut rng),
+                                        ..TextureAtlasSprite::default()
+                                    },
+                                    transform: spawn_point,
+                                    texture_atlas: atlas_handle.clone(),
+                                    ..SpriteSheetBundle::default()
+                                });
+                            }
+                        }
                     });
                 }
             }

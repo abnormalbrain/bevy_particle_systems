@@ -3,7 +3,82 @@ use std::ops::Range;
 
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
+use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
+
+/// A value that will be chosen from a set of possible values when read.
+///
+/// ## Examples
+///
+/// ``T`` values can be converted into ``Constant``
+/// [`Range<T>`]s or [`Vec<T>`]s can be converted into ``RandomChoice``
+///
+/// ## Examples
+/// ```
+/// # use bevy_particle_systems::values::{RandomValue};
+/// # use rand;
+///
+/// let mut rng = rand::thread_rng();
+///
+/// // Results in a constant value
+/// let c: RandomValue<usize> = (2).into();
+///
+/// // Results are picked randomly from a range
+/// let r: RandomValue<usize> = (1..3).into();
+///
+/// // Results are picked randomly from a set of values
+/// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
+/// ```
+
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum RandomValue<T: Reflect + Clone + FromReflect> {
+    /// A constant value
+    Constant(T),
+
+    /// A set of possible values to choose from randomly
+    RandomChoice(Vec<T>),
+}
+
+impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
+    fn from(t: T) -> Self {
+        RandomValue::Constant(t)
+    }
+}
+
+impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T>
+where
+    Range<T>: Iterator<Item = T>,
+{
+    fn from(r: Range<T>) -> Self {
+        RandomValue::RandomChoice(r.collect())
+    }
+}
+
+impl<T: Reflect + Clone + FromReflect> From<Vec<T>> for RandomValue<T> {
+    fn from(v: Vec<T>) -> Self {
+        RandomValue::RandomChoice(v)
+    }
+}
+
+impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
+    /// Get a value from the set of possible values
+    ///
+    /// # Panics
+    ///
+    /// Will panic if there are no values to choose from
+    pub fn get_value(&self, rng: &mut ThreadRng) -> T {
+        match self {
+            Self::Constant(t) => t.clone(),
+            Self::RandomChoice(v) => {
+                assert!(
+                    !v.is_empty(),
+                    "RandomValue::RandomChoice has no values to choose from!"
+                );
+                v.choose(rng).unwrap().clone()
+            }
+        }
+    }
+}
 
 /// A value that has random jitter within a configured range added to it when read.
 ///

@@ -11,7 +11,7 @@ use bevy::{
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, Playing,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 use bevy_time::Time;
 fn main() {
@@ -32,7 +32,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
                 emitter_angle: 0.0,
-                default_sprite: asset_server.load("px.png"),
+                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 acceleration: 0.0.into(),
@@ -59,7 +59,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 max_particles: 500,
                 emitter_shape: std::f32::consts::PI * 0.25,
                 emitter_angle: std::f32::consts::PI,
-                default_sprite: asset_server.load("px.png"),
+                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 acceleration: 0.0.into(),
