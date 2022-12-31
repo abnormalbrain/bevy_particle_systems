@@ -32,7 +32,7 @@ use rand::{prelude::ThreadRng, Rng};
 /// ```
 
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub enum RandomValue<T> {
+pub enum RandomValue<T: Reflect> {
     /// A constant value
     Constant(T),
 
