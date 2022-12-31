@@ -11,8 +11,7 @@ use rand::{prelude::ThreadRng, Rng};
 /// ## Examples
 ///
 /// ``T`` values can be converted into ``Constant``
-/// [`Range<T>`]s can be converted into ``RandomRange``
-/// [`Vec<T>`]s can be converted in ``RandomChoice``
+/// [`Range<T>`]s or [`Vec<T>`]s can be converted into ``RandomChoice``
 ///
 /// ## Examples
 /// ```
@@ -36,10 +35,6 @@ pub enum RandomValue<T: Reflect + Clone + FromReflect> {
     /// A constant value
     Constant(T),
 
-    /// A [`Range`] of possible values to choose from randomly
-    // TODO: must T derive PartialOrd?
-    RandomRange(Range<T>),
-
     /// A set of possible values to choose from randomly
     RandomChoice(Vec<T>),
 }
@@ -50,9 +45,9 @@ impl<T: Reflect + Clone + FromReflect> From<T> for RandomValue<T> {
     }
 }
 
-impl<T: Reflect + Clone + FromReflect + PartialOrd> From<Range<T>> for RandomValue<T> {
+impl<T: Reflect + Clone + FromReflect> From<Range<T>> for RandomValue<T> {
     fn from(r: Range<T>) -> Self {
-        RandomValue::RandomRange(r)
+        RandomValue::RandomChoice(r.collect())
     }
 }
 
@@ -67,7 +62,6 @@ impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
     pub fn get_value(&self, rng: &mut ThreadRng) -> T {
         match self {
             Self::Constant(t) => t.clone(),
-            Self::RandomRange(r) => rng.gen_range(r.clone()),
             Self::RandomChoice(v) => {
                 assert!(!v.is_empty(), "cannot choose RandomValue::RandomChoice from empty vec !");
                 v.choose(rng).unwrap().clone()
