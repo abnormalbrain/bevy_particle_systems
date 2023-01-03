@@ -1,4 +1,5 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
+use bevy_ecs::schedule::SystemLabel;
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
