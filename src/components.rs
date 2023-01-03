@@ -2,7 +2,7 @@
 
 use bevy_asset::Handle;
 use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
-use bevy_math::Vec3;
+use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_sprite::TextureAtlas;
@@ -74,6 +74,11 @@ pub struct ParticleSystem {
 
     /// The texture used for each particle.
     pub texture: ParticleTexture,
+
+    /// If provided, re-scale the texture size
+    ///
+    /// Note that this the inherent Sprite size, which can still be scaled up with `Transform`
+    pub rescale_texture: Option<Vec2>,
 
     /// The number of particles to spawn per second.
     ///
@@ -165,6 +170,7 @@ impl Default for ParticleSystem {
         Self {
             max_particles: 100,
             texture: ParticleTexture::Sprite(Handle::default()),
+            rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),
             spawn_radius: 0.0.into(),
             emitter_shape: std::f32::consts::TAU,

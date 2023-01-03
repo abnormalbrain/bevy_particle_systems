@@ -154,6 +154,7 @@ pub fn particle_spawner(
                         ParticleTexture::Sprite(image_handle) => {
                             entity_commands.insert(SpriteBundle {
                                 sprite: Sprite {
+                                    custom_size: particle_system.rescale_texture,
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
                                 },
@@ -168,6 +169,7 @@ pub fn particle_spawner(
                         } => {
                             entity_commands.insert(SpriteSheetBundle {
                                 sprite: TextureAtlasSprite {
+                                    custom_size: particle_system.rescale_texture,
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     index: index.get_value(&mut rng),
                                     ..TextureAtlasSprite::default()
@@ -204,6 +206,7 @@ pub fn particle_spawner(
                             ParticleTexture::Sprite(image_handle) => {
                                 entity_commands.insert(SpriteBundle {
                                     sprite: Sprite {
+                                        custom_size: particle_system.rescale_texture,
                                         color: particle_system.color.at_lifetime_pct(0.0),
                                         ..Sprite::default()
                                     },
@@ -218,6 +221,7 @@ pub fn particle_spawner(
                             } => {
                                 entity_commands.insert(SpriteSheetBundle {
                                     sprite: TextureAtlasSprite {
+                                        custom_size: particle_system.rescale_texture,
                                         color: particle_system.color.at_lifetime_pct(0.0),
                                         index: index.get_value(&mut rng),
                                         ..TextureAtlasSprite::default()
