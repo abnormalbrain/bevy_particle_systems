@@ -100,7 +100,7 @@ impl Plugin for ParticleSystemPlugin {
                 .after(ParticleSystemLabel::ParticleSpawn)
                 .with_system(particle_lifetime)
                 .with_system(particle_color)
-                .with_system(particle_transform)
+                .with_system(particle_transform),
         );
         app.add_system(particle_cleanup.label(ParticleSystemLabel::ParticleCleanup));
         app.register_type::<ParticleSystem>()

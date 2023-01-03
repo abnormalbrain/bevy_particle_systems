@@ -17,7 +17,6 @@ use crate::{
     DistanceTraveled, ParticleTexture,
 };
 
-
 /// Label enum for the systems relating to transform propagation
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 pub enum ParticleSystemLabel {
