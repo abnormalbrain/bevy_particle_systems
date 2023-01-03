@@ -65,11 +65,11 @@ pub mod values;
 use bevy_app::prelude::{App, Plugin};
 use bevy_ecs::prelude::{IntoSystemDescriptor, SystemSet};
 pub use components::*;
+pub use systems::ParticleSystemLabel;
 use systems::{
     particle_cleanup, particle_color, particle_lifetime, particle_spawner, particle_transform,
 };
 pub use values::*;
-use crate::systems::ParticleSystemLabel;
 
 /// The plugin component to be added to allow particle systems to run.
 ///
