@@ -278,9 +278,6 @@ impl Direction {
     }
 }
 
-/// Marker component indicating that the [`ParticleSystem`] on the same entity is currently Playing.
-#[derive(Debug, Component)]
-pub struct Playing;
 
 /// Tracks running state of the [`ParticleSystem`] on the same entity.
 #[derive(Debug, Component, Default, Reflect)]
@@ -288,7 +285,7 @@ pub struct Playing;
 pub struct RunningState {
     /// Tracks the current amount of time since the start of the system.
     ///
-    /// This is reset when the running time surpases the ``system_duration_seconds``.
+    /// This is reset when the running time surpasses the ``system_duration_seconds``.
     pub running_time: f32,
 
     /// The truncated current second.

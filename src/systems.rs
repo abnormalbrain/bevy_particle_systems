@@ -16,6 +16,18 @@ use crate::{
     DistanceTraveled, ParticleTexture,
 };
 
+
+/// Label enum for the systems relating to transform propagation
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+pub enum ParticleSystemLabel {
+    /// Spawn particles
+    ParticleSpawn,
+    /// Update particles
+    ParticleUpdate,
+    /// Cleanup particles
+    ParticleCleanup,
+}
+
 #[allow(
     clippy::cast_sign_loss,
     clippy::cast_precision_loss,
