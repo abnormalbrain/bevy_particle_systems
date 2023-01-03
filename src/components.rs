@@ -278,6 +278,9 @@ impl Direction {
     }
 }
 
+/// Marker component indicating that the [`ParticleSystem`] on the same entity is currently Playing.
+#[derive(Debug, Component)]
+pub struct Playing;
 
 /// Tracks running state of the [`ParticleSystem`] on the same entity.
 #[derive(Debug, Component, Default, Reflect)]
