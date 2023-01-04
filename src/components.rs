@@ -132,6 +132,15 @@ pub struct ParticleSystem {
     /// The speed at which the particle rotates in radian per second.
     pub rotation_speed: JitteredValue,
 
+    /// Rotates the particle to be facing the movement direction at spawn.
+    ///
+    /// This is useful if the image used for the particle has a visual 'forward'
+    /// that should match it's movement, such as an arrow.
+    ///
+    /// This rotation for the movement direction will be added to the `initial_rotation` value,
+    /// to account for needing to apply a base rotation to the sprite.
+    pub rotate_to_movement_direction: bool,
+
     /// Whether or not the system will start over automatically.
     pub looping: bool,
 
@@ -182,6 +191,7 @@ impl Default for ParticleSystem {
             scale: 1.0.into(),
             initial_rotation: 0.0.into(),
             rotation_speed: 0.0.into(),
+            rotate_to_movement_direction: false,
             looping: true,
             system_duration_seconds: 5.0,
             max_distance: None,

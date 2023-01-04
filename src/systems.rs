@@ -127,7 +127,14 @@ pub fn particle_spawner(
                 .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
-            spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
+
+            let particle_rotation = if particle_system.rotate_to_movement_direction {
+                radian + particle_system.initial_rotation.get_value(&mut rng)
+            } else {
+                particle_system.initial_rotation.get_value(&mut rng)
+            };
+
+            spawn_point.rotate_z(particle_rotation);
 
             match particle_system.space {
                 ParticleSpace::World => {
