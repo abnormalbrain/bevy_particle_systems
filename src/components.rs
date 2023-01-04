@@ -5,7 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
-use bevy_sprite::{Sprite, TextureAtlas, TextureAtlasSprite};
+use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime};
@@ -77,7 +77,7 @@ pub struct ParticleSystem {
 
     /// If provided, re-scale the texture size
     ///
-    /// This is simply passed directly to [`Sprite::custom_size`] or [`TextureAtlasSprite::custom_size`]
+    /// This is simply passed directly to `Sprite::custom_size` or `TextureAtlasSprite::custom_size`
     pub rescale_texture: Option<Vec2>,
 
     /// The number of particles to spawn per second.
