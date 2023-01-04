@@ -5,7 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
-use bevy_sprite::TextureAtlas;
+use bevy_sprite::{TextureAtlas, Sprite, TextureAtlasSprite};
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime};
