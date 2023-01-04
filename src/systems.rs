@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
-use bevy_ecs::schedule::{SystemLabel, SystemSet};
+use bevy_ecs::schedule::{SystemLabel};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
@@ -17,7 +17,7 @@ use crate::{
     DistanceTraveled, ParticleTexture,
 };
 
-/// System label attached to the [`SystemSet`] provided in this plugin
+/// System label attached to the `SystemSet` provided in this plugin
 ///
 /// This is provided so that users can order their systems to run before/after this plugin.
 #[derive(Debug, SystemLabel)]
