@@ -17,15 +17,13 @@ use crate::{
     DistanceTraveled, ParticleTexture,
 };
 
-/// Label enum for the systems relating to transform propagation
-#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+/// System label attached to the SystemSet provided in this plugin
+///
+/// This is provided so that users can order their systems to run before/after this plugin.
+#[derive(Debug, SystemLabel)]
 pub enum ParticleSystemLabel {
-    /// Spawn particles
-    ParticleSpawn,
-    /// Update particles
-    ParticleUpdate,
-    /// Cleanup particles
-    ParticleCleanup,
+    /// Label for the main systems
+    ParticleSystem,
 }
 
 #[allow(
