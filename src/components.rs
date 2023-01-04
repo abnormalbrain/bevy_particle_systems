@@ -77,7 +77,7 @@ pub struct ParticleSystem {
 
     /// If provided, re-scale the texture size
     ///
-    /// Note that this the inherent Sprite size, which can still be scaled up with `Transform`
+    /// This is simply passed directly to [`Sprite::custom_size`] or [`TextureAtlasSprite::custom_size`]
     pub rescale_texture: Option<Vec2>,
 
     /// The number of particles to spawn per second.
