@@ -63,7 +63,9 @@ mod systems;
 pub mod values;
 
 use bevy_app::prelude::{App, Plugin};
+use bevy_ecs::prelude::SystemSet;
 pub use components::*;
+pub use systems::ParticleSystemLabel;
 use systems::{
     particle_cleanup, particle_color, particle_lifetime, particle_spawner, particle_transform,
 };
@@ -91,12 +93,16 @@ pub struct ParticleSystemPlugin;
 
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(particle_spawner)
-            .add_system(particle_lifetime)
-            .add_system(particle_color)
-            .add_system(particle_transform)
-            .add_system(particle_cleanup)
-            .register_type::<ParticleSystem>()
+        app.add_system_set(
+            SystemSet::new()
+                .label(ParticleSystemLabel::ParticleSystem)
+                .with_system(particle_spawner)
+                .with_system(particle_lifetime)
+                .with_system(particle_color)
+                .with_system(particle_transform)
+                .with_system(particle_cleanup),
+        );
+        app.register_type::<ParticleSystem>()
             .register_type::<ParticleCount>()
             .register_type::<RunningState>()
             .register_type::<BurstIndex>();

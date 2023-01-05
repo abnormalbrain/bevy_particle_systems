@@ -1,4 +1,5 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
+use bevy_ecs::schedule::SystemLabel;
 use bevy_hierarchy::BuildChildren;
 use bevy_math::Vec3;
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
@@ -15,6 +16,15 @@ use crate::{
     values::ColorOverTime,
     DistanceTraveled, ParticleTexture,
 };
+
+/// System label attached to the `SystemSet` provided in this plugin
+///
+/// This is provided so that users can order their systems to run before/after this plugin.
+#[derive(Debug, SystemLabel)]
+pub enum ParticleSystemLabel {
+    /// Label for the main systems
+    ParticleSystem,
+}
 
 #[allow(
     clippy::cast_sign_loss,
@@ -162,6 +172,7 @@ pub fn particle_spawner(
                         ParticleTexture::Sprite(image_handle) => {
                             entity_commands.insert(SpriteBundle {
                                 sprite: Sprite {
+                                    custom_size: particle_system.rescale_texture,
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
                                 },
@@ -176,6 +187,7 @@ pub fn particle_spawner(
                         } => {
                             entity_commands.insert(SpriteSheetBundle {
                                 sprite: TextureAtlasSprite {
+                                    custom_size: particle_system.rescale_texture,
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     index: index.get_value(&mut rng),
                                     ..TextureAtlasSprite::default()
@@ -213,6 +225,7 @@ pub fn particle_spawner(
                             ParticleTexture::Sprite(image_handle) => {
                                 entity_commands.insert(SpriteBundle {
                                     sprite: Sprite {
+                                        custom_size: particle_system.rescale_texture,
                                         color: particle_system.color.at_lifetime_pct(0.0),
                                         ..Sprite::default()
                                     },
@@ -227,6 +240,7 @@ pub fn particle_spawner(
                             } => {
                                 entity_commands.insert(SpriteSheetBundle {
                                     sprite: TextureAtlasSprite {
+                                        custom_size: particle_system.rescale_texture,
                                         color: particle_system.color.at_lifetime_pct(0.0),
                                         index: index.get_value(&mut rng),
                                         ..TextureAtlasSprite::default()
