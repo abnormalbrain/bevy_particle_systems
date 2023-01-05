@@ -294,7 +294,7 @@ pub struct Playing;
 pub struct RunningState {
     /// Tracks the current amount of time since the start of the system.
     ///
-    /// This is reset when the running time surpases the ``system_duration_seconds``.
+    /// This is reset when the running time surpasses the ``system_duration_seconds``.
     pub running_time: f32,
 
     /// The truncated current second.
