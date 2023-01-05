@@ -45,6 +45,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 system_duration_seconds: 10.0,
                 space: ParticleSpace::World,
                 scale: 5.0.into(),
+                initial_rotation: JitteredValue::jittered(0.0, -2.0..2.0),
                 use_scaled_time: false,
                 ..ParticleSystem::default()
             },
