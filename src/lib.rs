@@ -67,7 +67,8 @@ use bevy_ecs::prelude::SystemSet;
 pub use components::*;
 pub use systems::ParticleSystemLabel;
 use systems::{
-    particle_cleanup, particle_color, particle_lifetime, particle_spawner, particle_transform,
+    particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
+    particle_texture_atlas_color, particle_transform,
 };
 pub use values::*;
 
@@ -98,7 +99,8 @@ impl Plugin for ParticleSystemPlugin {
                 .label(ParticleSystemLabel::ParticleSystem)
                 .with_system(particle_spawner)
                 .with_system(particle_lifetime)
-                .with_system(particle_color)
+                .with_system(particle_sprite_color)
+                .with_system(particle_texture_atlas_color)
                 .with_system(particle_transform)
                 .with_system(particle_cleanup),
         );
