@@ -5,9 +5,7 @@
 [![docs](https://docs.rs/bevy_particle_systems/badge.svg)](https://docs.rs/bevy_particle_systems/)
 [![MIT](https://img.shields.io/crates/l/bevy_particle_systems)](./LICENSE)
 
-A particle system plugin for [bevy](https://bevyengine.org)
-
-Currently sprite based and focused on 2D.
+A native and WASM-compatible 2D particle system plugin for [bevy](https://bevyengine.org)
 
 ## Example
 
