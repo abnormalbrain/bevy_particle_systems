@@ -286,7 +286,17 @@ pub struct Lifetime(pub f32);
 
 /// Contains how far, in world units, a particle has moved since spawning.
 #[derive(Debug, Component, Default)]
-pub struct DistanceTraveled(pub f32);
+pub struct DistanceTraveled {
+    /// The squared distance that the particle has traveled since spawn.
+    ///
+    /// The squared distance is used instead of the actual distance, since
+    /// this is used to compare to the `max_distance` value. When comparing
+    /// distances to each other, we can use the `distance_squared` to avoid
+    /// a square root, which is computationally very expensive.
+    pub dist_squared: f32,
+    /// The original spawn point for computing the `dist_squared`
+    pub from: Vec3,
+}
 
 /// Defines the current speed of an individual particle entity.
 #[derive(Debug, Component, Default)]

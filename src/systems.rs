@@ -165,6 +165,10 @@ pub fn particle_spawner(
                             direction,
                             particle_system.z_value_override.is_some(),
                         ),
+                        distance: DistanceTraveled {
+                            dist_squared: 0.0,
+                            from: spawn_point.translation,
+                        },
                         ..ParticleBundle::default()
                     });
 
@@ -218,6 +222,10 @@ pub fn particle_spawner(
                                 direction,
                                 particle_system.z_value_override.is_some(),
                             ),
+                            distance: DistanceTraveled {
+                                dist_squared: 0.0,
+                                from: spawn_point.translation,
+                            },
                             ..ParticleBundle::default()
                         });
 
@@ -317,7 +325,6 @@ pub(crate) fn particle_transform(
         512,
         |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
-            let initial_position = transform.translation;
             if particle.use_scaled_time {
                 speed.0 +=
                     particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
@@ -331,7 +338,7 @@ pub(crate) fn particle_transform(
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
             transform.rotate_z(particle.rotation_speed * time.delta_seconds());
 
-            distance.0 += transform.translation.distance(initial_position);
+            distance.dist_squared = transform.translation.distance_squared(distance.from);
         },
     );
 }
@@ -343,7 +350,8 @@ pub(crate) fn particle_cleanup(
 ) {
     for (entity, particle, lifetime, distance) in particle_query.iter() {
         if lifetime.0 >= particle.max_lifetime
-            || (particle.max_distance.is_some() && distance.0 >= particle.max_distance.unwrap())
+            || (particle.max_distance.is_some()
+                && distance.dist_squared >= particle.max_distance.unwrap().powi(2))
         {
             if let Ok(mut particle_count) = particle_count_query.get_mut(particle.parent_system) {
                 if particle_count.0 > 0 {
