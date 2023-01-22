@@ -283,28 +283,28 @@ pub(crate) fn particle_lifetime(
 }
 
 pub(crate) fn particle_sprite_color(
-    mut particle_query: Query<(&Particle, &Lifetime, &mut Sprite)>,
+    mut particle_query: Query<(&mut Particle, &Lifetime, &mut Sprite)>,
 ) {
-    particle_query.par_for_each_mut(512, |(particle, lifetime, mut sprite)| {
-        match &particle.color {
+    particle_query.par_for_each_mut(512, |(mut particle, lifetime, mut sprite)| {
+        let pct = lifetime.0 / particle.max_lifetime;
+        match &mut particle.color {
             ColorOverTime::Constant(color) => sprite.color = *color,
             ColorOverTime::Gradient(gradient) => {
-                let pct = lifetime.0 / particle.max_lifetime;
-                sprite.color = gradient.get_color(pct);
+                sprite.color = gradient.get_color_mut(pct);
             }
         }
     });
 }
 
 pub(crate) fn particle_texture_atlas_color(
-    mut particle_query: Query<(&Particle, &Lifetime, &mut TextureAtlasSprite)>,
+    mut particle_query: Query<(&mut Particle, &Lifetime, &mut TextureAtlasSprite)>,
 ) {
-    particle_query.par_for_each_mut(512, |(particle, lifetime, mut sprite)| {
-        match &particle.color {
+    particle_query.par_for_each_mut(512, |(mut particle, lifetime, mut sprite)| {
+        let pct = lifetime.0 / particle.max_lifetime;
+        match &mut particle.color {
             ColorOverTime::Constant(color) => sprite.color = *color,
             ColorOverTime::Gradient(gradient) => {
-                let pct = lifetime.0 / particle.max_lifetime;
-                sprite.color = gradient.get_color(pct);
+                sprite.color = gradient.get_color_mut(pct);
             }
         }
     });

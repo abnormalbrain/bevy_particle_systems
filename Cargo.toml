@@ -10,6 +10,9 @@ repository = "https://github.com/abnormalbrain/bevy_particle_systems"
 keywords = ["game", "gamedev", "bevy"]
 categories = ["game-development"]
 
+[profile.release]
+debug = true
+
 [dependencies]
 bevy_app = "0.9"
 bevy_asset = "0.9"

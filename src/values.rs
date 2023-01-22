@@ -182,19 +182,29 @@ pub trait Lerpable<T> {
 }
 
 impl Lerpable<f32> for f32 {
+    #[inline]
     fn lerp(&self, other: f32, pct: f32) -> f32 {
         lerp(*self, other, pct.clamp(0.0, 1.0))
     }
 }
 
 impl Lerpable<Color> for Color {
+    #[inline]
     fn lerp(&self, other: Color, pct: f32) -> Color {
         let clamped_pct = pct.clamp(0.0, 1.0);
+
+        // Convert both colors to float arrays first. Calling `r()`, `g()`, `b()` and `a()`
+        // copies the entire struct every time, whereas this should only copy once each.
+        // This whas showing up in the hot path when profiling the `basic` example when
+        // calling each individually, due to the excessive copies.
+        let rgba = self.as_rgba_f32();
+        let other_rgba = other.as_rgba_f32();
+
         Color::rgba(
-            self.r().lerp(other.r(), clamped_pct),
-            self.g().lerp(other.g(), clamped_pct),
-            self.b().lerp(other.b(), clamped_pct),
-            self.a().lerp(other.a(), clamped_pct),
+            rgba[0].lerp(other_rgba[0], clamped_pct),
+            rgba[1].lerp(other_rgba[1], clamped_pct),
+            rgba[2].lerp(other_rgba[2], clamped_pct),
+            rgba[3].lerp(other_rgba[3], clamped_pct),
         )
     }
 }
@@ -202,6 +212,7 @@ impl Lerpable<Color> for Color {
 /// Lerp between two floats by ``pct``.
 ///
 /// ``pct`` must be between `0.0` and `1.0` inclusive.
+#[inline]
 fn lerp(a: f32, b: f32, pct: f32) -> f32 {
     a * (1.0 - pct) + b * pct
 }
@@ -239,7 +250,7 @@ impl RoughlyEqual<f64> for f64 {
 /// Defines a color at a specific point in a gradient.
 ///
 /// ``point`` should be between `0.0` and `1.0` inclusive.
-#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct ColorPoint {
     /// Defines the [`Color`] value at a specified point in time.
     pub color: Color,
@@ -264,6 +275,15 @@ impl ColorPoint {
 /// A [`Gradient`] should always contain at least two [`ColorPoint`]s,
 /// one at `0.0` and one at `1.0`.
 ///
+/// Computing the gradient without state is a linear operation and can add up to be
+/// somewhat expensive. [`Gradient::get_color_mut`] can be used in these scenarios to potential
+/// improve performance, as long as the particular gradient only moves forward in time. This
+/// will use an `index_hint` state to skip to where the previous call was in gradient detection.
+///
+/// If most or all of the gradients are only two components, it is likely better to use [`Gradient::get_color`]
+/// rather than [`Gradient::get_color_mut`], as both will take the same shortcuts, but [`Gradient::get_color`] is does not
+/// require a mutable borrow and therefore can be used in parallel with other systems.
+///
 /// ## Examples
 /// ```
 /// # use bevy::prelude::Color;
@@ -279,7 +299,10 @@ impl ColorPoint {
 /// assert_eq!(alpha_gradient.get_color(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
 /// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub struct Gradient(Vec<ColorPoint>);
+pub struct Gradient {
+    points: Vec<ColorPoint>,
+    index_hint: usize,
+}
 
 impl Gradient {
     /// Creates a new Gradient from given [`ColorPoint`]s.
@@ -312,7 +335,10 @@ impl Gradient {
             );
         }
 
-        Self(points)
+        Self {
+            points,
+            index_hint: 0,
+        }
     }
 
     /// Get the color at ``pct`` percentage of the way through the gradient.
@@ -321,38 +347,122 @@ impl Gradient {
     ///
     /// Returns [`bevy_render::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
     /// that the gradient is misconfigured.
+    ///
+    /// Sets the internal `index_hint` to the index of the color found so subsequent calls of a `pct` greater than the
+    /// current call will be faster. This is only useful for gradients which have more than two [`ColorPoint`]s, otherwise,
+    /// use [`Gradient::get_color`] instead. If `pct` is less than a previous call for this gradient, `index_hint` will be reset. The
+    /// resulting color for these call should always be correct, but may result in a performance hit if done out of order.
+    #[inline]
+    pub fn get_color_mut(&mut self, pct: f32) -> Color {
+        let clamped_pct = pct.clamp(0.0, 1.0);
+
+        // Shortcuts
+        if clamped_pct == 0.0 {
+            return self.points[0].color;
+        }
+
+        if clamped_pct.roughly_equal(1.0) {
+            return self.points[self.points.len() - 1].color;
+        }
+
+        // If there's only two colors just directly lerp between them.
+        if self.points.len() == 2 {
+            return self.points[0].color.lerp(
+                self.points[1].color,
+                (clamped_pct - self.points[0].point)
+                    / (self.points[1].point - self.points[0].point).abs(),
+            );
+        }
+
+        // If pct is not moving forward, reset the index hint to zero so we can just scan from the beginning again.
+        if clamped_pct < self.points[self.index_hint].point {
+            self.index_hint = 0;
+        }
+
+        let mut current_point = self.points[self.index_hint].point;
+        let mut current_color = self.points[self.index_hint].color;
+        let mut next_point = self.points[self.index_hint + 1].point;
+        let mut next_color = self.points[self.index_hint + 1].color;
+
+        if self.index_hint <= self.points.len() - 2
+            && clamped_pct >= current_point
+            && clamped_pct < next_point
+        {
+            return current_color.lerp(
+                next_color,
+                (clamped_pct - current_point) / (next_point - current_point).abs(),
+            );
+        }
+
+        // Find the first color where the point is less than `pct`, starting from the last index that was used,
+        // indicating we need to lerp between that color and the next color. This requires points in the vec to
+        // be sorted to behave correctly.
+        for i in self.index_hint..self.points.len() - 1 {
+            current_point = self.points[i].point;
+            current_color = self.points[i].color;
+            next_point = self.points[i + 1].point;
+            next_color = self.points[i + 1].color;
+
+            if current_point.roughly_equal(clamped_pct) {
+                return current_color;
+            }
+
+            if clamped_pct > current_point && clamped_pct < next_point {
+                self.index_hint = i;
+                return current_color.lerp(
+                    next_color,
+                    (clamped_pct - current_point) / (next_point - current_point).abs(),
+                );
+            }
+            continue;
+        }
+
+        Color::FUCHSIA
+    }
+
+    /// Get the color at ``pct`` percentage of the way through the gradient.
+    ///
+    /// ``pct`` will be clamped between 0.0 and 1.0.
+    ///
+    /// Returns [`bevy_render::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
+    /// that the gradient is misconfigured.
+    ///
+    /// This operation is linear with the number of [`ColorPoint`]s contained in the gradient. If gradients contain more than
+    /// two [`ColorPoint`]s, it may be faster to use `get_color_mut`, which does index tracking.
     pub fn get_color(&self, pct: f32) -> Color {
         let clamped_pct = pct.clamp(0.0, 1.0);
 
         // Shortcuts
         if clamped_pct == 0.0 {
-            return self.0[0].color;
+            return self.points[0].color;
         }
 
         if clamped_pct.roughly_equal(1.0) {
-            return self.0[self.0.len() - 1].color;
+            return self.points[self.points.len() - 1].color;
         }
 
         // If there's only two colors just directly lerp between them.
-        if self.0.len() == 2 {
-            return self.0[0].color.lerp(
-                self.0[1].color,
-                (clamped_pct - self.0[0].point) / (self.0[1].point - self.0[0].point).abs(),
+        if self.points.len() == 2 {
+            return self.points[0].color.lerp(
+                self.points[1].color,
+                (clamped_pct - self.points[0].point)
+                    / (self.points[1].point - self.points[0].point).abs(),
             );
         }
 
         // Find the first color where the point is less than `pct`, indicating we need to
         // lerp between that color and the next color. This requires points in the vec to
         // be sorted to behave correctly.
-        for i in 0..self.0.len() - 1 {
-            if self.0[i].point.roughly_equal(clamped_pct) {
-                return self.0[i].color;
+        for i in 0..self.points.len() - 1 {
+            if self.points[i].point.roughly_equal(clamped_pct) {
+                return self.points[i].color;
             }
 
-            if clamped_pct > self.0[i].point && clamped_pct < self.0[i + 1].point {
-                return self.0[i].color.lerp(
-                    self.0[i + 1].color,
-                    (clamped_pct - self.0[i].point) / (self.0[i + 1].point - self.0[i].point).abs(),
+            if clamped_pct > self.points[i].point && clamped_pct < self.points[i + 1].point {
+                return self.points[i].color.lerp(
+                    self.points[i + 1].color,
+                    (clamped_pct - self.points[i].point)
+                        / (self.points[i + 1].point - self.points[i].point).abs(),
                 );
             }
             continue;
