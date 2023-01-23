@@ -8,30 +8,7 @@ use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
 
-/// A value that will be chosen from a set of possible values when read.
-///
-/// ## Examples
-///
-/// ``T`` values can be converted into ``Constant``
-/// [`Range<T>`]s or [`Vec<T>`]s can be converted into ``RandomChoice``
-///
-/// ## Examples
-/// ```
-/// # use bevy_particle_systems::values::{RandomValue};
-/// # use rand;
-///
-/// let mut rng = rand::thread_rng();
-///
-/// // Results in a constant value
-/// let c: RandomValue<usize> = (2).into();
-///
-/// // Results are picked randomly from a range
-/// let r: RandomValue<usize> = (1..3).into();
-///
-/// // Results are picked randomly from a set of values
-/// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
-/// ```
-
+/// Describes the shape on which new particles get spawned
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum EmitterShape {
     /// A oriented segment of a circle at a given radius
@@ -95,6 +72,29 @@ impl EmitterShape {
     }
 }
 
+/// A value that will be chosen from a set of possible values when read.
+///
+/// ## Examples
+///
+/// ``T`` values can be converted into ``Constant``
+/// [`Range<T>`]s or [`Vec<T>`]s can be converted into ``RandomChoice``
+///
+/// ## Examples
+/// ```
+/// # use bevy_particle_systems::values::{RandomValue};
+/// # use rand;
+///
+/// let mut rng = rand::thread_rng();
+///
+/// // Results in a constant value
+/// let c: RandomValue<usize> = (2).into();
+///
+/// // Results are picked randomly from a range
+/// let r: RandomValue<usize> = (1..3).into();
+///
+/// // Results are picked randomly from a set of values
+/// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
+/// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum RandomValue<T: Reflect + Clone + FromReflect> {
     /// A constant value
