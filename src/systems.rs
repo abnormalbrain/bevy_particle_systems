@@ -1,12 +1,11 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
 use bevy_ecs::schedule::SystemLabel;
 use bevy_hierarchy::BuildChildren;
-use bevy_math::Vec3;
+use bevy_math::{Quat, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
-use rand::prelude::*;
 
 use crate::{
     components::{
@@ -122,15 +121,17 @@ pub fn particle_spawner(
         }
 
         for _ in 0..to_spawn + extra {
-            let mut spawn_point = match particle_system.space {
+            let origin_pos = match particle_system.space {
                 ParticleSpace::Local => Transform::default(),
                 ParticleSpace::World => Transform::from(*global_transform),
             };
-            let radian: f32 = rng.gen_range(-0.5..0.5) * particle_system.emitter_shape
-                + particle_system.emitter_angle;
-            let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
 
-            spawn_point.translation += direction * particle_system.spawn_radius.get_value(&mut rng);
+            let spawn_pos = particle_system.emitter_shape.sample(&mut rng);
+
+            let mut spawn_point = origin_pos.mul_transform(spawn_pos);
+
+            let direction = spawn_point.rotation * Vec3::X;
+
             spawn_point.translation.z = particle_system
                 .z_value_override
                 .as_ref()
@@ -138,13 +139,12 @@ pub fn particle_spawner(
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
 
-            let particle_rotation = if particle_system.rotate_to_movement_direction {
-                radian + particle_system.initial_rotation.get_value(&mut rng)
+            if particle_system.rotate_to_movement_direction {
+                spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
             } else {
-                particle_system.initial_rotation.get_value(&mut rng)
+                spawn_point.rotation =
+                    Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
             };
-
-            spawn_point.rotate_z(particle_rotation);
 
             match particle_system.space {
                 ParticleSpace::World => {

@@ -8,7 +8,10 @@ use bevy_render::prelude::{Image, VisibilityBundle};
 use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
-use crate::values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime};
+use crate::{
+    values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime},
+    EmitterShape,
+};
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
 ///
@@ -85,24 +88,8 @@ pub struct ParticleSystem {
     /// This uses a [`ValueOverTime`] so that the spawn rate can vary over the lifetime of the system.
     pub spawn_rate_per_second: ValueOverTime,
 
-    /// The radius around the particle systems location that particles will spawn in.
-    ///
-    /// Setting this to zero will make all particles start at the same position.
-    /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
-    /// center position. Jitter will allow particles to spawn in a range.
-    pub spawn_radius: JitteredValue,
-
-    /// The shape of the emitter, defined in radian.
-    ///
-    /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
-    /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
-    /// in a semi-circle.
-    pub emitter_shape: f32,
-
-    /// The rotation angle of the emitter, defined in radian.
-    ///
-    /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
-    pub emitter_angle: f32,
+    /// The shape of the emitter.
+    pub emitter_shape: EmitterShape,
 
     /// The initial movement speed of a particle.
     ///
@@ -187,9 +174,11 @@ impl Default for ParticleSystem {
             texture: ParticleTexture::Sprite(Handle::default()),
             rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),
-            spawn_radius: 0.0.into(),
-            emitter_shape: std::f32::consts::TAU,
-            emitter_angle: 0.0,
+            emitter_shape: EmitterShape::CircleSegment {
+                opening_angle: std::f32::consts::TAU,
+                direction_angle: 0.0,
+                radius: 0.0.into(),
+            },
             initial_speed: 1.0.into(),
             acceleration: 0.0.into(),
             lifetime: 5.0.into(),
