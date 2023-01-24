@@ -47,7 +47,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 emitter_shape: EmitterShape::Line {
-                    length: 200.0.into(),
+                    length: 200.0,
                     angle: std::f32::consts::FRAC_PI_4.into(),
                 },
                 looping: true,
@@ -79,7 +79,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
                     radius: 10.0.into(),
                     opening_angle: std::f32::consts::PI,
-                    direction_angle: std::f32::consts::FRAC_PI_4.into(),
+                    direction_angle: std::f32::consts::FRAC_PI_4,
                 },
                 looping: true,
                 rotate_to_movement_direction: true,
