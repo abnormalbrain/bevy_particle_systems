@@ -48,7 +48,7 @@ impl EmitterShape {
     /// Samples a random starting transform from the Emitter shape
     ///
     /// The returned transform describes the position and direction of movement of the newly spawned particle.
-    /// (Note: The actual angle of the new particle might get overridden for a [`ParticleSystem`] e.g if
+    /// (Note: The actual angle of the new particle might get overridden for a [`crate::components::ParticleSystem`] e.g if
     /// `rotate_to_movement_direction` is false.)
     pub fn sample(&self, rng: &mut ThreadRng) -> Transform {
         match self {
