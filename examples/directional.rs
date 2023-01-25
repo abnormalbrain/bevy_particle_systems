@@ -36,11 +36,13 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
             particle_system: ParticleSystem {
                 texture: ParticleTexture::Sprite(asset_server.load("arrow.png")),
                 spawn_rate_per_second: 25.0.into(),
-                spawn_radius: 10.0.into(),
                 initial_speed: JitteredValue::jittered(70.0, -3.0..3.0),
                 lifetime: JitteredValue::jittered(5.0, -1.0..1.0),
-                emitter_shape: std::f32::consts::PI,
-                emitter_angle: std::f32::consts::PI / 2.0,
+                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                    radius: 10.0.into(),
+                    opening_angle: std::f32::consts::PI,
+                    direction_angle: std::f32::consts::PI / 2.0,
+                },
                 looping: true,
                 scale: 0.07.into(),
                 system_duration_seconds: 5.0,
