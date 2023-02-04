@@ -1,10 +1,80 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
+use bevy_math::{vec3, Quat, Vec3};
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
+use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
+
+/// Describes the shape on which new particles get spawned
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum EmitterShape {
+    /// A oriented segment of a circle at a given radius
+    CircleSegment {
+        /// The shape of the emitter, defined in radian.
+        ///
+        /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
+        /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
+        /// in a semi-circle.
+        opening_angle: f32,
+
+        /// The rotation angle of the emitter, defined in radian.
+        ///
+        /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
+        direction_angle: f32,
+
+        /// The radius around the particle systems location that particles will spawn in.
+        ///
+        /// Setting this to zero will make all particles start at the same position.
+        /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
+        /// center position. Jitter will allow particles to spawn in a range.
+        radius: JitteredValue,
+    },
+    /// Emit particles from a 2d line at an angle
+    Line {
+        /// The lenth of the line
+        length: f32,
+
+        /// The rotation angle of the emitter, defined in radian.
+        ///
+        /// Zero indicates straight to the right in the +X direction. [`std::f32::consts::PI`] indicates straight left in the -X direction.
+        angle: JitteredValue,
+    },
+}
+
+impl EmitterShape {
+    /// Samples a random starting transform from the Emitter shape
+    ///
+    /// The returned transform describes the position and direction of movement of the newly spawned particle.
+    /// (Note: The actual angle of the new particle might get overridden for a [`crate::components::ParticleSystem`] e.g if
+    /// `rotate_to_movement_direction` is false.)
+    pub fn sample(&self, rng: &mut ThreadRng) -> Transform {
+        match self {
+            EmitterShape::CircleSegment {
+                opening_angle,
+                radius,
+                direction_angle,
+            } => {
+                let radian: f32 = rng.gen_range(-0.5..0.5) * opening_angle + direction_angle;
+                let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
+
+                let delta = direction * radius.get_value(rng);
+                Transform::from_translation(delta).with_rotation(Quat::from_rotation_z(radian))
+            }
+            EmitterShape::Line { length, angle } => {
+                let angle = angle.get_value(rng);
+                let distance: f32 = rng.gen_range(-0.5..0.5) * length;
+
+                let rotation = Quat::from_rotation_z(angle);
+
+                Transform::from_translation(rotation * vec3(0.0, distance, 0.0))
+                    .with_rotation(rotation)
+            }
+        }
+    }
+}
 
 /// A value that will be chosen from a set of possible values when read.
 ///
@@ -29,7 +99,6 @@ use rand::{prelude::ThreadRng, Rng};
 /// // Results are picked randomly from a set of values
 /// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
 /// ```
-
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum RandomValue<T: Reflect + Clone + FromReflect> {
     /// A constant value
