@@ -275,10 +275,10 @@ impl Default for Particle {
 }
 
 /// Holds an individual particles color descriptor.
-/// 
+///
 /// This is separated into its own component because the [`ColorOverTime`]
 /// is used mutably in the case of Gradients to improve performance.
-/// 
+///
 /// Its initial value on particle spawn is copied from [`ParticleSystem::color`]
 #[derive(Debug, Component, Default)]
 pub struct ParticleColor(pub ColorOverTime);

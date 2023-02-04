@@ -10,8 +10,8 @@ use rand::prelude::*;
 
 use crate::{
     components::{
-        BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleCount, ParticleSpace, ParticleColor,
-        ParticleSystem, Playing, RunningState, Speed,
+        BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
+        ParticleSpace, ParticleSystem, Playing, RunningState, Speed,
     },
     values::ColorOverTime,
     DistanceTraveled, ParticleTexture,
@@ -285,29 +285,40 @@ pub(crate) fn particle_lifetime(
 pub(crate) fn particle_sprite_color(
     mut particle_query: Query<(&Particle, &mut ParticleColor, &Lifetime, &mut Sprite)>,
 ) {
-    particle_query.par_for_each_mut(512, |(particle, mut particle_color, lifetime, mut sprite)| {
-        let pct = lifetime.0 / particle.max_lifetime;
-        match &mut particle_color.0 {
-            ColorOverTime::Constant(color) => sprite.color = *color,
-            ColorOverTime::Gradient(gradient) => {
-                sprite.color = gradient.get_color_mut(pct);
+    particle_query.par_for_each_mut(
+        512,
+        |(particle, mut particle_color, lifetime, mut sprite)| {
+            let pct = lifetime.0 / particle.max_lifetime;
+            match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => sprite.color = *color,
+                ColorOverTime::Gradient(gradient) => {
+                    sprite.color = gradient.get_color_mut(pct);
+                }
             }
-        }
-    });
+        },
+    );
 }
 
 pub(crate) fn particle_texture_atlas_color(
-    mut particle_query: Query<(&Particle, &mut ParticleColor, &Lifetime, &mut TextureAtlasSprite)>,
+    mut particle_query: Query<(
+        &Particle,
+        &mut ParticleColor,
+        &Lifetime,
+        &mut TextureAtlasSprite,
+    )>,
 ) {
-    particle_query.par_for_each_mut(512, |(particle, mut particle_color, lifetime, mut sprite)| {
-        let pct = lifetime.0 / particle.max_lifetime;
-        match &mut particle_color.0 {
-            ColorOverTime::Constant(color) => sprite.color = *color,
-            ColorOverTime::Gradient(gradient) => {
-                sprite.color = gradient.get_color_mut(pct);
+    particle_query.par_for_each_mut(
+        512,
+        |(particle, mut particle_color, lifetime, mut sprite)| {
+            let pct = lifetime.0 / particle.max_lifetime;
+            match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => sprite.color = *color,
+                ColorOverTime::Gradient(gradient) => {
+                    sprite.color = gradient.get_color_mut(pct);
+                }
             }
-        }
-    });
+        },
+    );
 }
 
 pub(crate) fn particle_transform(
