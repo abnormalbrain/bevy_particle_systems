@@ -345,12 +345,12 @@ impl ColorPoint {
 /// one at `0.0` and one at `1.0`.
 ///
 /// Computing the gradient without state is a linear operation and can add up to be
-/// somewhat expensive. [`Gradient::get_color_mut`] can be used in these scenarios to potential
+/// somewhat expensive. [`Gradient::get_color_mut`] can be used in these scenarios to potentialy
 /// improve performance, as long as the particular gradient only moves forward in time. This
 /// will use an `index_hint` state to skip to where the previous call was in gradient detection.
 ///
 /// If most or all of the gradients are only two components, it is likely better to use [`Gradient::get_color`]
-/// rather than [`Gradient::get_color_mut`], as both will take the same shortcuts, but [`Gradient::get_color`] is does not
+/// rather than [`Gradient::get_color_mut`], as both will take the same shortcuts, but [`Gradient::get_color`] does not
 /// require a mutable borrow and therefore can be used in parallel with other systems.
 ///
 /// ## Examples
