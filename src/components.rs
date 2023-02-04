@@ -229,11 +229,6 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::use_scaled_time`] on spawn.
     pub use_scaled_time: bool,
 
-    /// The color of this particle over time.
-    ///
-    /// This is copied from [`ParticleSystem::color`] on spawn.
-    pub color: ColorOverTime,
-
     /// The scale or size of this particle over time.
     ///
     /// This is copied from [`ParticleSystem::scale`] on spawn.
@@ -260,7 +255,6 @@ impl Default for Particle {
             max_lifetime: f32::default(),
             max_distance: None,
             use_scaled_time: true,
-            color: ColorOverTime::default(),
             scale: 1.0.into(),
             rotation_speed: 0.0,
             acceleration: 0.0.into(),
@@ -268,6 +262,15 @@ impl Default for Particle {
         }
     }
 }
+
+/// Holds an individual particles color descriptor.
+///
+/// This is separated into its own component because the [`ColorOverTime`]
+/// is used mutably in the case of Gradients to improve performance.
+///
+/// Its initial value on particle spawn is copied from [`ParticleSystem::color`]
+#[derive(Debug, Component, Default)]
+pub struct ParticleColor(pub ColorOverTime);
 
 /// Contains how long a particle has been alive, in seconds.
 #[derive(Debug, Component, Default)]
@@ -386,4 +389,5 @@ pub(crate) struct ParticleBundle {
     pub speed: Speed,
     pub direction: Direction,
     pub distance: DistanceTraveled,
+    pub color: ParticleColor,
 }
