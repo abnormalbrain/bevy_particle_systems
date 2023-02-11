@@ -209,7 +209,7 @@ impl JitteredValue {
         }
     }
 
-    /// Create a new ``JitteredValue`` with a value centered withing the jitter range.
+    /// Create a new ``JitteredValue`` with a value centered within the jitter range.
     pub fn centered_range(range: Range<f32>) -> Self {
         let mid = (range.start + range.end) / 2.;
         let half_width = (range.end - range.start) / 2.;
