@@ -209,6 +209,18 @@ impl JitteredValue {
         }
     }
 
+    /// Create a new ``JitteredValue`` with a value centered within the jitter range.
+    pub fn centered_range(range: Range<f32>) -> Self {
+        let mid = (range.start + range.end) / 2.;
+        let half_width = (range.end - range.start) / 2.;
+        let start = mid - half_width;
+        let end = mid + half_width;
+        Self {
+            value: mid,
+            jitter_range: Some(start..end),
+        }
+    }
+
     /// Create a new ``JitteredValue`` from an existing one with the specified jitter range.
     pub const fn with_jitter(&self, jitter_range: Range<f32>) -> Self {
         Self {
@@ -229,6 +241,12 @@ impl JitteredValue {
 impl From<f32> for JitteredValue {
     fn from(f: f32) -> Self {
         JitteredValue::new(f)
+    }
+}
+
+impl From<Range<f32>> for JitteredValue {
+    fn from(range: Range<f32>) -> Self {
+        JitteredValue::centered_range(range)
     }
 }
 
