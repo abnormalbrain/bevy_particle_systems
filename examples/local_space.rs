@@ -12,8 +12,8 @@ use bevy_math::Quat;
 use bevy_time::Time;
 
 use bevy_particle_systems::{
-    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, ColorPoint, EmitterShape, Gradient, JitteredValue, ParticleSpace,
+    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 
 #[derive(Debug, Component)]
@@ -39,11 +39,10 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                emitter_shape: EmitterShape::CircleSegment(CircleSegment {
                     opening_angle: std::f32::consts::PI * 0.25,
-                    direction_angle: 0.0,
-                    radius: 0.0.into(),
-                },
+                    ..Default::default()
+                }),
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
@@ -70,11 +69,11 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                emitter_shape: EmitterShape::CircleSegment(CircleSegment {
                     opening_angle: std::f32::consts::PI * 0.25,
                     direction_angle: std::f32::consts::PI,
-                    radius: 0.0.into(),
-                },
+                    ..Default::default()
+                }),
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),

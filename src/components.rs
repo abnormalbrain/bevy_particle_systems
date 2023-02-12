@@ -9,7 +9,7 @@ use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
-    values::{CircleSegment, ColorOverTime, JitteredValue, RandomValue, ValueOverTime},
+    values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime},
     EmitterShape,
 };
 
@@ -174,7 +174,7 @@ impl Default for ParticleSystem {
             texture: ParticleTexture::Sprite(Handle::default()),
             rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),
-            emitter_shape: EmitterShape::CircleSegment(CircleSegment::default()),
+            emitter_shape: EmitterShape::default(),
             initial_speed: 1.0.into(),
             acceleration: 0.0.into(),
             lifetime: 5.0.into(),
