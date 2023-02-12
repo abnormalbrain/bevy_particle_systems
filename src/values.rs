@@ -8,43 +8,96 @@ use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
 
+/// Describes an oriengted segment of a circle with a given radius.
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub struct CircleSegment {
+    /// The shape of the emitter, defined in radian.
+    ///
+    /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
+    /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
+    /// in a semi-circle.
+    pub opening_angle: f32,
+
+    /// The rotation angle of the emitter, defined in radian.
+    ///
+    /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
+    pub direction_angle: f32,
+
+    /// The radius around the particle systems location that particles will spawn in.
+    ///
+    /// Setting this to zero will make all particles start at the same position.
+    /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
+    /// center position. Jitter will allow particles to spawn in a range.
+    pub radius: JitteredValue,
+}
+
+impl Default for CircleSegment {
+    fn default() -> Self {
+        Self {
+            opening_angle: std::f32::consts::TAU,
+            direction_angle: 0.0,
+            radius: 0.0.into(),
+        }
+    }
+}
+
+/// Defines a line along which particles will be spawned.
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub struct Line {
+    /// The lenth of the line
+    pub length: f32,
+
+    /// The rotation angle of the emitter, defined in radian.
+    ///
+    /// Zero indicates straight to the right in the +X direction. [`std::f32::consts::PI`] indicates straight left in the -X direction.
+    pub angle: JitteredValue,
+}
+
+impl Default for Line {
+    fn default() -> Self {
+        Self {
+            length: 1.0,
+            angle: 0.0.into(),
+        }
+    }
+}
+
 /// Describes the shape on which new particles get spawned
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum EmitterShape {
-    /// A oriented segment of a circle at a given radius
-    CircleSegment {
-        /// The shape of the emitter, defined in radian.
-        ///
-        /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
-        /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
-        /// in a semi-circle.
-        opening_angle: f32,
-
-        /// The rotation angle of the emitter, defined in radian.
-        ///
-        /// Zero indicates straight to the right in the X direction. [`std::f32::consts::PI`] indicates straight left in the X direction.
-        direction_angle: f32,
-
-        /// The radius around the particle systems location that particles will spawn in.
-        ///
-        /// Setting this to zero will make all particles start at the same position.
-        /// Setting this to a non-jittered constant will make particles spawn exactly that distance away from the
-        /// center position. Jitter will allow particles to spawn in a range.
-        radius: JitteredValue,
-    },
+    /// An oriented segment of a circle with a given radius
+    CircleSegment(CircleSegment),
     /// Emit particles from a 2d line at an angle
-    Line {
-        /// The lenth of the line
-        length: f32,
-
-        /// The rotation angle of the emitter, defined in radian.
-        ///
-        /// Zero indicates straight to the right in the +X direction. [`std::f32::consts::PI`] indicates straight left in the -X direction.
-        angle: JitteredValue,
-    },
+    Line(Line),
 }
 
 impl EmitterShape {
+    /// Defines a circular emitter with the specified radius.
+    ///
+    /// See [`CircleSegment`] for more details.
+    pub fn circle<T>(radius: T) -> Self
+    where
+        T: Into<JitteredValue>,
+    {
+        Self::CircleSegment(CircleSegment {
+            radius: radius.into(),
+            ..Default::default()
+        })
+    }
+
+    /// Creates a new Line emitter with the specified length and angle in radian.
+    ///
+    /// See [`Line`] for more details.
+    pub fn line<T>(length: f32, angle: T) -> Self
+    where
+        T: Into<JitteredValue>,
+    {
+        Self::Line(Line {
+            length,
+            angle: angle.into(),
+        })
+    }
+
     /// Samples a random starting transform from the Emitter shape
     ///
     /// The returned transform describes the position and direction of movement of the newly spawned particle.
@@ -52,18 +105,18 @@ impl EmitterShape {
     /// `rotate_to_movement_direction` is false.)
     pub fn sample(&self, rng: &mut ThreadRng) -> Transform {
         match self {
-            EmitterShape::CircleSegment {
+            EmitterShape::CircleSegment(CircleSegment {
                 opening_angle,
                 radius,
                 direction_angle,
-            } => {
+            }) => {
                 let radian: f32 = rng.gen_range(-0.5..0.5) * opening_angle + direction_angle;
                 let direction = Vec3::new(radian.cos(), radian.sin(), 0.0);
 
                 let delta = direction * radius.get_value(rng);
                 Transform::from_translation(delta).with_rotation(Quat::from_rotation_z(radian))
             }
-            EmitterShape::Line { length, angle } => {
+            EmitterShape::Line(Line { length, angle }) => {
                 let angle = angle.get_value(rng);
                 let distance: f32 = rng.gen_range(-0.5..0.5) * length;
 
@@ -73,6 +126,12 @@ impl EmitterShape {
                     .with_rotation(rotation)
             }
         }
+    }
+}
+
+impl Default for EmitterShape {
+    fn default() -> Self {
+        Self::CircleSegment(CircleSegment::default())
     }
 }
 
