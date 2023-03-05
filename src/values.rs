@@ -41,6 +41,12 @@ impl Default for CircleSegment {
     }
 }
 
+impl From<CircleSegment> for EmitterShape {
+    fn from(segment: CircleSegment) -> EmitterShape {
+        EmitterShape::CircleSegment(segment)
+    }
+}
+
 /// Defines a line along which particles will be spawned.
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct Line {
@@ -62,7 +68,29 @@ impl Default for Line {
     }
 }
 
+impl From<Line> for EmitterShape {
+    fn from(line: Line) -> EmitterShape {
+        EmitterShape::Line(line)
+    }
+}
+
 /// Describes the shape on which new particles get spawned
+///
+/// For convenience, these can also be created directly from
+/// [`CircleSegment`] and [`Line`] instances, or using [`EmitterShape::line`] or
+/// [`EmitterShape::circle`]
+///
+/// # Examples
+///
+/// ```rust
+/// # use bevy_particle_systems::values::{CircleSegment, EmitterShape, Line};
+/// # use bevy_particle_systems::ParticleSystem;
+/// let particle_system = ParticleSystem {
+///     emitter_shape: CircleSegment::default().into(),
+///     // ...
+///     ..Default::default()
+/// };
+/// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum EmitterShape {
     /// An oriented segment of a circle with a given radius
