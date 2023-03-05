@@ -73,11 +73,12 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ColorPoint::new(Color::RED, 0.5),
                     ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
-                emitter_shape: EmitterShape::CircleSegment(CircleSegment {
+                emitter_shape: CircleSegment {
                     radius: 10.0.into(),
                     opening_angle: std::f32::consts::PI,
                     direction_angle: std::f32::consts::FRAC_PI_4,
-                }),
+                }
+                .into(),
                 looping: true,
                 rotate_to_movement_direction: true,
                 initial_rotation: (-90.0_f32).to_radians().into(),

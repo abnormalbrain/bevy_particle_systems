@@ -7,8 +7,8 @@ use bevy::{
 use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
-    CircleSegment, EmitterShape, JitteredValue, ParticleSystem, ParticleSystemBundle,
-    ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, JitteredValue, ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin,
+    ParticleTexture, Playing,
 };
 
 fn main() {
@@ -38,11 +38,12 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 spawn_rate_per_second: 25.0.into(),
                 initial_speed: JitteredValue::jittered(70.0, -3.0..3.0),
                 lifetime: JitteredValue::jittered(5.0, -1.0..1.0),
-                emitter_shape: EmitterShape::CircleSegment(CircleSegment {
+                emitter_shape: CircleSegment {
                     radius: 10.0.into(),
                     opening_angle: std::f32::consts::PI,
                     direction_angle: std::f32::consts::PI / 2.0,
-                }),
+                }
+                .into(),
                 looping: true,
                 scale: 0.07.into(),
                 system_duration_seconds: 5.0,
