@@ -14,17 +14,24 @@ categories = ["game-development"]
 debug = true
 
 [dependencies]
-bevy_app = "0.9"
-bevy_asset = "0.9"
-bevy_ecs = "0.9"
-bevy_hierarchy = "0.9"
-bevy_math = "0.9"
-bevy_render = "0.9"
-bevy_sprite = "0.9"
-bevy_time = "0.9"
-bevy_transform = "0.9"
-bevy_reflect = "0.9"
+bevy_app = { git = "https://github.com/bevyengine/bevy" }
+bevy_asset = { git = "https://github.com/bevyengine/bevy" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy" }
+bevy_hierarchy = { git = "https://github.com/bevyengine/bevy" }
+bevy_math = { git = "https://github.com/bevyengine/bevy" }
+bevy_render = { git = "https://github.com/bevyengine/bevy" }
+bevy_sprite = { git = "https://github.com/bevyengine/bevy" }
+bevy_time = { git = "https://github.com/bevyengine/bevy" }
+bevy_transform = { git = "https://github.com/bevyengine/bevy" }
+bevy_reflect = { git = "https://github.com/bevyengine/bevy" }
 rand = "0.8"
 
 [dev-dependencies]
-bevy = { version = "0.9", default-features=false, features = ["bevy_asset", "render", "png", "bevy_winit", "x11"] }
+bevy = { git = "https://github.com/bevyengine/bevy", default-features=false, features = [
+    "bevy_asset",
+    "bevy_sprite",
+    "bevy_core_pipeline",
+    "png",
+    "bevy_winit",
+    "x11"
+] }

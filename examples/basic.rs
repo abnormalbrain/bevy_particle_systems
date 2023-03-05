@@ -1,12 +1,9 @@
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
-    window::{PresentMode, WindowDescriptor, WindowPlugin},
+    prelude::*,
+    window::WindowPlugin,
     DefaultPlugins,
 };
-use bevy_app::PluginGroup;
-use bevy_asset::AssetServer;
-
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, SinWave, ValueOverTime,
@@ -19,10 +16,6 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                present_mode: PresentMode::AutoNoVsync,
-                ..Default::default()
-            },
             ..Default::default()
         }))
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
