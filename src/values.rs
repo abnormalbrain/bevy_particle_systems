@@ -8,12 +8,12 @@ use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
 
-/// Describes an oriengted segment of a circle with a given radius.
+/// Describes an oriented segment of a circle with a given radius.
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct CircleSegment {
-    /// The shape of the emitter, defined in radian.
+    /// The shape of the emitter, defined in radians.
     ///
-    /// The default is [`std::f32::consts::TAU`], which results particles going in all directions in a circle.
+    /// The default is `2 * PI`, which results particles going in all directions in a circle.
     /// Reducing the value reduces the possible emitting directions. [`std::f32::consts::PI`] will emit particles
     /// in a semi-circle.
     pub opening_angle: f32,
