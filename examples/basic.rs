@@ -1,7 +1,7 @@
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
-    window::WindowPlugin,
+    window::{PresentMode, WindowPlugin},
     DefaultPlugins,
 };
 use bevy_particle_systems::{
@@ -16,7 +16,11 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            ..Default::default()
+            primary_window: Some(Window {
+                present_mode: PresentMode::AutoNoVsync,
+                ..default()
+            }),
+            ..default()
         }))
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
