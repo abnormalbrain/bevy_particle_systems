@@ -1,7 +1,7 @@
 use bevy::{
     diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::{App, Camera2dBundle, ClearColor, Color, Commands, Res},
-    window::{PresentMode, WindowDescriptor, WindowPlugin},
+    prelude::*,
+    window::{PresentMode, Window, WindowPlugin},
     DefaultPlugins,
 };
 use bevy_app::PluginGroup;
@@ -18,11 +18,11 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
+            primary_window: Some(Window {
                 present_mode: PresentMode::AutoNoVsync,
-                ..Default::default()
-            },
-            ..Default::default()
+                ..default()
+            }),
+            ..default()
         }))
         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
         .add_startup_system(startup_system)
