@@ -36,7 +36,7 @@
 //! fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>) {
 //!     commands
 //!     // Add the bundle specifying the particle system itself.
-//!     .spawn_bundle(ParticleSystemBundle {
+//!     .spawn(ParticleSystemBundle {
 //!         particle_system: ParticleSystem {
 //!             max_particles: 10_000,
 //!             texture: ParticleTexture::Sprite(asset_server.load("px.png")),
@@ -63,9 +63,9 @@ mod systems;
 pub mod values;
 
 use bevy_app::prelude::{App, Plugin};
-use bevy_ecs::prelude::SystemSet;
+use bevy_ecs::prelude::IntoSystemConfigs;
 pub use components::*;
-pub use systems::ParticleSystemLabel;
+pub use systems::ParticleSystemSet;
 use systems::{
     particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
     particle_texture_atlas_color, particle_transform,
@@ -94,15 +94,17 @@ pub struct ParticleSystemPlugin;
 
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::new()
-                .label(ParticleSystemLabel::ParticleSystem)
-                .with_system(particle_spawner)
-                .with_system(particle_lifetime)
-                .with_system(particle_sprite_color)
-                .with_system(particle_texture_atlas_color)
-                .with_system(particle_transform)
-                .with_system(particle_cleanup),
+        app.add_systems(
+            (
+                particle_spawner,
+                particle_lifetime,
+                particle_sprite_color,
+                particle_texture_atlas_color,
+                particle_transform,
+                particle_cleanup,
+            )
+                .into_configs()
+                .in_set(ParticleSystemSet),
         );
         app.register_type::<ParticleSystem>()
             .register_type::<ParticleCount>()
