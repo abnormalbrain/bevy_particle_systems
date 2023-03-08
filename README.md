@@ -51,7 +51,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
     .spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             max_particles: 10_000,
-            texture: ParticuleTexture::Sprite(asset_server.load("my_particle.png")),
+            texture: ParticleTexture::Sprite(asset_server.load("my_particle.png")),
             spawn_rate_per_second: 25.0.into(),
             initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),

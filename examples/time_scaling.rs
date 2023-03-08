@@ -10,8 +10,8 @@ use bevy::{
 };
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
-    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace,
+    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 use bevy_time::Time;
 fn main() {
@@ -30,11 +30,12 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                emitter_shape: CircleSegment {
                     direction_angle: 0.0,
                     opening_angle: std::f32::consts::PI * 0.25,
                     radius: 0.0.into(),
-                },
+                }
+                .into(),
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
@@ -61,11 +62,12 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 500,
-                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                emitter_shape: CircleSegment {
                     opening_angle: std::f32::consts::PI * 0.25,
                     direction_angle: std::f32::consts::PI,
                     radius: 0.0.into(),
-                },
+                }
+                .into(),
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),

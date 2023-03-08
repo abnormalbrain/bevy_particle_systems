@@ -8,8 +8,8 @@ use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
-    ColorOverTime, ColorPoint, EmitterShape, Gradient, JitteredValue, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, ColorPoint, EmitterShape, Gradient, JitteredValue,
+    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 
 fn main() {
@@ -46,10 +46,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ColorPoint::new(Color::RED, 0.5),
                     ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
-                emitter_shape: EmitterShape::Line {
-                    length: 200.0,
-                    angle: std::f32::consts::FRAC_PI_4.into(),
-                },
+                emitter_shape: EmitterShape::line(200.0, std::f32::consts::FRAC_PI_4),
                 looping: true,
                 rotate_to_movement_direction: true,
                 initial_rotation: (-90.0_f32).to_radians().into(),
@@ -76,11 +73,12 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ColorPoint::new(Color::RED, 0.5),
                     ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
-                emitter_shape: bevy_particle_systems::EmitterShape::CircleSegment {
+                emitter_shape: CircleSegment {
                     radius: 10.0.into(),
                     opening_angle: std::f32::consts::PI,
                     direction_angle: std::f32::consts::FRAC_PI_4,
-                },
+                }
+                .into(),
                 looping: true,
                 rotate_to_movement_direction: true,
                 initial_rotation: (-90.0_f32).to_radians().into(),
