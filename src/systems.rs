@@ -1,5 +1,4 @@
-use bevy_ecs::prelude::{Commands, Entity, Query, Res, With};
-use bevy_ecs::schedule::SystemLabel;
+use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
@@ -19,11 +18,8 @@ use crate::{
 /// System label attached to the `SystemSet` provided in this plugin
 ///
 /// This is provided so that users can order their systems to run before/after this plugin.
-#[derive(Debug, SystemLabel)]
-pub enum ParticleSystemLabel {
-    /// Label for the main systems
-    ParticleSystem,
-}
+#[derive(Debug, SystemSet, Hash, Clone, PartialEq, Eq)]
+pub struct ParticleSystemSet;
 
 #[allow(
     clippy::cast_sign_loss,
@@ -273,20 +269,21 @@ pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
     time: Res<Time>,
 ) {
-    lifetime_query.par_for_each_mut(512, |(mut lifetime, particle)| {
-        if particle.use_scaled_time {
-            lifetime.0 += time.delta_seconds();
-        } else {
-            lifetime.0 += time.raw_delta_seconds();
-        }
-    });
+    lifetime_query
+        .par_iter_mut()
+        .for_each_mut(|(mut lifetime, particle)| {
+            if particle.use_scaled_time {
+                lifetime.0 += time.delta_seconds();
+            } else {
+                lifetime.0 += time.raw_delta_seconds();
+            }
+        });
 }
 
 pub(crate) fn particle_sprite_color(
     mut particle_query: Query<(&Particle, &mut ParticleColor, &Lifetime, &mut Sprite)>,
 ) {
-    particle_query.par_for_each_mut(
-        512,
+    particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
             match &mut particle_color.0 {
@@ -307,8 +304,7 @@ pub(crate) fn particle_texture_atlas_color(
         &mut TextureAtlasSprite,
     )>,
 ) {
-    particle_query.par_for_each_mut(
-        512,
+    particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
             match &mut particle_color.0 {
@@ -332,8 +328,7 @@ pub(crate) fn particle_transform(
     )>,
     time: Res<Time>,
 ) {
-    particle_query.par_for_each_mut(
-        512,
+    particle_query.par_iter_mut().for_each_mut(
         |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
             if particle.use_scaled_time {
