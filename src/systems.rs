@@ -8,8 +8,8 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     components::{
-        BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
-        ParticleSpace, ParticleSystem, Playing, RunningState, Speed,
+        BurstIndex/* , Direction*/, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
+        ParticleSpace, ParticleSystem, Playing, RunningState/*, Speed*/, Velocity,
     },
     values::ColorOverTime,
     DistanceTraveled, ParticleTexture,
@@ -155,10 +155,14 @@ pub fn particle_spawner(
                             acceleration: particle_system.acceleration.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
-                        speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
+                        /*speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                         direction: Direction::new(
                             direction,
                             particle_system.z_value_override.is_some(),
+                        ),*/
+                        velocity: Velocity::new(
+                            direction * particle_system.initial_speed.get_value(&mut rng),
+                            true,
                         ),
                         distance: DistanceTraveled {
                             dist_squared: 0.0,
@@ -212,10 +216,14 @@ pub fn particle_spawner(
                                 acceleration: particle_system.acceleration.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
-                            speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
+                            /*speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
                             direction: Direction::new(
                                 direction,
                                 particle_system.z_value_override.is_some(),
+                            ),*/
+                            velocity: Velocity::new(
+                                direction * particle_system.initial_speed.get_value(&mut rng),
+                                true,
                             ),
                             distance: DistanceTraveled {
                                 dist_squared: 0.0,
@@ -321,24 +329,41 @@ pub(crate) fn particle_transform(
     mut particle_query: Query<(
         &Particle,
         &Lifetime,
-        &Direction,
+        //&Direction,
+        &mut Velocity,
         &mut DistanceTraveled,
-        &mut Speed,
+        //&mut Speed,
         &mut Transform,
     )>,
     time: Res<Time>,
 ) {
     particle_query.par_iter_mut().for_each_mut(
-        |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
+        |(particle, lifetime/*, direction*/, mut velocity, mut distance/*, mut speed*/, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
+            //let mut velocity_pct = velocity.0;
+
             if particle.use_scaled_time {
-                speed.0 +=
-                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
-                transform.translation += direction.0 * speed.0 * time.delta_seconds();
+                // The velocity_direction variable is temporary due to its relation with the acceleration being a f32 and not a Vec3
+                let velocity_direction = velocity.0.normalize();
+                //speed.0 +=
+                //    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
+                //transform.translation += direction.0 * speed.0 * time.delta_seconds();
+                velocity.0 +=
+                    velocity_direction * particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
+                transform.translation += velocity.0 * time.delta_seconds();
             } else {
-                speed.0 +=
-                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
-                transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
+                // The velocity_direction variable is temporary due to its relation with the acceleration being a f32 and not a Vec3
+                let velocity_direction = velocity.0.normalize();
+                //speed.0 +=
+                //    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
+                //transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
+                velocity.0 +=
+                    velocity_direction * particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
+                transform.translation += velocity.0 * time.raw_delta_seconds();
+            }
+
+            if transform.translation.z > 0.1 {
+                println!("Oh nooooooooooooooooooooooooooooo.... {}", transform.translation.z);
             }
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
