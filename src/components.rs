@@ -286,29 +286,6 @@ pub struct DistanceTraveled {
     pub from: Vec3,
 }
 
-/*
-/// Defines the current speed of an individual particle entity.
-#[derive(Debug, Component, Default)]
-pub struct Speed(pub f32);
-
-/// Defines the direction a particle is currently traveling.
-#[derive(Debug, Component, Default)]
-pub struct Direction(pub Vec3);
-
-impl Direction {
-    /// Creates a new [`Direction`] based on a [`Vec3`].
-    ///
-    /// ``ignore_z`` should generally be set to true for 2d use cases, so trajectories ignore the z dimension and a particle stays at a consistent depth.
-    pub fn new(mut direction: Vec3, ignore_z: bool) -> Self {
-        if ignore_z {
-            direction.z = 0.0;
-        }
-        Self(direction.normalize())
-    }
-}
-*/
-
-
 /// Defines the current velocity of an individual entity particle.
 #[derive(Debug, Component, Default)]
 pub struct Velocity(pub Vec3);
@@ -318,33 +295,14 @@ impl Velocity {
     /// ``ignore_z`` should generally be set to true for 2d use cases, so trajectories ignore the z dimension and a particle stays at a consistent depth.
     pub fn new(velocity: Vec3, ignore_z: bool) -> Self {
         if ignore_z {
-            let magnitude = velocity.length();
             Self(
                 
-                Vec3::new(velocity.x, velocity.y, 0.0).normalize() * magnitude
+                Vec3::new(velocity.x, velocity.y, 0.0).normalize() * velocity.length()
             )
         } else {
             Self(velocity)
         }
     }
-
-    /* NOT NEEDED FOR NOW
-    pub fn to_speed(&self, ignore_z: bool) -> f32 {
-        let mut velocity = self.0;
-        if ignore_z {
-            velocity.z = 0.0;
-        }
-        velocity.length()
-    }
-
-    pub fn to_direction(&self, ignore_z: bool) -> Vec3 {
-        let mut velocity = self.0;
-        if ignore_z {
-            velocity.z = 0.0;
-        }
-        velocity.normalize()
-    }
-    */
 }
 
 /// Marker component indicating that the [`ParticleSystem`] on the same entity is currently Playing.
@@ -423,8 +381,6 @@ pub struct ParticleSystemBundle {
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
-    //pub speed: Speed,
-    //pub direction: Direction,
     pub velocity: Velocity,
     pub distance: DistanceTraveled,
     pub color: ParticleColor,
