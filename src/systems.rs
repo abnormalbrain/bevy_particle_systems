@@ -153,6 +153,7 @@ pub fn particle_spawner(
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                             acceleration: particle_system.acceleration.clone(),
+                            drag: particle_system.drag.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
                         velocity: Velocity::new(
@@ -209,6 +210,7 @@ pub fn particle_spawner(
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                                 acceleration: particle_system.acceleration.clone(),
+                                drag: particle_system.drag.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
                             velocity: Velocity::new(
@@ -329,19 +331,33 @@ pub(crate) fn particle_transform(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
-            if particle.use_scaled_time {
-                // The velocity_direction variable is needed due to its relation with the acceleration being a f32 and not a Vec3
-                let velocity_direction = velocity.0.normalize();
-                velocity.0 +=
-                    velocity_direction * particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
-                transform.translation += velocity.0 * time.delta_seconds();
-            } else {
-                // The velocity_direction variable is needed due to its relation with the acceleration being a f32 and not a Vec3
-                let velocity_direction = velocity.0.normalize();
-                velocity.0 +=
-                    velocity_direction * particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
-                transform.translation += velocity.0 * time.raw_delta_seconds();
+            let delta_time = match particle.use_scaled_time {
+                true => time.delta_seconds(),
+                false => time.raw_delta_seconds(),
+            };
+
+            // The velocity_direction variable is needed due to its relation with the acceleration being a f32 and not a Vec3
+            let velocity_direction = velocity.0.normalize();
+
+            // Apply acceleration
+            velocity.0 +=
+                velocity_direction
+                * particle.acceleration.at_lifetime_pct(lifetime_pct)
+                * delta_time;
+            
+            // Apply drag
+            let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
+            if current_drag > 0.0 {
+                let drag_force =
+                    ( velocity.0.length() * velocity.0.length() )
+                    * current_drag
+                    * delta_time;
+                let drag_force = - velocity.0.normalize() * drag_force;
+                velocity.0 += drag_force;
             }
+            
+            // Apply velocity
+            transform.translation += velocity.0 * delta_time;
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
             transform.rotate_z(particle.rotation_speed * time.delta_seconds());

@@ -101,6 +101,12 @@ pub struct ParticleSystem {
     /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
     pub acceleration: ValueOverTime,
 
+    /// The drag of this particle. Will slow it down over time, simulating air resistance
+    ///
+    /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
+    /// Negative values are ignored and behave like Zero.
+    pub drag: ValueOverTime,
+
     /// The lifetime of each particle, in seconds.
     ///
     /// This value can have jitter, causing lifetimes to vary per particle.
@@ -177,6 +183,7 @@ impl Default for ParticleSystem {
             emitter_shape: EmitterShape::default(),
             initial_speed: 1.0.into(),
             acceleration: 0.0.into(),
+            drag: 0.0.into(),
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
             scale: 1.0.into(),
@@ -235,6 +242,11 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::acceleration`] on spawn.
     pub acceleration: ValueOverTime,
 
+    /// The drag of this particle. Will slow it down over time, simulating air resistance
+    ///
+    /// This is copied from [`ParticleSystem::drag`] on spawn.
+    pub drag: ValueOverTime,
+
     /// The speed, in radian per second, at which the particle rotates.
     ///
     /// This is chosen from [`ParticleSystem::rotation_speed`] on spawn.
@@ -254,6 +266,7 @@ impl Default for Particle {
             scale: 1.0.into(),
             rotation_speed: 0.0,
             acceleration: 0.0.into(),
+            drag: 0.0.into(),
             despawn_with_parent: false,
         }
     }
