@@ -11,7 +11,7 @@ use bevy_time::Time;
 
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace,
-    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
 };
 
 #[derive(Debug, Component)]
@@ -45,7 +45,13 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 40.0.into(),
                 initial_speed: JitteredValue::jittered(600.0, -100.0..100.0),
-                drag: 0.02.into(),
+                velocity_modifiers: vec![
+                    // This will make the particles go up
+                    ConstantVector(Vec3::new(0.0, 500.0, 0.0)),
+                    // This will make them slow down
+                    Drag(0.02.into()),
+                    // For VelocityModifier::Value(), see the example basic.rs
+                ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
                     ColorPoint::new(Color::WHITE, 0.0),

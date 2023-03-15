@@ -11,7 +11,7 @@ use crate::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
-    values::ColorOverTime,
+    values::{ColorOverTime, VelocityModifier},
     DistanceTraveled, ParticleTexture,
 };
 
@@ -152,8 +152,7 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            acceleration: particle_system.acceleration.clone(),
-                            drag: particle_system.drag.clone(),
+                            velocity_modifiers: particle_system.velocity_modifiers.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
                         velocity: Velocity::new(
@@ -209,8 +208,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                acceleration: particle_system.acceleration.clone(),
-                                drag: particle_system.drag.clone(),
+                                velocity_modifiers: particle_system.velocity_modifiers.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
                             velocity: Velocity::new(
@@ -336,24 +334,32 @@ pub(crate) fn particle_transform(
                 false => time.raw_delta_seconds(),
             };
 
-            // The velocity_direction variable is needed due to its relation with the acceleration being a f32 and not a Vec3
-            let velocity_direction = velocity.0.normalize();
-
-            // Apply acceleration
-            velocity.0 +=
-                velocity_direction
-                * particle.acceleration.at_lifetime_pct(lifetime_pct)
-                * delta_time;
-            
-            // Apply drag
-            let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
-            if current_drag > 0.0 {
-                let drag_force =
-                    ( velocity.0.length() * velocity.0.length() )
-                    * current_drag
-                    * delta_time;
-                let drag_force = - velocity.0.normalize() * drag_force;
-                velocity.0 += drag_force;
+            // Apply velocity modifiers to velocity
+            for modifier in &particle.velocity_modifiers {
+                use VelocityModifier::*;
+                match modifier {
+                    ConstantVector(v) => {
+                        velocity.0 += *v * delta_time;
+                    },
+                    Value(v) => {
+                        let velocity_direction = velocity.0.normalize();
+                        velocity.0 +=
+                            v.at_lifetime_pct(lifetime_pct)
+                            * velocity_direction
+                            * delta_time;
+                    },
+                    Drag(v) => {
+                        let current_drag = v.at_lifetime_pct(lifetime_pct);
+                        if current_drag > 0.0 {
+                            let drag_force =
+                                velocity.0.length() * velocity.0.length()
+                                * current_drag
+                                * delta_time;
+                            let drag_force = - velocity.0.normalize() * drag_force;
+                            velocity.0 += drag_force;
+                        }
+                    }
+                }
             }
             
             // Apply velocity
