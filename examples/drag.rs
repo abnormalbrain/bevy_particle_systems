@@ -45,7 +45,6 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 40.0.into(),
                 initial_speed: JitteredValue::jittered(600.0, -100.0..100.0),
-                acceleration: 0.0.into(),
                 drag: 0.02.into(),
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
