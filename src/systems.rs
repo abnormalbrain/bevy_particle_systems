@@ -152,7 +152,7 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            velocity: particle_system.velocity.clone(),
+                            acceleration: particle_system.acceleration.clone(),
                             drag: particle_system.drag.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
@@ -209,7 +209,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                velocity: particle_system.velocity.clone(),
+                                acceleration: particle_system.acceleration.clone(),
                                 drag: particle_system.drag.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
@@ -336,8 +336,8 @@ pub(crate) fn particle_transform(
                 false => time.raw_delta_seconds(),
             };
 
-            // Apply velocity
-            velocity.0 += particle.velocity * delta_time;
+            // Apply acceleration
+            velocity.0 += particle.acceleration * delta_time;
 
             // Apply drag
             let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
