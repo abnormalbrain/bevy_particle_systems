@@ -152,7 +152,7 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            acceleration: particle_system.acceleration.clone(),
+                            acceleration: particle_system.acceleration,
                             drag: particle_system.drag.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
@@ -209,7 +209,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                acceleration: particle_system.acceleration.clone(),
+                                acceleration: particle_system.acceleration,
                                 drag: particle_system.drag.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
@@ -331,9 +331,10 @@ pub(crate) fn particle_transform(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
-            let delta_time = match particle.use_scaled_time {
-                true => time.delta_seconds(),
-                false => time.raw_delta_seconds(),
+            let delta_time = if particle.use_scaled_time {
+                time.delta_seconds()
+            } else {
+                time.raw_delta_seconds()
             };
 
             // Apply acceleration
