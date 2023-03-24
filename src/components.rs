@@ -99,7 +99,7 @@ pub struct ParticleSystem {
     /// The acceleration of each particle.
     ///
     /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
-    pub acceleration: ValueOverTime,
+    pub velocity: Vec3,
 
     /// The drag of this particle. Will slow it down over time, simulating air resistance
     ///
@@ -182,7 +182,7 @@ impl Default for ParticleSystem {
             spawn_rate_per_second: 5.0.into(),
             emitter_shape: EmitterShape::default(),
             initial_speed: 1.0.into(),
-            acceleration: 0.0.into(),
+            velocity: Vec3::splat(0.0),
             drag: 0.0.into(),
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
@@ -240,7 +240,7 @@ pub struct Particle {
     /// The acceleration of this particle.
     ///
     /// This is copied from [`ParticleSystem::acceleration`] on spawn.
-    pub acceleration: ValueOverTime,
+    pub velocity: Vec3,
 
     /// The drag of this particle. Will slow it down over time, simulating air resistance
     ///
@@ -265,7 +265,7 @@ impl Default for Particle {
             use_scaled_time: true,
             scale: 1.0.into(),
             rotation_speed: 0.0,
-            acceleration: 0.0.into(),
+            velocity: Vec3::splat(0.0),
             drag: 0.0.into(),
             despawn_with_parent: false,
         }
@@ -308,10 +308,7 @@ impl Velocity {
     /// ``ignore_z`` should generally be set to true for 2d use cases, so trajectories ignore the z dimension and a particle stays at a consistent depth.
     pub fn new(velocity: Vec3, ignore_z: bool) -> Self {
         if ignore_z {
-            Self(
-                
-                Vec3::new(velocity.x, velocity.y, 0.0).normalize() * velocity.length()
-            )
+            Self(Vec3::new(velocity.x, velocity.y, 0.0).normalize() * velocity.length())
         } else {
             Self(velocity)
         }
