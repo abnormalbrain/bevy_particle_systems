@@ -152,8 +152,6 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            acceleration: particle_system.acceleration,
-                            drag: particle_system.drag.clone(),
                             velocity_modifiers: particle_system.velocity_modifiers.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
@@ -329,17 +327,24 @@ pub(crate) fn particle_transform(
 ) {
     particle_query.par_iter_mut().for_each_mut(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
+
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
+            let delta_time = if particle.use_scaled_time {
+                time.delta_seconds()
+            } else {
+                time.raw_delta_seconds()
             };
 
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
                 use VelocityModifier::*;
                 match modifier {
+
                     ConstantVector(v) => {
                         velocity.0 += *v * delta_time;
                     },
+
                     Value(v) => {
                         let velocity_direction = velocity.0.normalize();
                         velocity.0 +=
@@ -347,6 +352,7 @@ pub(crate) fn particle_transform(
                             * velocity_direction
                             * delta_time;
                     },
+                    
                     Drag(v) => {
                         let current_drag = v.at_lifetime_pct(lifetime_pct);
                         if current_drag > 0.0 {
