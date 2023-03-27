@@ -8,8 +8,8 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     components::{
-        BurstIndex, Direction, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
-        ParticleSpace, ParticleSystem, Playing, RunningState, Speed,
+        BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
+        ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
     values::ColorOverTime,
     DistanceTraveled, ParticleTexture,
@@ -152,13 +152,13 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            acceleration: particle_system.acceleration.clone(),
+                            acceleration: particle_system.acceleration,
+                            drag: particle_system.drag.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
-                        speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
-                        direction: Direction::new(
-                            direction,
-                            particle_system.z_value_override.is_some(),
+                        velocity: Velocity::new(
+                            direction * particle_system.initial_speed.get_value(&mut rng),
+                            true,
                         ),
                         distance: DistanceTraveled {
                             dist_squared: 0.0,
@@ -209,13 +209,13 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                acceleration: particle_system.acceleration.clone(),
+                                acceleration: particle_system.acceleration,
+                                drag: particle_system.drag.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
-                            speed: Speed(particle_system.initial_speed.get_value(&mut rng)),
-                            direction: Direction::new(
-                                direction,
-                                particle_system.z_value_override.is_some(),
+                            velocity: Velocity::new(
+                                direction * particle_system.initial_speed.get_value(&mut rng),
+                                true,
                             ),
                             distance: DistanceTraveled {
                                 dist_squared: 0.0,
@@ -321,25 +321,35 @@ pub(crate) fn particle_transform(
     mut particle_query: Query<(
         &Particle,
         &Lifetime,
-        &Direction,
+        &mut Velocity,
         &mut DistanceTraveled,
-        &mut Speed,
         &mut Transform,
     )>,
     time: Res<Time>,
 ) {
     particle_query.par_iter_mut().for_each_mut(
-        |(particle, lifetime, direction, mut distance, mut speed, mut transform)| {
+        |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
-            if particle.use_scaled_time {
-                speed.0 +=
-                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.delta_seconds();
-                transform.translation += direction.0 * speed.0 * time.delta_seconds();
+
+            let delta_time = if particle.use_scaled_time {
+                time.delta_seconds()
             } else {
-                speed.0 +=
-                    particle.acceleration.at_lifetime_pct(lifetime_pct) * time.raw_delta_seconds();
-                transform.translation += direction.0 * speed.0 * time.raw_delta_seconds();
+                time.raw_delta_seconds()
+            };
+
+            // Apply acceleration
+            velocity.0 += particle.acceleration * delta_time;
+
+            // Apply drag
+            let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
+            if current_drag > 0.0 {
+                let drag_force = velocity.0.length_squared() * current_drag * delta_time;
+                let drag_force = -velocity.0.normalize() * drag_force;
+                velocity.0 += drag_force;
             }
+
+            // Apply velocity to translation
+            transform.translation += velocity.0 * delta_time;
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
             transform.rotate_z(particle.rotation_speed * time.delta_seconds());

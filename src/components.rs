@@ -98,8 +98,14 @@ pub struct ParticleSystem {
 
     /// The acceleration of each particle.
     ///
+    /// Vec3::ZERO makes the particle move at its ``initial_speed`` for its lifetime.
+    pub acceleration: Vec3,
+
+    /// The drag of this particle. Will slow it down over time, simulating air resistance
+    ///
     /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
-    pub acceleration: ValueOverTime,
+    /// Negative values are ignored and behave like Zero.
+    pub drag: ValueOverTime,
 
     /// The lifetime of each particle, in seconds.
     ///
@@ -176,7 +182,8 @@ impl Default for ParticleSystem {
             spawn_rate_per_second: 5.0.into(),
             emitter_shape: EmitterShape::default(),
             initial_speed: 1.0.into(),
-            acceleration: 0.0.into(),
+            acceleration: Vec3::splat(0.0),
+            drag: 0.0.into(),
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
             scale: 1.0.into(),
@@ -233,7 +240,12 @@ pub struct Particle {
     /// The acceleration of this particle.
     ///
     /// This is copied from [`ParticleSystem::acceleration`] on spawn.
-    pub acceleration: ValueOverTime,
+    pub acceleration: Vec3,
+
+    /// The drag of this particle. Will slow it down over time, simulating air resistance
+    ///
+    /// This is copied from [`ParticleSystem::drag`] on spawn.
+    pub drag: ValueOverTime,
 
     /// The speed, in radian per second, at which the particle rotates.
     ///
@@ -253,7 +265,8 @@ impl Default for Particle {
             use_scaled_time: true,
             scale: 1.0.into(),
             rotation_speed: 0.0,
-            acceleration: 0.0.into(),
+            acceleration: Vec3::splat(0.0),
+            drag: 0.0.into(),
             despawn_with_parent: false,
         }
     }
@@ -286,23 +299,19 @@ pub struct DistanceTraveled {
     pub from: Vec3,
 }
 
-/// Defines the current speed of an individual particle entity.
+/// Defines the current velocity of an individual entity particle.
 #[derive(Debug, Component, Default)]
-pub struct Speed(pub f32);
-
-/// Defines the direction a particle is currently traveling.
-#[derive(Debug, Component, Default)]
-pub struct Direction(pub Vec3);
-
-impl Direction {
-    /// Creates a new [`Direction`] based on a [`Vec3`].
+pub struct Velocity(pub Vec3);
+impl Velocity {
+    /// Creates a new [`Velocity`] based on a [`Vec3`].
     ///
     /// ``ignore_z`` should generally be set to true for 2d use cases, so trajectories ignore the z dimension and a particle stays at a consistent depth.
-    pub fn new(mut direction: Vec3, ignore_z: bool) -> Self {
+    pub fn new(velocity: Vec3, ignore_z: bool) -> Self {
         if ignore_z {
-            direction.z = 0.0;
+            Self(Vec3::new(velocity.x, velocity.y, 0.0).normalize() * velocity.length())
+        } else {
+            Self(velocity)
         }
-        Self(direction.normalize())
     }
 }
 
@@ -382,8 +391,7 @@ pub struct ParticleSystemBundle {
 pub(crate) struct ParticleBundle {
     pub particle: Particle,
     pub lifetime: Lifetime,
-    pub speed: Speed,
-    pub direction: Direction,
+    pub velocity: Velocity,
     pub distance: DistanceTraveled,
     pub color: ParticleColor,
 }
