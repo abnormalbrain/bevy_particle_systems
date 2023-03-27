@@ -11,7 +11,7 @@ use crate::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
-    values::ColorOverTime,
+    values::{ColorOverTime, VelocityModifier},
     DistanceTraveled, ParticleTexture,
 };
 
@@ -154,6 +154,7 @@ pub fn particle_spawner(
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                             acceleration: particle_system.acceleration,
                             drag: particle_system.drag.clone(),
+                            velocity_modifiers: particle_system.velocity_modifiers.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
                         velocity: Velocity::new(
@@ -209,8 +210,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                acceleration: particle_system.acceleration,
-                                drag: particle_system.drag.clone(),
+                                velocity_modifiers: particle_system.velocity_modifiers.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
                             velocity: Velocity::new(
@@ -331,24 +331,35 @@ pub(crate) fn particle_transform(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
-            let delta_time = if particle.use_scaled_time {
-                time.delta_seconds()
-            } else {
-                time.raw_delta_seconds()
             };
 
-            // Apply acceleration
-            velocity.0 += particle.acceleration * delta_time;
-
-            // Apply drag
-            let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
-            if current_drag > 0.0 {
-                let drag_force = velocity.0.length_squared() * current_drag * delta_time;
-                let drag_force = -velocity.0.normalize() * drag_force;
-                velocity.0 += drag_force;
+            // Apply velocity modifiers to velocity
+            for modifier in &particle.velocity_modifiers {
+                use VelocityModifier::*;
+                match modifier {
+                    ConstantVector(v) => {
+                        velocity.0 += *v * delta_time;
+                    },
+                    Value(v) => {
+                        let velocity_direction = velocity.0.normalize();
+                        velocity.0 +=
+                            v.at_lifetime_pct(lifetime_pct)
+                            * velocity_direction
+                            * delta_time;
+                    },
+                    Drag(v) => {
+                        let current_drag = v.at_lifetime_pct(lifetime_pct);
+                        if current_drag > 0.0 {
+                            let drag_force =
+                                velocity.0.length() * velocity.0.length()
+                                * current_drag
+                                * delta_time;
+                            let drag_force = - velocity.0.normalize() * drag_force;
+                            velocity.0 += drag_force;
+                        }
+                    }
+                }
             }
-
-            // Apply velocity to translation
             transform.translation += velocity.0 * delta_time;
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));

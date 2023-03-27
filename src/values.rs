@@ -649,7 +649,7 @@ impl Gradient {
 /// Defines how a color changes over time
 ///
 /// Colors can either be constant, or follow a [`crate::values::Gradient`].
-#[derive(Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ColorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Color),
@@ -710,7 +710,7 @@ impl ColorOverTime {
 /// assert!(s.at_lifetime_pct(0.5).roughly_equal(0.0));
 /// assert!(s.at_lifetime_pct(0.75).roughly_equal(-1.0));
 /// ```
-#[derive(Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ValueOverTime {
     /// Specifies the value should be linearly interpolated between two values over time.
     Lerp(Lerp),
@@ -808,3 +808,18 @@ impl Default for SinWave {
         }
     }
 }
+
+
+
+/// Defines an acceleration_modifier that will affect particles velocity.
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum VelocityModifier {
+    /// f32 value that will use the direction of the current velocity.
+    Value(ValueOverTime),
+    /// Constant vector acceleration, such as gravity.
+    ConstantVector(Vec3),
+    /// Force that will slow down the particles like air resistance.
+    Drag(ValueOverTime),
+}
+
+

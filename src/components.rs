@@ -10,7 +10,7 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime},
-    EmitterShape,
+    EmitterShape, VelocityModifier,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
@@ -96,16 +96,11 @@ pub struct ParticleSystem {
     /// This value can be constant, or have added jitter to have particles move at varying speeds.
     pub initial_speed: JitteredValue,
 
-    /// The acceleration of each particle.
-    ///
-    /// Vec3::ZERO makes the particle move at its ``initial_speed`` for its lifetime.
-    pub acceleration: Vec3,
-
-    /// The drag of this particle. Will slow it down over time, simulating air resistance
-    ///
-    /// This value can change over time. Zero makes the particle move at its ``initial_speed`` for its lifetime.
-    /// Negative values are ignored and behave like Zero.
-    pub drag: ValueOverTime,
+    /// Modifiers affecting the particle velocity.
+    /// 
+    /// They can be stacked, and will be applied in order.
+    /// No modifiers makes the particle move at its ``initial_speed`` for its lifetime.
+    pub velocity_modifiers: Vec<VelocityModifier>,
 
     /// The lifetime of each particle, in seconds.
     ///
@@ -182,8 +177,7 @@ impl Default for ParticleSystem {
             spawn_rate_per_second: 5.0.into(),
             emitter_shape: EmitterShape::default(),
             initial_speed: 1.0.into(),
-            acceleration: Vec3::splat(0.0),
-            drag: 0.0.into(),
+            velocity_modifiers: vec![],
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
             scale: 1.0.into(),
@@ -237,15 +231,10 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::scale`] on spawn.
     pub scale: ValueOverTime,
 
-    /// The acceleration of this particle.
-    ///
-    /// This is copied from [`ParticleSystem::acceleration`] on spawn.
-    pub acceleration: Vec3,
-
-    /// The drag of this particle. Will slow it down over time, simulating air resistance
-    ///
-    /// This is copied from [`ParticleSystem::drag`] on spawn.
-    pub drag: ValueOverTime,
+    /// Velocity Modifiers of this particle.
+    /// 
+    /// This os copied from [`ParticleSystem::velocity_modifiers`] on spawn.
+    pub velocity_modifiers: Vec<VelocityModifier>,
 
     /// The speed, in radian per second, at which the particle rotates.
     ///
@@ -265,8 +254,7 @@ impl Default for Particle {
             use_scaled_time: true,
             scale: 1.0.into(),
             rotation_speed: 0.0,
-            acceleration: Vec3::splat(0.0),
-            drag: 0.0.into(),
+            velocity_modifiers: vec![],
             despawn_with_parent: false,
         }
     }
