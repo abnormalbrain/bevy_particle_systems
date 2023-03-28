@@ -6,8 +6,7 @@ use bevy::{
 };
 use bevy_particle_systems::{
     ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleBurst, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, SinWave, ValueOverTime,
-    VelocityModifier::*,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
 };
 
 fn main() {
@@ -37,12 +36,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 max_particles: 50_000,
                 texture: ParticleTexture::Sprite(asset_server.load("px.png")),
                 spawn_rate_per_second: 1000.0.into(),
-                initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
-                velocity_modifiers: vec![ScalarAcceleration(ValueOverTime::Sin(SinWave {
-                    amplitude: 150.0,
-                    period: 5.0,
-                    ..SinWave::default()
-                }))],
+                initial_speed: JitteredValue::jittered(200.0, -50.0..50.0),
+                velocity_modifiers: vec![Drag(0.01.into())],
                 lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Gradient::new(vec![
                     ColorPoint::new(Color::PURPLE, 0.0),
