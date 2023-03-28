@@ -2,7 +2,7 @@
 //! The red particle system only has a Constant Acceleration that makes particles accelerate upwards over time.
 //! The green one only has a Drag effect that makes particles slow down over time.
 //! The blue one only has a Noise2D that affects randomly how particles are moving.
-//! The orange one combine both constant acceleration and drag.
+//! The orange one combine all three effects together.
 //!
 //! There is no limit but performance in how much velocity modifiers a particle system can have simultaneously.
 
