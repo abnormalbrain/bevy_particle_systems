@@ -97,7 +97,7 @@ pub struct ParticleSystem {
     pub initial_speed: JitteredValue,
 
     /// Modifiers affecting the particle velocity.
-    /// 
+    ///
     /// They can be stacked, and will be applied in order.
     /// No modifiers makes the particle move at its ``initial_speed`` for its lifetime.
     pub velocity_modifiers: Vec<VelocityModifier>,
@@ -232,7 +232,7 @@ pub struct Particle {
     pub scale: ValueOverTime,
 
     /// Velocity Modifiers of this particle.
-    /// 
+    ///
     /// This os copied from [`ParticleSystem::velocity_modifiers`] on spawn.
     pub velocity_modifiers: Vec<VelocityModifier>,
 

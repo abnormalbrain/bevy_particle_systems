@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
-use bevy_math::{Quat, Vec3};
+use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
@@ -11,7 +11,7 @@ use crate::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
-    values::{ColorOverTime, VelocityModifier},
+    values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
     DistanceTraveled, ParticleTexture,
 };
 
@@ -327,7 +327,6 @@ pub(crate) fn particle_transform(
 ) {
     particle_query.par_iter_mut().for_each_mut(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
-
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
             let delta_time = if particle.use_scaled_time {
@@ -336,33 +335,38 @@ pub(crate) fn particle_transform(
                 time.raw_delta_seconds()
             };
 
+            // inititalize precalculated values
+            let mut ppv = PrecalculatedParticleVariables::new();
+
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
-                use VelocityModifier::*;
+                use VelocityModifier::{Constant, Drag, Noise, ScalarAcceleration};
                 match modifier {
-
-                    ConstantVector(v) => {
+                    Constant(v) => {
                         velocity.0 += *v * delta_time;
-                    },
+                    }
 
-                    Value(v) => {
-                        let velocity_direction = velocity.0.normalize();
-                        velocity.0 +=
-                            v.at_lifetime_pct(lifetime_pct)
-                            * velocity_direction
-                            * delta_time;
-                    },
-                    
+                    ScalarAcceleration(v) => {
+                        let direction = ppv.get_particle_direction(&velocity.0);
+                        velocity.0 += v.at_lifetime_pct(lifetime_pct) * direction * delta_time;
+                    }
+
                     Drag(v) => {
                         let current_drag = v.at_lifetime_pct(lifetime_pct);
                         if current_drag > 0.0 {
                             let drag_force =
-                                velocity.0.length() * velocity.0.length()
-                                * current_drag
-                                * delta_time;
-                            let drag_force = - velocity.0.normalize() * drag_force;
-                            velocity.0 += drag_force;
+                                ppv.get_particle_sqr_speed(&velocity.0) * current_drag * delta_time;
+                            let direction = ppv.get_particle_direction(&velocity.0);
+                            velocity.0 -= direction * drag_force;
                         }
+                    }
+
+                    Noise(n) => {
+                        let offset = n.sample(
+                            Vec2::new(transform.translation.x, transform.translation.y),
+                            time.elapsed_seconds_wrapped(),
+                        ) * delta_time;
+                        velocity.0 += Vec3::new(offset.x, offset.y, 0.0);
                     }
                 }
             }

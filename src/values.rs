@@ -1,7 +1,7 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
-use bevy_math::{vec3, Quat, Vec3};
+use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
 use bevy_transform::prelude::Transform;
@@ -809,17 +809,119 @@ impl Default for SinWave {
     }
 }
 
+#[derive(Debug, Clone, Reflect, FromReflect)]
+/// Defines a flow field that will influence particles velocity over space and time.
+pub struct Noise2D {
+    /// Frequency of the noise.
+    ///
+    /// Increase for wiggling effect, decrease for smooth waves.
+    pub frequency: f32,
+    /// Amplitude of the noise.
+    ///
+    /// Defines how much the noise will affect the particles.
+    pub amplitude: f32,
+    /// Translation of the noise.
+    ///
+    /// Defines how much the noise will change over time in X and Y axis.
+    pub translation: Vec2,
+}
+impl Default for Noise2D {
+    fn default() -> Self {
+        Self {
+            frequency: 0.1,
+            amplitude: 100.0,
+            translation: Vec2::new(10.0, 8.5),
+        }
+    }
+}
+impl Noise2D {
+    /// Creates a new `Noise2D`
+    pub fn new(frequency: f32, amplitude: f32, translation: Vec2) -> Self {
+        Noise2D {
+            frequency,
+            amplitude,
+            translation,
+        }
+    }
 
+    /// evaluates the noise at a given position and time
+    pub fn sample(&self, position: Vec2, time: f32) -> Vec2 {
+        let n1 = 128.648; // random number useful to compute noise
+        let n2 = 0.8614;
+        let sampling_position = position + self.translation * time;
+        let sample_x = (sampling_position.x * self.frequency).sin_cos();
+        let sample_y = ((sampling_position.y + n1) * (self.frequency * n2)).sin_cos();
 
-/// Defines an acceleration_modifier that will affect particles velocity.
+        Vec2::new(sample_x.0 + sample_y.0, sample_x.1 + sample_y.0) * self.amplitude
+    }
+}
+
+/// Defines an acceleration modifier that will affect particles velocity.
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum VelocityModifier {
     /// f32 value that will use the direction of the current velocity.
-    Value(ValueOverTime),
+    ScalarAcceleration(ValueOverTime),
     /// Constant vector acceleration, such as gravity.
-    ConstantVector(Vec3),
+    Constant(Vec3),
     /// Force that will slow down the particles like air resistance.
     Drag(ValueOverTime),
+    /// Sinusoidal 2D Noise
+    Noise(Noise2D),
 }
 
+/// Setup optional values used so that every calculated values are not re-calculated for every modifiers that uses it
+pub struct PrecalculatedParticleVariables {
+    /// velocity squared length
+    pub particle_sqr_speed: Option<f32>,
+    /// velocity length
+    pub particle_speed: Option<f32>,
+    /// velocity normalized
+    pub particle_direction: Option<Vec3>,
+}
 
+impl PrecalculatedParticleVariables {
+    /// Creates a new empty `PrecalculatedParticleValues`
+    pub fn new() -> Self {
+        PrecalculatedParticleVariables {
+            particle_sqr_speed: None,
+            particle_speed: None,
+            particle_direction: None,
+        }
+    }
+    /// Return or Calculate particle squared speed (velocity squared length)
+    pub fn get_particle_sqr_speed(&mut self, velocity: &Vec3) -> f32 {
+        if let Some(x) = self.particle_sqr_speed {
+            return x;
+        }
+
+        let result = velocity.length_squared();
+        self.particle_sqr_speed = Some(result);
+        result
+    }
+    /// Return or Calculate particle speed (velocity length)
+    pub fn get_particle_speed(&mut self, velocity: &Vec3) -> f32 {
+        if let Some(x) = self.particle_speed {
+            return x;
+        }
+
+        let result = self.get_particle_sqr_speed(velocity).sqrt();
+        self.particle_speed = Some(result);
+        result
+    }
+    /// Return or Calculate particle direction (velocity normalized)
+    pub fn get_particle_direction(&mut self, velocity: &Vec3) -> Vec3 {
+        if let Some(x) = self.particle_direction {
+            return x;
+        }
+
+        let result = *velocity / self.get_particle_speed(velocity);
+        self.particle_direction = Some(result);
+        result
+    }
+}
+
+impl Default for PrecalculatedParticleVariables {
+    fn default() -> Self {
+        Self::new()
+    }
+}
