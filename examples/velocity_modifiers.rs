@@ -14,7 +14,7 @@ use bevy::{
 use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
-    CircleSegment, ColorOverTime, CurvePoint, Curve, JitteredValue, Noise2D, ParticleSystem,
+    CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, Noise2D, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
 };
 

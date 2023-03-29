@@ -452,13 +452,13 @@ impl RoughlyEqual<f64> for f64 {
     }
 }
 
-
 /// Defines a value at a specific point in a curve.
 ///
 /// ``point`` should be between `0.0` and `1.0` inclusive.
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct CurvePoint<T>
-where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+where
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 {
     /// Defines the value at a specified point in time.
     pub value: T,
@@ -469,7 +469,8 @@ where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 }
 
 impl<T> CurvePoint<T>
-where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+where
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 {
     /// Create a new [`CurvePoint`] of the specified ``value`` at the given ``point``.
     ///
@@ -492,7 +493,7 @@ where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 /// If most or all of the curves are only two components, it is likely better to use [`Curve::sample`]
 /// rather than [`Curve::sample_mut`], as both will take the same shortcuts, but [`Curve::sample`] does not
 /// require a mutable borrow and therefore can be used in parallel with other systems.
-/// 
+///
 /// ## Examples
 /// ```
 /// # use bevy::prelude::Color;
@@ -509,14 +510,16 @@ where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 /// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct Curve<T>
-where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+where
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 {
     points: Vec<CurvePoint<T>>,
     index_hint: usize,
 }
 
 impl<T> Curve<T>
-where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+where
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
 {
     /// Creates a new Curve from given [`CurvePoint`]s.
     ///
@@ -553,7 +556,6 @@ where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
             index_hint: 0,
         }
     }
-
 
     /// Get the value at ``pct`` percentage of the way through the curve.
     ///
@@ -686,7 +688,6 @@ where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
     }
 }
 
-
 /// Defines how a color changes over time
 ///
 /// Colors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
@@ -722,10 +723,7 @@ impl From<Range<Color>> for ColorOverTime {
 
 impl From<Vec<CurvePoint<Color>>> for ColorOverTime {
     fn from(gradient: Vec<CurvePoint<Color>>) -> Self {
-        if gradient.len() == 2
-            && gradient[0].point <= 0.0
-            && gradient[1].point >= 1.0
-        {
+        if gradient.len() == 2 && gradient[0].point <= 0.0 && gradient[1].point >= 1.0 {
             ColorOverTime::Lerp(Lerp::new(gradient[0].value, gradient[1].value))
         } else {
             ColorOverTime::Gradient(Curve::new(gradient))
@@ -746,10 +744,9 @@ impl ColorOverTime {
     }
 }
 
-
 /// Defines how a vector changes over time
 ///
-/// Vectors can either be constant, or follow a [`crate::values::Gradient`].
+/// Vectors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum VectorOverTime {
     /// Specifies that a color should remain a constant color over time.
@@ -782,10 +779,7 @@ impl From<Range<Vec3>> for VectorOverTime {
 
 impl From<Vec<CurvePoint<Vec3>>> for VectorOverTime {
     fn from(curve: Vec<CurvePoint<Vec3>>) -> Self {
-        if curve.len() == 2
-            && curve[0].point <= 0.0
-            && curve[1].point >= 1.0
-        {
+        if curve.len() == 2 && curve[0].point <= 0.0 && curve[1].point >= 1.0 {
             VectorOverTime::Lerp(Lerp::new(curve[0].value, curve[1].value))
         } else {
             VectorOverTime::Gradient(Curve::new(curve))
@@ -902,7 +896,10 @@ impl Default for Lerp<f32> {
 
 impl Default for Lerp<Vec3> {
     fn default() -> Self {
-        Self { a: Vec3::splat(0.0), b: Vec3::splat(1.0) }
+        Self {
+            a: Vec3::splat(0.0),
+            b: Vec3::splat(1.0),
+        }
     }
 }
 

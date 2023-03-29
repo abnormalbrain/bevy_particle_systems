@@ -8,8 +8,8 @@ use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
-    CircleSegment, ColorOverTime, CurvePoint, Curve, EmitterShape, JitteredValue,
-    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, Curve, CurvePoint, EmitterShape, JitteredValue, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 
 fn main() {

@@ -5,7 +5,7 @@ use bevy::{
     DefaultPlugins,
 };
 use bevy_particle_systems::{
-    ColorOverTime, CurvePoint, Curve, JitteredValue, ParticleBurst, ParticleSystem,
+    ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
 };
 

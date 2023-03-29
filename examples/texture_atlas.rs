@@ -6,7 +6,7 @@ use bevy_app::App;
 use bevy_asset::{AssetServer, Assets};
 use bevy_math::Vec2;
 use bevy_particle_systems::{
-    ColorOverTime, CurvePoint, Curve, JitteredValue, ParticleSystem, ParticleSystemBundle,
+    ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSystem, ParticleSystemBundle,
     ParticleSystemPlugin, ParticleTexture, Playing,
 };
 use bevy_sprite::TextureAtlas;

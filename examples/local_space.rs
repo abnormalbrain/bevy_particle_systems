@@ -12,8 +12,8 @@ use bevy_math::Quat;
 use bevy_time::Time;
 
 use bevy_particle_systems::{
-    CircleSegment, ColorOverTime, CurvePoint, Curve, JitteredValue, ParticleSpace,
-    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSpace, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 
 #[derive(Debug, Component)]

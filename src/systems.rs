@@ -288,7 +288,7 @@ pub(crate) fn particle_sprite_color(
             sprite.color = match &mut particle_color.0 {
                 ColorOverTime::Constant(color) => *color,
                 ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
-                ColorOverTime::Gradient(curve) =>  curve.sample_mut(pct),
+                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
             };
         },
     );
@@ -308,7 +308,7 @@ pub(crate) fn particle_texture_atlas_color(
             sprite.color = match &mut particle_color.0 {
                 ColorOverTime::Constant(color) => *color,
                 ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
-                ColorOverTime::Gradient(curve) =>  curve.sample_mut(pct),
+                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
             };
         },
     );
@@ -339,7 +339,7 @@ pub(crate) fn particle_transform(
 
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
-                use VelocityModifier::{Vector, Drag, Noise, Scalar};
+                use VelocityModifier::{Drag, Noise, Scalar, Vector};
                 match modifier {
                     Vector(v) => {
                         velocity.0 += v.at_lifetime_pct(lifetime_pct) * delta_time;
