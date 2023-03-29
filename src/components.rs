@@ -233,7 +233,7 @@ pub struct Particle {
 
     /// Velocity Modifiers of this particle.
     ///
-    /// This os copied from [`ParticleSystem::velocity_modifiers`] on spawn.
+    /// This is copied from [`ParticleSystem::velocity_modifiers`] on spawn.
     pub velocity_modifiers: Vec<VelocityModifier>,
 
     /// The speed, in radian per second, at which the particle rotates.

@@ -362,6 +362,13 @@ impl Lerpable<f32> for f32 {
     }
 }
 
+impl Lerpable<Vec3> for Vec3 {
+    #[inline]
+    fn lerp(&self, other: Vec3, pct: f32) -> Vec3 {
+        Vec3::lerp(*self, other, pct.clamp(0.0, 1.0))
+    }
+}
+
 impl Lerpable<Color> for Color {
     #[inline]
     fn lerp(&self, other: Color, pct: f32) -> Color {
@@ -389,6 +396,30 @@ impl Lerpable<Color> for Color {
 #[inline]
 fn lerp(a: f32, b: f32, pct: f32) -> f32 {
     a * (1.0 - pct) + b * pct
+}
+
+/// Define the default value returned by a [`Curve`] if misconfigured.
+pub trait ErrorDefault<T> {
+    /// Define the default value returned by a [`Curve`] if misconfigured.
+    fn get_error_default() -> T;
+}
+
+impl ErrorDefault<f32> for f32 {
+    fn get_error_default() -> f32 {
+        0.0
+    }
+}
+
+impl ErrorDefault<Vec3> for Vec3 {
+    fn get_error_default() -> Vec3 {
+        Vec3::splat(0.0)
+    }
+}
+
+impl ErrorDefault<Color> for Color {
+    fn get_error_default() -> Color {
+        Color::FUCHSIA
+    }
 }
 
 /// Determines whether or not two values of an imprecise type are close enough to call equal.
@@ -421,71 +452,79 @@ impl RoughlyEqual<f64> for f64 {
     }
 }
 
-/// Defines a color at a specific point in a gradient.
+
+/// Defines a value at a specific point in a curve.
 ///
 /// ``point`` should be between `0.0` and `1.0` inclusive.
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub struct ColorPoint {
-    /// Defines the [`Color`] value at a specified point in time.
-    pub color: Color,
-
-    /// Defines the point in time at which exactly this [`Color`] will be the presented value.
+pub struct CurvePoint<T>
+where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+{
+    /// Defines the value at a specified point in time.
+    pub value: T,
+    /// Defines the point in time at which exactly ``value`` will be the presented value.
     ///
-    /// The returned color of an evaluation of the gradient will be lerped between the two closest [`ColorPoint`]s based on their ``point`` value.
+    /// The returned value of an evaluation of the curve will be lerped between the two closest [`CurvePoint`]s based on their ``point`` value.
     pub point: f32,
 }
 
-impl ColorPoint {
-    /// Create a new [`ColorPoint`] of the specified [`Color`] at the given ``point``.
+impl<T> CurvePoint<T>
+where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+{
+    /// Create a new [`CurvePoint`] of the specified ``value`` at the given ``point``.
     ///
     /// ``point`` should be between `0.0` and `1.0` inclusive.
-    pub fn new(color: Color, point: f32) -> Self {
-        Self { color, point }
+    pub fn new(value: T, point: f32) -> Self {
+        Self { value, point }
     }
 }
 
-/// Defines a gradient as a series of color points.
+/// Defines a curve as a series of curve points.
 ///
-/// A [`Gradient`] should always contain at least two [`ColorPoint`]s,
+/// A [`Curve`] should always contain at least two [`CurvePoint`]s,
 /// one at `0.0` and one at `1.0`.
 ///
-/// Computing the gradient without state is a linear operation and can add up to be
-/// somewhat expensive. [`Gradient::get_color_mut`] can be used in these scenarios to potentialy
-/// improve performance, as long as the particular gradient only moves forward in time. This
-/// will use an `index_hint` state to skip to where the previous call was in gradient detection.
+/// Computing the curve without state is a linear operation and can add up to be
+/// somewhat expensive. [`Curve::sample_mut`] can be used in these scenarios to potentialy
+/// improve performance, as long as the particular curve only moves forward in time. This
+/// will use an `index_hint` state to skip to where the previous call was in curve detection.
 ///
-/// If most or all of the gradients are only two components, it is likely better to use [`Gradient::get_color`]
-/// rather than [`Gradient::get_color_mut`], as both will take the same shortcuts, but [`Gradient::get_color`] does not
+/// If most or all of the curves are only two components, it is likely better to use [`Curve::sample`]
+/// rather than [`Curve::sample_mut`], as both will take the same shortcuts, but [`Curve::sample`] does not
 /// require a mutable borrow and therefore can be used in parallel with other systems.
-///
+/// 
 /// ## Examples
 /// ```
 /// # use bevy::prelude::Color;
-/// # use bevy_particle_systems::values::{ColorPoint, Gradient};
-/// let gradient = Gradient::new(vec![ColorPoint::new(Color::BLACK, 0.0), ColorPoint::new(Color::WHITE, 1.0)]);
-/// assert_eq!(gradient.get_color(0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
+/// # use bevy_particle_systems::values::{CurvePoint, Curve};
+/// let gradient = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 1.0)]);
+/// assert_eq!(curve.sample(0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
 ///
-/// let three_color_gradient = Gradient::new(vec![ColorPoint::new(Color::BLACK, 0.0), ColorPoint::new(Color::WHITE, 0.5), ColorPoint::new(Color::BLACK, 1.0)]);
-/// assert_eq!(three_color_gradient.get_color(0.5), Color::rgba(1.0, 1.0, 1.0, 1.0));
-/// assert_eq!(three_color_gradient.get_color(0.75), Color::rgba(0.5, 0.5, 0.5, 1.0));
+/// let three_color_curve = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 0.5), CurvePoint::new(Color::BLACK, 1.0)]);
+/// assert_eq!(three_color_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 1.0));
+/// assert_eq!(three_color_curve.sample(0.75), Color::rgba(0.5, 0.5, 0.5, 1.0));
 ///
-/// let alpha_gradient = Gradient::new(vec![ColorPoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), ColorPoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
-/// assert_eq!(alpha_gradient.get_color(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
+/// let alpha_curve = Curve::new(vec![CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
+/// assert_eq!(alpha_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
 /// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub struct Gradient {
-    points: Vec<ColorPoint>,
+pub struct Curve<T>
+where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+{
+    points: Vec<CurvePoint<T>>,
     index_hint: usize,
 }
 
-impl Gradient {
-    /// Creates a new Gradient from given [`ColorPoint`]s.
+impl<T> Curve<T>
+where T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+{
+    /// Creates a new Curve from given [`CurvePoint`]s.
     ///
     /// Points should be in sorted, ascending order. There must be at least two points.
     /// The first point must be at 0.0 and the last at 1.0.
     ///
     /// This function panics in dev builds if this is not the case.
-    pub fn new(points: Vec<ColorPoint>) -> Self {
+    pub fn new(points: Vec<CurvePoint<T>>) -> Self {
         debug_assert!(
             points.len() >= 2,
             "Cannot have a gradient with less than two colors"
@@ -515,34 +554,35 @@ impl Gradient {
         }
     }
 
-    /// Get the color at ``pct`` percentage of the way through the gradient.
+
+    /// Get the value at ``pct`` percentage of the way through the curve.
     ///
     /// ``pct`` will be clamped between 0.0 and 1.0.
     ///
-    /// Returns [`bevy_render::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
-    /// that the gradient is misconfigured.
+    /// Returns [`ErrorDefault::get_error_default`] as a fallback if no value is found for ``pct``. This indicates
+    /// that the curve is misconfigured.
     ///
-    /// Sets the internal `index_hint` to the index of the color found so subsequent calls of a `pct` greater than the
-    /// current call will be faster. This is only useful for gradients which have more than two [`ColorPoint`]s, otherwise,
-    /// use [`Gradient::get_color`] instead. If `pct` is less than a previous call for this gradient, `index_hint` will be reset. The
+    /// Sets the internal `index_hint` to the index of the value found so subsequent calls of a `pct` greater than the
+    /// current call will be faster. This is only useful for curvess which have more than two [`CurvePoint`]s, otherwise,
+    /// use [`Curve::sample`] instead. If `pct` is less than a previous call for this curve, `index_hint` will be reset. The
     /// resulting color for these call should always be correct, but may result in a performance hit if done out of order.
     #[inline]
-    pub fn get_color_mut(&mut self, pct: f32) -> Color {
+    pub fn sample_mut(&mut self, pct: f32) -> T {
         let clamped_pct = pct.clamp(0.0, 1.0);
 
         // Shortcuts
         if clamped_pct == 0.0 {
-            return self.points[0].color;
+            return self.points[0].value;
         }
 
         if clamped_pct.roughly_equal(1.0) {
-            return self.points[self.points.len() - 1].color;
+            return self.points[self.points.len() - 1].value;
         }
 
-        // If there's only two colors just directly lerp between them.
+        // If there's only two values just directly lerp between them.
         if self.points.len() == 2 {
-            return self.points[0].color.lerp(
-                self.points[1].color,
+            return self.points[0].value.lerp(
+                self.points[1].value,
                 (clamped_pct - self.points[0].point)
                     / (self.points[1].point - self.points[0].point).abs(),
             );
@@ -554,87 +594,87 @@ impl Gradient {
         }
 
         let mut current_point = self.points[self.index_hint].point;
-        let mut current_color = self.points[self.index_hint].color;
+        let mut current_value = self.points[self.index_hint].value;
         let mut next_point = self.points[self.index_hint + 1].point;
-        let mut next_color = self.points[self.index_hint + 1].color;
+        let mut next_value = self.points[self.index_hint + 1].value;
 
         if self.index_hint <= self.points.len() - 2
             && clamped_pct >= current_point
             && clamped_pct < next_point
         {
-            return current_color.lerp(
-                next_color,
+            return current_value.lerp(
+                next_value,
                 (clamped_pct - current_point) / (next_point - current_point).abs(),
             );
         }
 
-        // Find the first color where the point is less than `pct`, starting from the last index that was used,
-        // indicating we need to lerp between that color and the next color. This requires points in the vec to
+        // Find the first value where the point is less than `pct`, starting from the last index that was used,
+        // indicating we need to lerp between that value and the next value. This requires points in the vec to
         // be sorted to behave correctly.
         for i in self.index_hint..self.points.len() - 1 {
             current_point = self.points[i].point;
-            current_color = self.points[i].color;
+            current_value = self.points[i].value;
             next_point = self.points[i + 1].point;
-            next_color = self.points[i + 1].color;
+            next_value = self.points[i + 1].value;
 
             if current_point.roughly_equal(clamped_pct) {
-                return current_color;
+                return current_value;
             }
 
             if clamped_pct > current_point && clamped_pct < next_point {
                 self.index_hint = i;
-                return current_color.lerp(
-                    next_color,
+                return current_value.lerp(
+                    next_value,
                     (clamped_pct - current_point) / (next_point - current_point).abs(),
                 );
             }
             continue;
         }
 
-        Color::FUCHSIA
+        T::get_error_default()
     }
 
-    /// Get the color at ``pct`` percentage of the way through the gradient.
+    /// Get the value at ``pct`` percentage of the way through the curve.
     ///
     /// ``pct`` will be clamped between 0.0 and 1.0.
     ///
-    /// Returns [`bevy_render::prelude::Color::FUCHSIA`] as a fallback if no color is found for ``pct``. This indicates
-    /// that the gradient is misconfigured.
+    /// Returns [`ErrorDefault::get_error_default`] as a fallback if no value is found for ``pct``. This indicates
+    /// that the curve is misconfigured.
     ///
-    /// This operation is linear with the number of [`ColorPoint`]s contained in the gradient. If gradients contain more than
-    /// two [`ColorPoint`]s, it may be faster to use `get_color_mut`, which does index tracking.
-    pub fn get_color(&self, pct: f32) -> Color {
+    /// This operation is linear with the number of [`CurvePoint`]s contained in the curve. If curvess contain more than
+    /// two [`CurvePoint`]s, it may be faster to use `sample_mut`, which does index tracking.
+    pub fn sample(&self, pct: f32) -> T {
         let clamped_pct = pct.clamp(0.0, 1.0);
 
         // Shortcuts
         if clamped_pct == 0.0 {
-            return self.points[0].color;
+            return self.points[0].value;
         }
 
         if clamped_pct.roughly_equal(1.0) {
-            return self.points[self.points.len() - 1].color;
+            return self.points[self.points.len() - 1].value;
         }
 
         // If there's only two colors just directly lerp between them.
         if self.points.len() == 2 {
-            return self.points[0].color.lerp(
-                self.points[1].color,
+            return self.points[0].value.lerp(
+                self.points[1].value,
                 (clamped_pct - self.points[0].point)
                     / (self.points[1].point - self.points[0].point).abs(),
             );
         }
 
-        // Find the first color where the point is less than `pct`, indicating we need to
-        // lerp between that color and the next color. This requires points in the vec to
+        // Find the first value where the point is less than `pct`, indicating we need to
+        // lerp between that value and the next value. This requires points in the vec to
         // be sorted to behave correctly.
         for i in 0..self.points.len() - 1 {
             if self.points[i].point.roughly_equal(clamped_pct) {
-                return self.points[i].color;
+                return self.points[i].value;
             }
 
             if clamped_pct > self.points[i].point && clamped_pct < self.points[i + 1].point {
-                return self.points[i].color.lerp(
-                    self.points[i + 1].color,
+                return self.points[i].value.lerp(
+                    self.points[i + 1].value,
                     (clamped_pct - self.points[i].point)
                         / (self.points[i + 1].point - self.points[i].point).abs(),
                 );
@@ -642,20 +682,24 @@ impl Gradient {
             continue;
         }
 
-        Color::FUCHSIA
+        T::get_error_default()
     }
 }
 
+
 /// Defines how a color changes over time
 ///
-/// Colors can either be constant, or follow a [`crate::values::Gradient`].
+/// Colors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ColorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Color),
 
-    /// Specifies that a color will follow a gradient of two or more colors over time.
-    Gradient(Gradient),
+    /// Specifies that a color should be linearly interpolated between two colors over time.
+    Lerp(Lerp<Color>),
+
+    /// Specifies that a color will follow a curve of two or more colors over time.
+    Gradient(Curve<Color>),
 }
 
 impl Default for ColorOverTime {
@@ -670,9 +714,22 @@ impl From<Color> for ColorOverTime {
     }
 }
 
-impl From<Vec<ColorPoint>> for ColorOverTime {
-    fn from(gradient: Vec<ColorPoint>) -> Self {
-        ColorOverTime::Gradient(Gradient::new(gradient))
+impl From<Range<Color>> for ColorOverTime {
+    fn from(r: Range<Color>) -> Self {
+        ColorOverTime::Lerp(Lerp::new(r.start, r.end))
+    }
+}
+
+impl From<Vec<CurvePoint<Color>>> for ColorOverTime {
+    fn from(gradient: Vec<CurvePoint<Color>>) -> Self {
+        if gradient.len() == 2
+            && gradient[0].point <= 0.0
+            && gradient[1].point >= 1.0
+        {
+            ColorOverTime::Lerp(Lerp::new(gradient[0].value, gradient[1].value))
+        } else {
+            ColorOverTime::Gradient(Curve::new(gradient))
+        }
     }
 }
 
@@ -682,8 +739,69 @@ impl ColorOverTime {
     /// ``pct`` should be between `0.0` and `1.0` inclusive.
     pub fn at_lifetime_pct(&self, pct: f32) -> Color {
         match self {
-            Self::Constant(color) => *color,
-            Self::Gradient(gradient) => gradient.get_color(pct),
+            Self::Constant(c) => *c,
+            Self::Lerp(l) => l.a.lerp(l.b, pct),
+            Self::Gradient(g) => g.sample(pct),
+        }
+    }
+}
+
+
+/// Defines how a vector changes over time
+///
+/// Vectors can either be constant, or follow a [`crate::values::Gradient`].
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum VectorOverTime {
+    /// Specifies that a color should remain a constant color over time.
+    Constant(Vec3),
+
+    /// Specifies that a color should be linearly interpolated between two color over time.
+    Lerp(Lerp<Vec3>),
+
+    /// Specifies that a color will follow a curve of two or more colors over time.
+    Gradient(Curve<Vec3>),
+}
+
+impl Default for VectorOverTime {
+    fn default() -> Self {
+        VectorOverTime::Constant(Vec3::splat(0.0))
+    }
+}
+
+impl From<Vec3> for VectorOverTime {
+    fn from(vector: Vec3) -> Self {
+        VectorOverTime::Constant(vector)
+    }
+}
+
+impl From<Range<Vec3>> for VectorOverTime {
+    fn from(r: Range<Vec3>) -> Self {
+        VectorOverTime::Lerp(Lerp::new(r.start, r.end))
+    }
+}
+
+impl From<Vec<CurvePoint<Vec3>>> for VectorOverTime {
+    fn from(curve: Vec<CurvePoint<Vec3>>) -> Self {
+        if curve.len() == 2
+            && curve[0].point <= 0.0
+            && curve[1].point >= 1.0
+        {
+            VectorOverTime::Lerp(Lerp::new(curve[0].value, curve[1].value))
+        } else {
+            VectorOverTime::Gradient(Curve::new(curve))
+        }
+    }
+}
+
+impl VectorOverTime {
+    /// Evaluate a color at the specified lifetime percentage.
+    ///
+    /// ``pct`` should be between `0.0` and `1.0` inclusive.
+    pub fn at_lifetime_pct(&self, pct: f32) -> Vec3 {
+        match self {
+            Self::Constant(v) => *v,
+            Self::Lerp(l) => l.a.lerp(l.b, pct),
+            Self::Gradient(g) => g.sample(pct),
         }
     }
 }
@@ -713,7 +831,10 @@ impl ColorOverTime {
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ValueOverTime {
     /// Specifies the value should be linearly interpolated between two values over time.
-    Lerp(Lerp),
+    Lerp(Lerp<f32>),
+
+    /// Specifies that a color will follow a gradient of two or more colors over time.
+    Curve(Curve<f32>),
 
     /// Specifies that the value should follow a sinusoidal wave over time.
     ///
@@ -736,11 +857,18 @@ impl From<Range<f32>> for ValueOverTime {
     }
 }
 
+impl From<Vec<CurvePoint<f32>>> for ValueOverTime {
+    fn from(curve: Vec<CurvePoint<f32>>) -> Self {
+        ValueOverTime::Curve(Curve::new(curve))
+    }
+}
+
 impl ValueOverTime {
     /// Gets the value at the specified percentage of its lifetime
     pub fn at_lifetime_pct(&self, pct: f32) -> f32 {
         match self {
             Self::Lerp(l) => l.a.lerp(l.b, pct),
+            Self::Curve(c) => c.sample(pct),
             Self::Sin(s) => {
                 s.amplitude * (s.period * (pct * std::f32::consts::TAU) - s.phase_shift).sin()
                     + s.vertical_shift
@@ -752,23 +880,38 @@ impl ValueOverTime {
 
 /// Defines a value that will linearly move between ``a`` and ``b`` over its configured lifetime.
 #[derive(Debug, Clone, Reflect, FromReflect)]
-pub struct Lerp {
+pub struct Lerp<T: Lerpable<T>> {
     /// The starting value, returned when ``pct`` is `0.0`.
-    pub a: f32,
+    pub a: T,
     /// The ending value, returned when ``pct`` is `1.0`.
-    pub b: f32,
+    pub b: T,
 }
 
-impl Lerp {
+impl<T: Lerpable<T>> Lerp<T> {
     /// Create a new [`Lerp`] to move between ``a`` and ``b`` values over time.
-    pub const fn new(a: f32, b: f32) -> Self {
+    pub const fn new(a: T, b: T) -> Self {
         Self { a, b }
     }
 }
 
-impl Default for Lerp {
+impl Default for Lerp<f32> {
     fn default() -> Self {
         Self { a: 0.0, b: 1.0 }
+    }
+}
+
+impl Default for Lerp<Vec3> {
+    fn default() -> Self {
+        Self { a: Vec3::splat(0.0), b: Vec3::splat(1.0) }
+    }
+}
+
+impl Default for Lerp<Color> {
+    fn default() -> Self {
+        Self {
+            a: Color::BLACK,
+            b: Color::WHITE,
+        }
     }
 }
 
@@ -844,7 +987,7 @@ impl Noise2D {
         }
     }
 
-    /// evaluates the noise at a given position and time
+    /// Evaluates the noise at a given position and time
     pub fn sample(&self, position: Vec2, time: f32) -> Vec2 {
         let n1 = 128.648; // random number useful to compute noise
         let n2 = 0.8614;
@@ -860,9 +1003,9 @@ impl Noise2D {
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum VelocityModifier {
     /// f32 value that will use the direction of the current velocity.
-    ScalarAcceleration(ValueOverTime),
+    Scalar(ValueOverTime),
     /// Constant vector acceleration, such as gravity.
-    Constant(Vec3),
+    Vector(VectorOverTime),
     /// Force that will slow down the particles like air resistance.
     Drag(ValueOverTime),
     /// Sinusoidal 2D Noise

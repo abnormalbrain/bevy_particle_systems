@@ -6,6 +6,7 @@ use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
+use crate::Lerpable;
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -284,12 +285,11 @@ pub(crate) fn particle_sprite_color(
     particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
-            match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => sprite.color = *color,
-                ColorOverTime::Gradient(gradient) => {
-                    sprite.color = gradient.get_color_mut(pct);
-                }
-            }
+            sprite.color = match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => *color,
+                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
+                ColorOverTime::Gradient(curve) =>  curve.sample_mut(pct),
+            };
         },
     );
 }
@@ -305,12 +305,11 @@ pub(crate) fn particle_texture_atlas_color(
     particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
-            match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => sprite.color = *color,
-                ColorOverTime::Gradient(gradient) => {
-                    sprite.color = gradient.get_color_mut(pct);
-                }
-            }
+            sprite.color = match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => *color,
+                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
+                ColorOverTime::Gradient(curve) =>  curve.sample_mut(pct),
+            };
         },
     );
 }
@@ -329,10 +328,10 @@ pub(crate) fn particle_transform(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
-            let delta_time = if particle.use_scaled_time {
-                time.delta_seconds()
+            let (delta_time, elapsed_time) = if particle.use_scaled_time {
+                (time.delta_seconds(), time.elapsed_seconds_wrapped())
             } else {
-                time.raw_delta_seconds()
+                (time.raw_delta_seconds(), time.raw_elapsed_seconds_wrapped())
             };
 
             // inititalize precalculated values
@@ -340,13 +339,13 @@ pub(crate) fn particle_transform(
 
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
-                use VelocityModifier::{Constant, Drag, Noise, ScalarAcceleration};
+                use VelocityModifier::{Vector, Drag, Noise, Scalar};
                 match modifier {
-                    Constant(v) => {
-                        velocity.0 += *v * delta_time;
+                    Vector(v) => {
+                        velocity.0 += v.at_lifetime_pct(lifetime_pct) * delta_time;
                     }
 
-                    ScalarAcceleration(v) => {
+                    Scalar(v) => {
                         let direction = ppv.get_particle_direction(&velocity.0);
                         velocity.0 += v.at_lifetime_pct(lifetime_pct) * direction * delta_time;
                     }
@@ -364,7 +363,7 @@ pub(crate) fn particle_transform(
                     Noise(n) => {
                         let offset = n.sample(
                             Vec2::new(transform.translation.x, transform.translation.y),
-                            time.elapsed_seconds_wrapped(),
+                            elapsed_time,
                         ) * delta_time;
                         velocity.0 += Vec3::new(offset.x, offset.y, 0.0);
                     }

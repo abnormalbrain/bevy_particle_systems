@@ -14,7 +14,7 @@ use bevy::{
 use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
-    CircleSegment, ColorOverTime, ColorPoint, Gradient, JitteredValue, Noise2D, ParticleSystem,
+    CircleSegment, ColorOverTime, CurvePoint, Curve, JitteredValue, Noise2D, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
 };
 
@@ -50,7 +50,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(300.0, -100.0..100.0),
                 velocity_modifiers: vec![
                     // This will make the particles go up
-                    Constant(Vec3::new(0.0, 250.0, 0.0)),
+                    Vector(Vec3::new(0.0, 250.0, 0.0).into()),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Constant(Color::RED),
@@ -134,7 +134,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(300.0, -100.0..100.0),
                 velocity_modifiers: vec![
                     // This will make the particles go up
-                    Constant(Vec3::new(0.0, 250.0, 0.0)),
+                    Vector(Vec3::new(0.0, 250.0, 0.0).into()),
                     // This will make them slow down
                     Drag(0.01.into()),
                     // this will make particles move randomly over time
@@ -144,11 +144,11 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     }),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
-                color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::WHITE, 0.0),
-                    ColorPoint::new(Color::rgba(0.8, 0.2, 0.0, 1.0), 0.05),
-                    ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.25), 0.5),
-                    ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                color: ColorOverTime::Gradient(Curve::new(vec![
+                    CurvePoint::new(Color::WHITE, 0.0),
+                    CurvePoint::new(Color::rgba(0.8, 0.2, 0.0, 1.0), 0.05),
+                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.25), 0.5),
+                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 scale: (8.0..50.0).into(),
                 rotation_speed: 2.0.into(),
