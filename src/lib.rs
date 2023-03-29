@@ -43,9 +43,9 @@
 //!             spawn_rate_per_second: 25.0.into(),
 //!             initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
 //!             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
-//!             color: ColorOverTime::Gradient(Gradient::new(vec![
-//!                 ColorPoint::new(Color::WHITE, 0.0),
-//!                 ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+//!             color: ColorOverTime::Gradient(Curve::new(vec![
+//!                 CurvePoint::new(Color::WHITE, 0.0),
+//!                 CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
 //!             ])),
 //!             looping: true,
 //!             system_duration_seconds: 10.0,

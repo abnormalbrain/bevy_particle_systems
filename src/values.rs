@@ -498,7 +498,7 @@ where
 /// ```
 /// # use bevy::prelude::Color;
 /// # use bevy_particle_systems::values::{CurvePoint, Curve};
-/// let gradient = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 1.0)]);
+/// let curve = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 1.0)]);
 /// assert_eq!(curve.sample(0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
 ///
 /// let three_color_curve = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 0.5), CurvePoint::new(Color::BLACK, 1.0)]);
