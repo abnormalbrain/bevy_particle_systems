@@ -6,7 +6,7 @@ use bevy_app::App;
 use bevy_asset::{AssetServer, Assets};
 use bevy_math::Vec2;
 use bevy_particle_systems::{
-    ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSystem, ParticleSystemBundle,
+    ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSystem, ParticleSystemBundle,
     ParticleSystemPlugin, ParticleTexture, Playing,
 };
 use bevy_sprite::TextureAtlas;
@@ -45,9 +45,9 @@ fn startup_system(
                 lifetime: 3.0.into(),
                 initial_speed: JitteredValue::jittered(150.0, -50.0..50.0),
                 scale: 1.5.into(),
-                color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::WHITE, 0.0),
-                    ColorPoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0),
+                color: ColorOverTime::Gradient(Curve::new(vec![
+                    CurvePoint::new(Color::WHITE, 0.0),
+                    CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0),
                 ])),
                 ..Default::default()
             },

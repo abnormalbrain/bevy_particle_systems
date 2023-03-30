@@ -12,8 +12,8 @@ use bevy_math::Quat;
 use bevy_time::Time;
 
 use bevy_particle_systems::{
-    CircleSegment, ColorOverTime, ColorPoint, Gradient, JitteredValue, ParticleSpace,
-    ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSpace, ParticleSystem,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
 
 #[derive(Debug, Component)]
@@ -48,9 +48,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
-                color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::RED, 0.0),
-                    ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                color: ColorOverTime::Gradient(Curve::new(vec![
+                    CurvePoint::new(Color::RED, 0.0),
+                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,
                 system_duration_seconds: 10.0,
@@ -79,9 +79,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
-                color: ColorOverTime::Gradient(Gradient::new(vec![
-                    ColorPoint::new(Color::GREEN, 0.0),
-                    ColorPoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                color: ColorOverTime::Gradient(Curve::new(vec![
+                    CurvePoint::new(Color::GREEN, 0.0),
+                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,
                 system_duration_seconds: 10.0,

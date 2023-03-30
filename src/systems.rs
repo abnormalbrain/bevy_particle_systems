@@ -1,17 +1,18 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
-use bevy_math::{Quat, Vec3};
+use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
+use crate::Lerpable;
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
-    values::ColorOverTime,
+    values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
     DistanceTraveled, ParticleTexture,
 };
 
@@ -152,8 +153,7 @@ pub fn particle_spawner(
                             use_scaled_time: particle_system.use_scaled_time,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            acceleration: particle_system.acceleration,
-                            drag: particle_system.drag.clone(),
+                            velocity_modifiers: particle_system.velocity_modifiers.clone(),
                             despawn_with_parent: particle_system.despawn_particles_with_system,
                         },
                         velocity: Velocity::new(
@@ -209,8 +209,7 @@ pub fn particle_spawner(
                                 use_scaled_time: particle_system.use_scaled_time,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                acceleration: particle_system.acceleration,
-                                drag: particle_system.drag.clone(),
+                                velocity_modifiers: particle_system.velocity_modifiers.clone(),
                                 despawn_with_parent: particle_system.despawn_particles_with_system,
                             },
                             velocity: Velocity::new(
@@ -286,12 +285,11 @@ pub(crate) fn particle_sprite_color(
     particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
-            match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => sprite.color = *color,
-                ColorOverTime::Gradient(gradient) => {
-                    sprite.color = gradient.get_color_mut(pct);
-                }
-            }
+            sprite.color = match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => *color,
+                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
+                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
+            };
         },
     );
 }
@@ -307,12 +305,11 @@ pub(crate) fn particle_texture_atlas_color(
     particle_query.par_iter_mut().for_each_mut(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
-            match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => sprite.color = *color,
-                ColorOverTime::Gradient(gradient) => {
-                    sprite.color = gradient.get_color_mut(pct);
-                }
-            }
+            sprite.color = match &mut particle_color.0 {
+                ColorOverTime::Constant(color) => *color,
+                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
+                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
+            };
         },
     );
 }
@@ -331,24 +328,47 @@ pub(crate) fn particle_transform(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
-            let delta_time = if particle.use_scaled_time {
-                time.delta_seconds()
+            let (delta_time, elapsed_time) = if particle.use_scaled_time {
+                (time.delta_seconds(), time.elapsed_seconds_wrapped())
             } else {
-                time.raw_delta_seconds()
+                (time.raw_delta_seconds(), time.raw_elapsed_seconds_wrapped())
             };
 
-            // Apply acceleration
-            velocity.0 += particle.acceleration * delta_time;
+            // inititalize precalculated values
+            let mut ppv = PrecalculatedParticleVariables::new();
 
-            // Apply drag
-            let current_drag = particle.drag.at_lifetime_pct(lifetime_pct);
-            if current_drag > 0.0 {
-                let drag_force = velocity.0.length_squared() * current_drag * delta_time;
-                let drag_force = -velocity.0.normalize() * drag_force;
-                velocity.0 += drag_force;
+            // Apply velocity modifiers to velocity
+            for modifier in &particle.velocity_modifiers {
+                use VelocityModifier::{Drag, Noise, Scalar, Vector};
+                match modifier {
+                    Vector(v) => {
+                        velocity.0 += v.at_lifetime_pct(lifetime_pct) * delta_time;
+                    }
+
+                    Scalar(v) => {
+                        let direction = ppv.get_particle_direction(&velocity.0);
+                        velocity.0 += v.at_lifetime_pct(lifetime_pct) * direction * delta_time;
+                    }
+
+                    Drag(v) => {
+                        let current_drag = v.at_lifetime_pct(lifetime_pct);
+                        if current_drag > 0.0 {
+                            let drag_force =
+                                ppv.get_particle_sqr_speed(&velocity.0) * current_drag * delta_time;
+                            let direction = ppv.get_particle_direction(&velocity.0);
+                            velocity.0 -= direction * drag_force;
+                        }
+                    }
+
+                    Noise(n) => {
+                        let offset = n.sample(
+                            Vec2::new(transform.translation.x, transform.translation.y),
+                            elapsed_time,
+                        ) * delta_time;
+                        velocity.0 += Vec3::new(offset.x, offset.y, 0.0);
+                    }
+                }
             }
-
-            // Apply velocity to translation
             transform.translation += velocity.0 * delta_time;
 
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
