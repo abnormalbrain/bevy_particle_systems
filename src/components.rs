@@ -10,7 +10,7 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     values::{ColorOverTime, JitteredValue, ValueOverTime},
-    EmitterShape, VelocityModifier, AtlasIndex,
+    AtlasIndex, EmitterShape, VelocityModifier,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
@@ -85,7 +85,11 @@ impl AnimatedIndex {
     }
     /// Returns the index corresponding at a given time in the animation
     pub fn get_at_time(&self, time: f32) -> usize {
-        let steps_passed = (time / self.time_step).floor() as usize;
+        // Disabling `cast_possible_truncation` so we can truncate the f32.
+        // Disabling `pedantic` because we use `abs()` before truncation. No sign loss possible.
+        #[allow(clippy::cast_possible_truncation, clippy::pedantic)]
+        // take only the integer part.
+        let steps_passed = (time / self.time_step).abs() as usize;
         let sample_idx = self.step_offset + steps_passed;
 
         if sample_idx < self.indices.len() {
@@ -95,8 +99,6 @@ impl AnimatedIndex {
         }
     }
 }
-
-
 
 /// Defines the parameters of how a system and its particles behave.
 ///

@@ -267,8 +267,7 @@ impl From<usize> for AtlasIndex {
     }
 }
 
-impl From<Range<usize>> for AtlasIndex
-{
+impl From<Range<usize>> for AtlasIndex {
     fn from(r: Range<usize>) -> Self {
         AtlasIndex::Random(r.into())
     }
@@ -313,7 +312,7 @@ impl From<(Range<usize>, f32, usize)> for AtlasIndex {
 impl From<(Vec<usize>, f32)> for AtlasIndex {
     fn from((indices, time): (Vec<usize>, f32)) -> Self {
         AtlasIndex::Animated(AnimatedIndex {
-            indices: indices,
+            indices,
             time_step: time,
             step_offset: 0,
         })
@@ -323,7 +322,7 @@ impl From<(Vec<usize>, f32)> for AtlasIndex {
 impl From<(Vec<usize>, f32, usize)> for AtlasIndex {
     fn from((indices, time, step): (Vec<usize>, f32, usize)) -> Self {
         AtlasIndex::Animated(AnimatedIndex {
-            indices: indices,
+            indices,
             time_step: time,
             step_offset: step,
         })
@@ -333,10 +332,8 @@ impl From<(Vec<usize>, f32, usize)> for AtlasIndex {
 impl From<&TextureAtlas> for AtlasIndex {
     fn from(atlas: &TextureAtlas) -> Self {
         AtlasIndex::Animated(AnimatedIndex {
-            indices: {
-                (0..(atlas.len())).collect()
-            },
-            time_step: 1.0/6.0, // 1/6 seconds is fine
+            indices: { (0..(atlas.len())).collect() },
+            time_step: 1.0 / 6.0, // 1/6 seconds is fine
             step_offset: 0,
         })
     }
@@ -345,9 +342,7 @@ impl From<&TextureAtlas> for AtlasIndex {
 impl From<(&TextureAtlas, f32)> for AtlasIndex {
     fn from((atlas, time): (&TextureAtlas, f32)) -> Self {
         AtlasIndex::Animated(AnimatedIndex {
-            indices: {
-                (0..atlas.len()).collect()
-            },
+            indices: { (0..atlas.len()).collect() },
             time_step: time,
             step_offset: 0,
         })

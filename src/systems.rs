@@ -1,13 +1,11 @@
-use bevy_asset::Assets;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite, TextureAtlas};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
-use crate::{Lerpable, AtlasIndex, AnimatedIndex};
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -16,6 +14,7 @@ use crate::{
     values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
     DistanceTraveled, ParticleTexture,
 };
+use crate::{AnimatedIndex, AtlasIndex, Lerpable};
 
 /// System label attached to the `SystemSet` provided in this plugin
 ///

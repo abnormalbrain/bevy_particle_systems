@@ -1,21 +1,21 @@
 //! This example demonstrates the texture atlas works:
 //! [`TextureAtlas`] index can be animated, constant, or randomly choosen.
 //! Here we use the same sprite as this Bevy example: https://bevyengine.org/examples/2d/sprite-sheet/
-//! 
+//!
 //! For a constant index, use "2.into()". For a randomly choosen index, use "vec![2, 3, 10].into()"
 
 use bevy::{
-    prelude::{Camera2dBundle, ClearColor, Color, Commands, Res, ResMut, Transform, ImagePlugin},
+    prelude::{Camera2dBundle, ClearColor, Color, Commands, ImagePlugin, Res, ResMut, Transform},
     DefaultPlugins,
 };
 use bevy_app::{App, PluginGroup};
 use bevy_asset::{AssetServer, Assets};
 use bevy_math::Vec2;
 use bevy_particle_systems::{
-    ColorOverTime, Curve, CurvePoint, ParticleSystem, ParticleSystemBundle,
-    ParticleSystemPlugin, ParticleTexture, Playing, CircleSegment,
+    CircleSegment, ColorOverTime, Curve, CurvePoint, ParticleSystem, ParticleSystemBundle,
+    ParticleSystemPlugin, ParticleTexture, Playing,
 };
-use bevy_sprite::{TextureAtlas, SpriteBundle, Sprite};
+use bevy_sprite::{Sprite, SpriteBundle, TextureAtlas};
 
 fn main() {
     App::new()
@@ -57,7 +57,7 @@ fn startup_system(
                     index: (1..7, 0.1).into(),
                 },
                 lifetime: 2.3.into(),
-                system_duration_seconds: 10.0.into(),
+                system_duration_seconds: 10.0,
                 initial_speed: (150.0..250.0).into(),
                 scale: 8.5.into(),
                 color: ColorOverTime::Gradient(Curve::new(vec![
@@ -75,9 +75,7 @@ fn startup_system(
 }
 
 // add the grey ground
-fn setup_ground(
-    mut commands: Commands,
-) {
+fn setup_ground(mut commands: Commands) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
             color: Color::DARK_GRAY,
