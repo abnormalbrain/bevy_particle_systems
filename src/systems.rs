@@ -1,12 +1,13 @@
+use bevy_asset::Assets;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite, TextureAtlas};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
-use crate::Lerpable;
+use crate::{Lerpable, AtlasIndex, AnimatedIndex};
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -196,6 +197,10 @@ pub fn particle_spawner(
                                 texture_atlas: atlas_handle.clone(),
                                 ..SpriteSheetBundle::default()
                             });
+
+                            if let AtlasIndex::Animated(animated_index) = index {
+                                entity_commands.insert(animated_index.clone());
+                            };
                         }
                     }
                 }
@@ -252,6 +257,10 @@ pub fn particle_spawner(
                                     texture_atlas: atlas_handle.clone(),
                                     ..SpriteSheetBundle::default()
                                 });
+
+                                if let AtlasIndex::Animated(animated_index) = index {
+                                    entity_commands.insert(animated_index.clone());
+                                };
                             }
                         }
                     });
@@ -300,16 +309,21 @@ pub(crate) fn particle_texture_atlas_color(
         &mut ParticleColor,
         &Lifetime,
         &mut TextureAtlasSprite,
+        Option<&AnimatedIndex>,
     )>,
 ) {
     particle_query.par_iter_mut().for_each_mut(
-        |(particle, mut particle_color, lifetime, mut sprite)| {
+        |(particle, mut particle_color, lifetime, mut sprite, anim_index)| {
             let pct = lifetime.0 / particle.max_lifetime;
             sprite.color = match &mut particle_color.0 {
                 ColorOverTime::Constant(color) => *color,
                 ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
                 ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
             };
+
+            if let Some(anim_index) = anim_index {
+                sprite.index = anim_index.get_at_time(lifetime.0);
+            }
         },
     );
 }

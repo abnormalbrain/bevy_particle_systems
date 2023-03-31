@@ -4,9 +4,12 @@ use std::ops::Range;
 use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
+use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
+
+use crate::AnimatedIndex;
 
 /// Describes an oriented segment of a circle with a given radius.
 #[derive(Debug, Clone, Reflect, FromReflect)]
@@ -233,6 +236,127 @@ impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
                 v.choose(rng).unwrap().clone()
             }
         }
+    }
+}
+
+/// Defines an index of a texture atlas to use for a particle
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum AtlasIndex {
+    /// Constant index
+    Constant(usize),
+    /// Index randomly choosen at the particle spawn
+    Random(RandomValue<usize>),
+    /// Animated index, to animate a sprite sheet
+    Animated(AnimatedIndex),
+}
+
+impl AtlasIndex {
+    /// Returns what should be the initial value of the index, at the particle spawn
+    pub fn get_value(&self, rng: &mut ThreadRng) -> usize {
+        match self {
+            Self::Constant(c) => *c,
+            Self::Random(r) => r.get_value(rng),
+            Self::Animated(a) => a.get_at_start(),
+        }
+    }
+}
+
+impl From<usize> for AtlasIndex {
+    fn from(u: usize) -> Self {
+        AtlasIndex::Constant(u)
+    }
+}
+
+impl From<Range<usize>> for AtlasIndex
+{
+    fn from(r: Range<usize>) -> Self {
+        AtlasIndex::Random(r.into())
+    }
+}
+
+impl From<Vec<usize>> for AtlasIndex {
+    fn from(v: Vec<usize>) -> Self {
+        AtlasIndex::Random(v.into())
+    }
+}
+
+impl From<f32> for AtlasIndex {
+    fn from(t: f32) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: vec![],
+            time_step: t,
+            step_offset: 0,
+        })
+    }
+}
+
+impl From<(Range<usize>, f32)> for AtlasIndex {
+    fn from((range, time): (Range<usize>, f32)) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: range.collect(),
+            time_step: time,
+            step_offset: 0,
+        })
+    }
+}
+
+impl From<(Range<usize>, f32, usize)> for AtlasIndex {
+    fn from((range, time, step): (Range<usize>, f32, usize)) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: range.collect(),
+            time_step: time,
+            step_offset: step,
+        })
+    }
+}
+
+impl From<(Vec<usize>, f32)> for AtlasIndex {
+    fn from((indices, time): (Vec<usize>, f32)) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: indices,
+            time_step: time,
+            step_offset: 0,
+        })
+    }
+}
+
+impl From<(Vec<usize>, f32, usize)> for AtlasIndex {
+    fn from((indices, time, step): (Vec<usize>, f32, usize)) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: indices,
+            time_step: time,
+            step_offset: step,
+        })
+    }
+}
+
+impl From<&TextureAtlas> for AtlasIndex {
+    fn from(atlas: &TextureAtlas) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: {
+                (0..(atlas.len())).collect()
+            },
+            time_step: 1.0/6.0, // 1/6 seconds is fine
+            step_offset: 0,
+        })
+    }
+}
+
+impl From<(&TextureAtlas, f32)> for AtlasIndex {
+    fn from((atlas, time): (&TextureAtlas, f32)) -> Self {
+        AtlasIndex::Animated(AnimatedIndex {
+            indices: {
+                (0..atlas.len()).collect()
+            },
+            time_step: time,
+            step_offset: 0,
+        })
+    }
+}
+
+impl Default for AtlasIndex {
+    fn default() -> Self {
+        AtlasIndex::Constant(0)
     }
 }
 
