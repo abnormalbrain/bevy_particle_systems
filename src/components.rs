@@ -9,8 +9,8 @@ use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
-    values::{ColorOverTime, JitteredValue, RandomValue, ValueOverTime},
-    EmitterShape, VelocityModifier,
+    values::{ColorOverTime, JitteredValue, ValueOverTime},
+    AtlasIndex, EmitterShape, VelocityModifier,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
@@ -57,8 +57,47 @@ pub enum ParticleTexture {
         /// The handle to the texture atlas
         atlas: Handle<TextureAtlas>,
         /// The index in the atlas can constant, or be chosen randomly
-        index: RandomValue<usize>,
+        index: AtlasIndex,
     },
+}
+
+/// Defines how will be animated the texture atlas index
+#[derive(Component, Debug, Clone, Reflect, FromReflect)]
+pub struct AnimatedIndex {
+    /// At what indices are the different frames on a sprite sheet
+    pub indices: Vec<usize>,
+    /// How much time each frame should be displayed
+    pub time_step: f32,
+    /// At what index (from the `indices` field) should start the animation
+    pub step_offset: usize,
+}
+
+impl AnimatedIndex {
+    /// Returns the first index of the animation
+    pub fn get_at_start(&self) -> usize {
+        let idx = if self.step_offset < self.indices.len() {
+            self.step_offset
+        } else {
+            self.step_offset % self.indices.len()
+        };
+
+        self.indices[idx]
+    }
+    /// Returns the index corresponding at a given time in the animation
+    pub fn get_at_time(&self, time: f32) -> usize {
+        // Disabling `cast_possible_truncation` so we can truncate the f32.
+        // Disabling `pedantic` because we use `abs()` before truncation. No sign loss possible.
+        #[allow(clippy::cast_possible_truncation, clippy::pedantic)]
+        // take only the integer part.
+        let steps_passed = (time / self.time_step).abs() as usize;
+        let sample_idx = self.step_offset + steps_passed;
+
+        if sample_idx < self.indices.len() {
+            self.indices[sample_idx]
+        } else {
+            self.indices[sample_idx % self.indices.len()]
+        }
+    }
 }
 
 /// Defines the parameters of how a system and its particles behave.
