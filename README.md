@@ -1,23 +1,24 @@
 # bevy_particle_systems
 
----
 [![Crates.io](https://img.shields.io/crates/v/bevy_particle_systems)](https://crates.io/crates/bevy_particle_systems)
 [![docs](https://docs.rs/bevy_particle_systems/badge.svg)](https://docs.rs/bevy_particle_systems/)
 [![MIT](https://img.shields.io/crates/l/bevy_particle_systems)](./LICENSE)
 
 A native and WASM-compatible 2D particle system plugin for [bevy](https://bevyengine.org)
 
+**Note: This crate is still under development and its API may change between releases.**
+
 ## Example
 
 ![](https://github.com/abnormalbrain/bevy_particle_systems/blob/main/assets/example.gif)
  
-The above was captured running a release build of the `basic` example, `cargo run --example basic --release`, and ran at 140-150 FPS on a
+The above was captured running a release build of the `basic` example, `cargo run --example basic --release`, and ran at 190-200 FPS on a
 2019 Intel i9 MacBook Pro, rendering about 10k particles.
 
 ```
-INFO bevy diagnostic: frame_time                      :    0.006995s (avg 0.006966s)
-INFO bevy diagnostic: fps                             :  142.956068  (avg 143.654887)
-INFO bevy diagnostic: entity_count                    : 10132.000000  (avg 10149.350000)
+INFO bevy diagnostic: frame_time                      :    5.125810ms (avg 5.211673ms)
+INFO bevy diagnostic: fps                             :  206.027150   (avg 204.176718)
+INFO bevy diagnostic: entity_count                    : 11358.713999   (avg 11341.450000)
 ```
 
 ## Usage
