@@ -47,6 +47,15 @@ pub enum ParticleSpace {
     World,
 }
 
+/// Defines how to render particles
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum ParticleRenderType {
+    /// Standard 2D sprite rendering
+    Sprite2D,
+    /// 3D Billboard rendering
+    Billboard3D,
+}
+
 /// Defines what texture to use for a particle
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleTexture {
@@ -113,6 +122,8 @@ impl AnimatedIndex {
 pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
+    /// The render type for this particle system
+    pub render_type: ParticleRenderType,
 
     /// The texture used for each particle.
     pub texture: ParticleTexture,
@@ -211,6 +222,7 @@ impl Default for ParticleSystem {
     fn default() -> Self {
         Self {
             max_particles: 100,
+            render_type: ParticleRenderType::Sprite2D,
             texture: ParticleTexture::Sprite(Handle::default()),
             rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),

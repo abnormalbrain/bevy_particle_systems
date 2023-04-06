@@ -61,16 +61,20 @@
 pub mod components;
 mod systems;
 pub mod values;
+pub mod render;
 
 use bevy_app::prelude::{App, Plugin};
 use bevy_ecs::prelude::IntoSystemConfigs;
+use bevy_pbr::MaterialPlugin;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{
-    particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
+    setup_particle_resources, particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
     particle_texture_atlas_color, particle_transform,
 };
 pub use values::*;
+pub use render::*;
+use render::BillboardMaterial;
 
 /// The plugin component to be added to allow particle systems to run.
 ///
@@ -94,6 +98,8 @@ pub struct ParticleSystemPlugin;
 
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugin(MaterialPlugin::<BillboardMaterial>::default());
+        app.add_startup_system(setup_particle_resources);
         app.add_systems(
             (
                 particle_spawner,
