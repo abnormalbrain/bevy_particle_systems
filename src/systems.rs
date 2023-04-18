@@ -1,63 +1,35 @@
+use std::collections::BTreeMap;
+
+use bevy_asset::Assets;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With, ResMut};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
-use bevy_asset::{Assets, AssetServer};
 use bevy_transform::prelude::{GlobalTransform, Transform};
-use bevy_pbr::{AlphaMode, MaterialMeshBundle, Material};
 use bevy_render::{
+    prelude::{SpatialBundle, Mesh, shape},
     color::Color,
-    mesh::{Mesh, shape}
+    view::NoFrustumCulling,
 };
-
-use crate::render::BillboardMaterial;
+use crate::BillboardMeshHandle;
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
     values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
-    DistanceTraveled, ParticleTexture,
+    DistanceTraveled, ParticleTexture, AnimatedIndex, AtlasIndex, Lerpable,
+    ParticleSystemInstancedData, ParticleBillboardInstanceData,
+    ParticleSystemInstancedDataBundle, InstancedParticle
 };
-use crate::{AnimatedIndex, AtlasIndex, Lerpable, BillboardAssets};
 
 /// System label attached to the `SystemSet` provided in this plugin
 ///
 /// This is provided so that users can order their systems to run before/after this plugin.
 #[derive(Debug, SystemSet, Hash, Clone, PartialEq, Eq)]
 pub struct ParticleSystemSet;
-
-pub fn setup_particle_resources(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut billboard_materials: ResMut<Assets<BillboardMaterial>>,
-) {
-    // Add plane mesh asst, will be used for all billboard particles.
-    let mesh_handle = meshes.add(
-        Mesh::from(shape::Plane {
-            size: 1.0,
-            subdivisions: 0
-    }));
-    // Load a texture and retrieve its aspect ratio
-    let texture_handle = asset_server.load("arrow.png");
-    // Define custom billboard shader
-    let billboard_material = BillboardMaterial {
-        color: Color::WHITE,
-        size: Vec2::splat(1.0),
-        texture: Some(texture_handle.clone()),
-        alpha_mode: AlphaMode::Blend,
-    };
-    // Add this new material to assets
-    let material_handle = billboard_materials.add(billboard_material);
-    // Save these handles as a resource
-    commands.insert_resource(BillboardAssets {
-        mesh: mesh_handle,
-        material: material_handle,
-    })
-}
 
 #[allow(
     clippy::cast_sign_loss,
@@ -75,14 +47,16 @@ pub fn particle_spawner(
             &mut ParticleCount,
             &mut RunningState,
             &mut BurstIndex,
+            Option<&mut ParticleSystemInstancedData>,
         ),
         With<Playing>,
     >,
     time: Res<Time>,
     mut commands: Commands,
-    meshes: Res<Assets<Mesh>>,
+    /*meshes: Res<Assets<Mesh>>,
     billboard_materials: Res<Assets<BillboardMaterial>>,
-    billboard_assets: Res<BillboardAssets>,
+    billboard_assets: Res<BillboardAssets>,*/
+    billboard_mesh: Res<BillboardMeshHandle>,
 ) {
     let mut rng = rand::thread_rng();
     for (
@@ -92,6 +66,7 @@ pub fn particle_spawner(
         mut particle_count,
         mut running_state,
         mut burst_index,
+        mut instanced_data,
     ) in particle_systems.iter_mut()
     {
         if particle_system.use_scaled_time {
@@ -221,7 +196,7 @@ pub fn particle_spawner(
                                 texture: image_handle.clone(),
                                 ..SpriteBundle::default()
                             });
-                        }
+                        },
                         ParticleTexture::TextureAtlas {
                             atlas: atlas_handle,
                             index,
@@ -245,11 +220,34 @@ pub fn particle_spawner(
                     }
                 },
                 crate::ParticleRenderType::Billboard3D => {
-                    particle_entity_commands.insert(MaterialMeshBundle {
-                        mesh: billboard_assets.mesh.clone(),
-                        material: billboard_assets.material.clone(),
-                        ..Default::default()
-                    });
+                    let particle_id = particle_entity_commands.id();
+                    let particle_inst_data = ParticleBillboardInstanceData {
+                        position: spawn_point.translation,
+                        scale: particle_system.scale.clone().at_lifetime_pct(0.0),
+                        color: particle_system.color.at_lifetime_pct(0.0).as_rgba_f32(),
+                    };
+
+                    if let Some(ref mut inst_data) = instanced_data {
+                        inst_data.0.insert(
+                            particle_id,
+                            particle_inst_data);
+                    } else {
+                        let mut inst_data = BTreeMap::new();
+                        inst_data.insert(
+                            particle_id,
+                            particle_inst_data);
+                        particle_entity_commands
+                            .commands()
+                            .entity(entity)
+                            .insert(ParticleSystemInstancedDataBundle {
+                                mesh_handle: billboard_mesh.0.clone(),
+                                spacial: SpatialBundle::INHERITED_IDENTITY,
+                                inst_data: ParticleSystemInstancedData(inst_data),
+                                disabled_frustrum_culling: NoFrustumCulling,
+                        });
+                    };
+                    
+                    particle_entity_commands.insert(InstancedParticle(entity));
                 },
             }
 
@@ -420,12 +418,32 @@ pub(crate) fn particle_transform(
     );
 }
 
+pub(crate) fn update_instanced_particles(
+    particle_query: Query<(&Particle, &Transform, &ParticleColor, &Lifetime), With<InstancedParticle>>,
+    mut inst_data_query: Query<Option<&mut ParticleSystemInstancedData>, With<ParticleSystem>>,
+) {
+    // Do only for each particle system with instanced data
+    inst_data_query.for_each_mut( |inst_data| {
+        if let Some(mut inst_data) = inst_data {
+            for (particle, instance) in inst_data.0.iter_mut() {
+                if let Ok((p, p_transform, p_color, p_lifetime)) = particle_query.get(*particle) {
+                    instance.position = p_transform.translation;
+                    instance.scale = p_transform.scale.x;
+                    let pct = p_lifetime.0 / p.max_lifetime;
+                    instance.color = p_color.0.at_lifetime_pct(pct).as_rgba_f32();
+                }
+            }
+        }
+    });
+}
+
 pub(crate) fn particle_cleanup(
-    particle_query: Query<(Entity, &Particle, &Lifetime, &DistanceTraveled)>,
+    particle_query: Query<(Entity, &Particle, &Lifetime, &DistanceTraveled, Option<&InstancedParticle>)>,
     mut particle_count_query: Query<&mut ParticleCount>,
+    mut instanced_data_query: Query<&mut ParticleSystemInstancedData>,
     mut commands: Commands,
 ) {
-    for (entity, particle, lifetime, distance) in particle_query.iter() {
+    for (entity, particle, lifetime, distance, inst_particle) in particle_query.iter() {
         if lifetime.0 >= particle.max_lifetime
             || (particle.max_distance.is_some()
                 && distance.dist_squared >= particle.max_distance.unwrap().powi(2))
@@ -435,11 +453,53 @@ pub(crate) fn particle_cleanup(
                     particle_count.0 -= 1;
                 }
             }
-            commands.entity(entity).despawn();
+            despawn_particle(
+                entity,
+                inst_particle,
+                &mut instanced_data_query,
+                &mut commands
+            );
         } else if particle.despawn_with_parent
             && commands.get_entity(particle.parent_system).is_none()
         {
-            commands.entity(entity).despawn();
+            despawn_particle(
+                entity,
+                inst_particle,
+                &mut instanced_data_query,
+                &mut commands
+            );
         }
     }
+}
+
+fn despawn_particle(
+    particle: Entity,
+    instance: Option<&InstancedParticle>,
+    instanced_data_query: &mut Query<&mut ParticleSystemInstancedData>,
+    commands: &mut Commands,
+) {
+    // remove the particle from the instanced data if needed
+    if let Some(instance) = instance {
+        if let Ok(mut instanced_data) = instanced_data_query.get_mut(instance.0) {
+            instanced_data.0.remove(&particle);
+        } else {
+            panic!("This is not supposed to happen");
+        }
+    }
+    // despawn the particle entity
+    commands.entity(particle).despawn();
+}
+
+pub(crate) fn setup_billboard_resource(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+) {
+    let handle = meshes.add(Mesh::from(shape::Plane {
+        size: -0.5,
+        subdivisions: 0,
+    }));
+    /*let handle = meshes.add(Mesh::from(shape::Cube {
+        size: 1.0,
+    }));*/
+    commands.insert_resource(BillboardMeshHandle(handle));
 }

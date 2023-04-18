@@ -4,7 +4,12 @@ use bevy_asset::Handle;
 use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
-use bevy_render::prelude::{Image, VisibilityBundle};
+use bevy_render::{
+    prelude::{
+        Image, VisibilityBundle
+    },
+};
+
 use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
@@ -122,6 +127,7 @@ impl AnimatedIndex {
 pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
+
     /// The render type for this particle system
     pub render_type: ParticleRenderType,
 
