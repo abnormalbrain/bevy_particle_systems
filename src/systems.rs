@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-
 use bevy_asset::Assets;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With, ResMut};
 use bevy_hierarchy::BuildChildren;
@@ -11,7 +10,7 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 use bevy_render::{
     prelude::{SpatialBundle, Mesh, shape},
     color::Color,
-    view::NoFrustumCulling,
+    view::{NoFrustumCulling, visibility::ComputedVisibility},
 };
 use crate::BillboardMeshHandle;
 use crate::{
@@ -53,9 +52,6 @@ pub fn particle_spawner(
     >,
     time: Res<Time>,
     mut commands: Commands,
-    /*meshes: Res<Assets<Mesh>>,
-    billboard_materials: Res<Assets<BillboardMaterial>>,
-    billboard_assets: Res<BillboardAssets>,*/
     billboard_mesh: Res<BillboardMeshHandle>,
 ) {
     let mut rng = rand::thread_rng();
@@ -182,6 +178,15 @@ pub fn particle_spawner(
                 ..ParticleBundle::default()
             });
 
+            // If we use local space, then parent the particle to the particle system
+            if let ParticleSpace::Local = particle_system.space {
+                let particle_entity = particle_entity_commands.id();
+                particle_entity_commands
+                    .commands()
+                    .entity(entity)
+                    .push_children(&[particle_entity]);
+            }
+
             match &particle_system.render_type {
                 crate::ParticleRenderType::Sprite2D => {
                     match &particle_system.texture {
@@ -241,7 +246,7 @@ pub fn particle_spawner(
                             .entity(entity)
                             .insert(ParticleSystemInstancedDataBundle {
                                 mesh_handle: billboard_mesh.0.clone(),
-                                spacial: SpatialBundle::INHERITED_IDENTITY,
+                                computed_visibility: ComputedVisibility::default(),
                                 inst_data: ParticleSystemInstancedData(inst_data),
                                 disabled_frustrum_culling: NoFrustumCulling,
                         });
@@ -285,13 +290,8 @@ pub fn particle_spawner(
                     };
                 }
             }
-
-            // If we use local space, then parent the particle to the particle system
-            if let ParticleSpace::Local = particle_system.space {
-                let particle_entity = particle_entity_commands.id();
-                commands.entity(entity).push_children(&[particle_entity]);
-            }
         }
+
         // Don't count bursts in the normal spawn rate, but still count them in the particle cap.
         running_state.spawned_this_second += to_spawn;
         particle_count.0 += to_spawn + extra;
@@ -498,8 +498,5 @@ pub(crate) fn setup_billboard_resource(
         size: -0.5,
         subdivisions: 0,
     }));
-    /*let handle = meshes.add(Mesh::from(shape::Cube {
-        size: 1.0,
-    }));*/
     commands.insert_resource(BillboardMeshHandle(handle));
 }

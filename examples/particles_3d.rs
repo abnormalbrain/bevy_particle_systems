@@ -1,38 +1,16 @@
 //! A shader that renders a mesh multiple times in one draw call.
 
-use std::collections::BTreeMap;
-
 use bevy::prelude::*;
 use bevy_particle_systems::*;
-use bevy_render::view::NoFrustumCulling;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(ParticleSystemPlugin::default())
         .insert_resource(ClearColor(Color::BLACK))
-        //.add_startup_system(setup)
-        //.add_system(update_particles)
-        .add_system(setup)
+        .add_startup_system(setup)
+        //.add_system(setup)
         .run();
-}
-
-fn update_particles(
-    mut ptcs: Query<(Entity, &mut ParticleSystemInstancedData)>,
-) {
-    ptcs.for_each_mut(|(entity, mut inst_data)| {
-        for i in &mut inst_data.0 {
-            i.1.position += Vec3::new(0.0, 0.01, 0.0);
-        }
-
-        inst_data.0.insert(
-            entity,
-            ParticleBillboardInstanceData {
-                position: Vec3::splat(0.0),
-                scale: 1.0,
-                color: Color::RED.as_rgba_f32()
-        });
-    });
 }
 
 #[derive(Resource)]
@@ -40,12 +18,9 @@ pub struct IsCheck;
 
 fn setup(
     mut commands: Commands,
-    billboard_mesh: Res<BillboardMeshHandle>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     check: Option<Res<IsCheck>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    //asset_server: Res<AssetServer>,
-
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if let Some(_) = check {
         return;
@@ -73,18 +48,16 @@ fn setup(
             scale: 0.1.into(),
             ..ParticleSystem::default()
         },
+        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
         ..ParticleSystemBundle::default()
     })
     .insert(Playing);
 
-    // light
-    /*commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 15000.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+    // cube
+    /*commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Cube { size: 3.0 })),
+        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+        transform: Transform::from_xyz(5.0, 5.0, 5.0),
         ..default()
     });*/
 

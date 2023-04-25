@@ -28,8 +28,9 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let cam_pos: vec3<f32> = view.world_position;
     // use the inverse view projection matrix to get the camera up vector
     let cam_up: vec3<f32> = view.inverse_view_proj[1].xyz;
-    // get the pivot of the plane in world position
-    let instance_position = mesh_position_local_to_world(mesh.model, vec4<f32>(vertex.i_pos_scale.xyz, 1.0)).xyz;
+    // get the pivot of the plane in world position, we don't use the mesh model matrix because
+    //let instance_position = mesh_position_local_to_world(mesh.model, vec4<f32>(vertex.i_pos_scale.xyz, 1.0)).xyz;
+    let instance_position = vertex.i_pos_scale.xyz;
     // get the vector mesh pivot -> camera
     let view: vec3<f32> = normalize(cam_pos - instance_position);
     // cross with camera up to get the billboard right vector

@@ -12,7 +12,7 @@ use bevy_render::{
         AddRenderCommand, DrawFunctions, PhaseItem, RenderCommand,
         RenderCommandResult, RenderPhase, SetItemPipeline, TrackedRenderPass,
     },
-    view::{ExtractedView, NoFrustumCulling},
+    view::{ExtractedView, NoFrustumCulling, visibility::ComputedVisibility},
     render_resource::*,
     render_asset::RenderAssets,
     renderer::RenderDevice,
@@ -43,12 +43,13 @@ impl Plugin for ParticleInstancingPlugin {
             .init_resource::<ParticlePipeline>()
             .init_resource::<SpecializedMeshPipelines<ParticlePipeline>>()
             .add_system(queue_custom.in_set(RenderSet::Queue))
+            //.add_system(queue_custom.in_set(RenderSet::Queue))
             .add_system(prepare_instance_buffers.in_set(RenderSet::Prepare));
     }
 }
 
 /// Defines a billboard material for particles
-#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+/*#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
 #[uuid = "f690cdae-d528-45bb-8225-97e2a4f056d0"]
 pub struct BillboardMaterial {
     #[uniform(4)]
@@ -72,16 +73,16 @@ impl Material for BillboardMaterial {
     fn alpha_mode(&self) -> AlphaMode {
         self.alpha_mode
     }
-}
+}*/
 
 #[derive(Resource)]
 pub struct BillboardMeshHandle(pub Handle<Mesh>);
 
-#[derive(Resource)]
+/*#[derive(Resource)]
 pub struct BillboardAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<BillboardMaterial>,
-}
+}*/
 
 #[derive(Clone, Copy, Pod, Zeroable, Debug)]
 #[repr(C)]
@@ -121,7 +122,7 @@ pub struct InstancedParticle(pub Entity);
 #[derive(Bundle)]
 pub struct ParticleSystemInstancedDataBundle {
     pub mesh_handle: Handle<Mesh>,
-    pub spacial: SpatialBundle,
+    pub computed_visibility: ComputedVisibility,
     pub inst_data: ParticleSystemInstancedData,
     pub disabled_frustrum_culling: NoFrustumCulling,
 }

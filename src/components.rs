@@ -5,9 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::{
-    prelude::{
-        Image, VisibilityBundle
-    },
+    prelude::{Image, VisibilityBundle, Mesh},
 };
 
 use bevy_sprite::TextureAtlas;
@@ -55,10 +53,12 @@ pub enum ParticleSpace {
 /// Defines how to render particles
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleRenderType {
-    /// Standard 2D sprite rendering
+    /// Standard 2D sprite
     Sprite2D,
-    /// 3D Billboard rendering
+    /// 3D Billboard instancing
     Billboard3D,
+    // Custom 3D Mesh instancing
+    //Mesh3D(Handle<Mesh>),
 }
 
 /// Defines what texture to use for a particle

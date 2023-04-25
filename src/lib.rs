@@ -63,9 +63,9 @@ mod systems;
 pub mod values;
 pub mod render;
 
-use bevy_app::prelude::{App, Plugin};
+use bevy_app::prelude::{App, Plugin, StartupSet};
 use bevy_ecs::prelude::IntoSystemConfigs;
-use bevy_pbr::MaterialPlugin;
+use bevy_ecs::schedule::IntoSystemConfig;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{
@@ -99,9 +99,9 @@ pub struct ParticleSystemPlugin;
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_plugin(MaterialPlugin::<BillboardMaterial>::default())
+            //.add_plugin(MaterialPlugin::<BillboardMaterial>::default())
             .add_plugin(ParticleInstancingPlugin);
-        app.add_startup_system(setup_billboard_resource);
+        app.add_system(setup_billboard_resource.in_base_set(StartupSet::PreStartup));
         app.add_systems(
             (
                 particle_spawner,
