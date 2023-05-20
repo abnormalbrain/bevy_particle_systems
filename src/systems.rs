@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use bevy_asset::Assets;
+use bevy_asset::{Assets, AssetServer, Handle};
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With, ResMut};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
@@ -8,11 +8,12 @@ use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 use bevy_render::{
-    prelude::{SpatialBundle, Mesh, shape},
+    prelude::{SpatialBundle, Mesh, shape, Image},
     color::Color,
     view::{NoFrustumCulling, visibility::ComputedVisibility},
+    render_resource::Texture,
 };
-use crate::BillboardMeshHandle;
+use crate::{BillboardMeshHandle, TestTexture};
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -488,15 +489,4 @@ fn despawn_particle(
     }
     // despawn the particle entity
     commands.entity(particle).despawn();
-}
-
-pub(crate) fn setup_billboard_resource(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-) {
-    let handle = meshes.add(Mesh::from(shape::Plane {
-        size: -0.5,
-        subdivisions: 0,
-    }));
-    commands.insert_resource(BillboardMeshHandle(handle));
 }

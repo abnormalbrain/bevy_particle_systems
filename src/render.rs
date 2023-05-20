@@ -1,11 +1,11 @@
 //! Defines Data and methods used for rendering the particles.
 
 use std::collections::BTreeMap;
-use bevy_asset::{Handle, AssetServer};
+use bevy_asset::{Handle, AssetServer, Assets, Asset, AddAsset};
 use bevy_math::{Vec2, Vec3};
-use bevy_app::{App, Plugin};
+use bevy_app::{App, Plugin, StartupSet};
 use bevy_render::{
-    prelude::{Msaa, SpatialBundle},
+    prelude::{Msaa, SpatialBundle, shape,},
     extract_component::{ ExtractComponentPlugin, ExtractComponent},
     mesh::{GpuBufferInfo, MeshVertexBufferLayout},
     render_phase::{
@@ -13,13 +13,14 @@ use bevy_render::{
         RenderCommandResult, RenderPhase, SetItemPipeline, TrackedRenderPass,
     },
     view::{ExtractedView, NoFrustumCulling, visibility::ComputedVisibility},
+    texture::GpuImage,
     render_resource::*,
     render_asset::RenderAssets,
     renderer::RenderDevice,
     RenderApp, RenderSet, texture::Image, prelude::Color, prelude::Mesh,
 };
 use bevy_ecs::{
-    system::{lifetimeless::*, SystemParamItem},
+    system::{lifetimeless::*, SystemParamItem, SystemState},
     prelude::*,
     query::QueryItem,
 };
@@ -37,52 +38,32 @@ pub struct ParticleInstancingPlugin;
 impl Plugin for ParticleInstancingPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ExtractComponentPlugin::<ParticleSystemInstancedData>::default());
+        app.add_startup_system(setup_billboard_resource.in_base_set(StartupSet::PreStartup));
         app
             .sub_app_mut(RenderApp)
             .add_render_command::<Transparent3d, DrawCustom>()
             .init_resource::<ParticlePipeline>()
             .init_resource::<SpecializedMeshPipelines<ParticlePipeline>>()
+            .init_resource::<TestTexture>()
+            //.add_asset::<BillboardBindGoup>()
             .add_system(queue_custom.in_set(RenderSet::Queue))
-            //.add_system(queue_custom.in_set(RenderSet::Queue))
             .add_system(prepare_instance_buffers.in_set(RenderSet::Prepare));
     }
 }
 
-/// Defines a billboard material for particles
-/*#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
-#[uuid = "f690cdae-d528-45bb-8225-97e2a4f056d0"]
-pub struct BillboardMaterial {
-    #[uniform(4)]
-    pub color: Color,
-    #[uniform(5)]
-    pub size: Vec2,
-    #[texture(2)]
-    #[sampler(3)]
-    pub texture: Option<Handle<Image>>,
-    pub alpha_mode: AlphaMode,
-} 
- 
-/// Make BillboardMaterial a Material, and assign the billboard shaders to it
-impl Material for BillboardMaterial {
-    fn vertex_shader() -> ShaderRef {
-        "shaders/particle_billboard.wgsl".into()
-    }
-    fn fragment_shader() -> ShaderRef {
-        "shaders/particle_billboard.wgsl".into()
-    }
-    fn alpha_mode(&self) -> AlphaMode {
-        self.alpha_mode
-    }
-}*/
-
 #[derive(Resource)]
 pub struct BillboardMeshHandle(pub Handle<Mesh>);
 
-/*#[derive(Resource)]
-pub struct BillboardAssets {
-    pub mesh: Handle<Mesh>,
-    pub material: Handle<BillboardMaterial>,
-}*/
+#[derive(Resource)]
+pub struct TestTexture(pub Handle<Image>);
+
+impl FromWorld for TestTexture {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        let texture_handle: Handle<Image> = asset_server.load("gabe-idle-run.png");
+        TestTexture(texture_handle)
+    }
+}
 
 #[derive(Clone, Copy, Pod, Zeroable, Debug)]
 #[repr(C)]
@@ -164,28 +145,51 @@ fn queue_custom(
 }
 
 #[derive(Component)]
-pub struct InstanceBuffer {
+pub struct ParticleInstanceBuffer {
     buffer: Buffer,
     length: usize,
+    ps_bind_group: BindGroup,
 }
 
 fn prepare_instance_buffers(
     mut commands: Commands,
     query: Query<(Entity, &ExtractedInstancedData)>,
     render_device: Res<RenderDevice>,
+    pipeline: Res<ParticlePipeline>,
+    test_texture: Res<TestTexture>,
+    textures: Res<RenderAssets<Image>>,
 ) {
     for (entity, instance_data) in &query {
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
             contents: {
-                //let values_slice = instance_data.0.clone();
                 bytemuck::cast_slice(instance_data.0.as_slice())
             },
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
-        commands.entity(entity).insert(InstanceBuffer {
+
+        let my_texture = textures.get(&test_texture.0).unwrap();
+
+        let ps_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
+            label: Some("particleSystemInfo BindGroup"),
+            layout: &pipeline.custom_particle_layout,
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: BindingResource::TextureView(&my_texture.texture_view),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: BindingResource::Sampler(&my_texture.sampler),
+                },
+            ],
+        });
+
+        commands.entity(entity).insert(
+        ParticleInstanceBuffer {
             buffer,
             length: instance_data.0.len(),
+            ps_bind_group,
         });
     }
 }
@@ -194,18 +198,49 @@ fn prepare_instance_buffers(
 pub struct ParticlePipeline {
     shader: Handle<Shader>,
     mesh_pipeline: MeshPipeline,
+    custom_particle_layout: BindGroupLayout,
 }
 
 impl FromWorld for ParticlePipeline {
     fn from_world(world: &mut World) -> Self {
+        // added
+        let mut system_state: SystemState<(
+            Res<RenderDevice>,
+        )> = SystemState::new(world);
+        let render_device = system_state.get_mut(world).0;
+
+        let bind_group_layout = render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+            label: Some("instance texture bind group layout"),
+            entries: &[
+                BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Texture {
+                        sample_type: TextureSampleType::Float { filterable: true },
+                        view_dimension: TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                }, 
+                BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Sampler(SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        });
+        // end added
+
         let asset_server = world.resource::<AssetServer>();
         let shader = asset_server.load("shaders/instancing.wgsl");
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
-
+        
         ParticlePipeline {
-            shader,
-            mesh_pipeline: mesh_pipeline.clone(),
+            shader:                     shader,
+            mesh_pipeline:              mesh_pipeline.clone(),
+            custom_particle_layout:     bind_group_layout,
         }
     }
 }
@@ -237,6 +272,7 @@ impl SpecializedMeshPipeline for ParticlePipeline {
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
+        descriptor.layout.push(self.custom_particle_layout.clone());
         Ok(descriptor)
     }
 }
@@ -248,18 +284,19 @@ type DrawCustom = (
     DrawMeshInstanced,
 );
 
+
 pub struct DrawMeshInstanced;
 
 impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
     type Param = SRes<RenderAssets<Mesh>>;
     type ViewWorldQuery = ();
-    type ItemWorldQuery = (Read<Handle<Mesh>>, Read<InstanceBuffer>);
+    type ItemWorldQuery = (Read<Handle<Mesh>>, Read<ParticleInstanceBuffer>);
 
     #[inline]
     fn render<'w>(
         _item: &P,
         _view: (),
-        (mesh_handle, instance_buffer): (&'w Handle<Mesh>, &'w InstanceBuffer),
+        (mesh_handle, instance_buffer): (&'w Handle<Mesh>, &'w ParticleInstanceBuffer),
         meshes: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
@@ -270,6 +307,7 @@ impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
 
         pass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, instance_buffer.buffer.slice(..));
+        pass.set_bind_group(2, &instance_buffer.ps_bind_group, &[]);
 
         match &gpu_mesh.buffer_info {
             GpuBufferInfo::Indexed {
@@ -284,6 +322,23 @@ impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
                 pass.draw(0..*vertex_count, 0..instance_buffer.length as u32);
             }
         }
+
         RenderCommandResult::Success
     }
+}
+
+pub(crate) fn setup_billboard_resource(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    //mut textures: ResMut<Assets<Image>>,
+    asset_server: ResMut<AssetServer>,
+) {
+    let handle = meshes.add(Mesh::from(shape::Plane {
+        size: -0.5,
+        subdivisions: 0,
+    }));
+    commands.insert_resource(BillboardMeshHandle(handle));
+
+    let texture_handle: Handle<Image> = asset_server.load("gabe-idle-run.png");
+    commands.insert_resource(TestTexture(texture_handle));
 }

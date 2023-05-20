@@ -28,6 +28,31 @@ fn setup(
         commands.insert_resource(IsCheck);
     }
 
+    /*commands.spawn(ParticleSystemBundle {
+        particle_system: ParticleSystem {
+            render_type: ParticleRenderType::Billboard3D,
+            max_particles: 10,
+            //texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+            spawn_rate_per_second: 1000.0.into(),
+            initial_speed: JitteredValue::jittered(2.0, -0.2..0.2),
+            velocity_modifiers: vec![VelocityModifier::Drag(0.01.into())],
+            lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
+            color: ColorOverTime::Gradient(Curve::new(vec![
+                CurvePoint::new(Color::PURPLE, 0.0),
+                CurvePoint::new(Color::RED, 0.5),
+                CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 1.0), 1.0),
+            ])),
+            looping: true,
+            system_duration_seconds: 10.0,
+            max_distance: Some(12.0),
+            scale: 10.0.into(),
+            ..ParticleSystem::default()
+        },
+        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+        ..ParticleSystemBundle::default()
+    })
+    .insert(Playing);*/
+
     commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             render_type: ParticleRenderType::Billboard3D,

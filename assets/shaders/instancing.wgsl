@@ -4,6 +4,12 @@
 @group(1) @binding(0)
 var<uniform> mesh: Mesh;
 
+@group(2) @binding(0)
+var instance_texture: texture_2d<f32>;
+
+@group(2) @binding(1)
+var instance_sampler: sampler;
+
 // NOTE: Bindings must come before functions that use them!
 #import bevy_pbr::mesh_functions
 
@@ -18,7 +24,8 @@ struct Vertex {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec4<f32>,
+    @location(0) uv: vec2<f32>,
+    @location(1) color: vec4<f32>,
 };
 
 @vertex
@@ -46,11 +53,14 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = mesh_position_world_to_clip(vec4<f32>(w_pos, 1.0));
     //out.clip_position = mesh_position_local_to_clip(mesh.model, vec4<f32>(vertex.position, 1.0));
+    out.uv = vertex.uv;
     out.color = vertex.i_color;
     return out;
 }
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color;
+    let color = textureSample(instance_texture, instance_sampler, in.uv.xy);
+    return color * in.color;
+    //return in.color;
 }

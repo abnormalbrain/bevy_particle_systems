@@ -71,7 +71,6 @@ pub use systems::ParticleSystemSet;
 use systems::{
     particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
     particle_texture_atlas_color, particle_transform, update_instanced_particles,
-    setup_billboard_resource,
 };
 pub use values::*;
 pub use render::*;
@@ -101,7 +100,7 @@ impl Plugin for ParticleSystemPlugin {
         app
             //.add_plugin(MaterialPlugin::<BillboardMaterial>::default())
             .add_plugin(ParticleInstancingPlugin);
-        app.add_system(setup_billboard_resource.in_base_set(StartupSet::PreStartup));
+        //app.add_system(setup_billboard_resource.in_base_set(StartupSet::PreStartup));
         app.add_systems(
             (
                 particle_spawner,
