@@ -19,7 +19,8 @@ struct Vertex {
     @location(2) uv: vec2<f32>,
 
     @location(3) i_pos_scale: vec4<f32>,
-    @location(4) i_color: vec4<f32>,
+    @location(4) i_rotation: vec4<f32>,
+    @location(5) i_color: vec4<f32>,
 };
 
 struct VertexOutput {
@@ -44,11 +45,18 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let right: vec3<f32> = normalize(cross(cam_up, view));
     // cross billboard right with view to get billboard up vector
     let up: vec3<f32> = cross(view, right);
+    // rotate UVs to apply the rotation
+    let rot_sin = sin(vertex.i_rotation.x);
+    let rot_cos = cos(vertex.i_rotation.x);
+    let rotated_uvs = vec2<f32>(
+        vertex.uv.x * rot_cos - vertex.uv.y * rot_sin,
+        vertex.uv.x * rot_sin + vertex.uv.y * rot_cos,
+    );
     // resolve billboard position using billboard up and right vector and plane uv
     let w_pos:    vec3<f32> =
         instance_position
-        + (right *  (vertex.uv.x - 0.5) *   vertex.i_pos_scale.w)
-        + (up *     (vertex.uv.y - 0.5) *   vertex.i_pos_scale.w);
+        + (right *  (rotated_uvs.x - 0.5) *   vertex.i_pos_scale.w)
+        + (up *     (rotated_uvs.y - 0.5) *   vertex.i_pos_scale.w);
     //let position = vertex.position * vertex.i_pos_scale.w + vertex.i_pos_scale.xyz;
     var out: VertexOutput;
     out.clip_position = mesh_position_world_to_clip(vec4<f32>(w_pos, 1.0));

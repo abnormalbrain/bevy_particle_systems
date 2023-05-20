@@ -45,7 +45,7 @@ impl Plugin for ParticleInstancingPlugin {
             .init_resource::<ParticlePipeline>()
             .init_resource::<SpecializedMeshPipelines<ParticlePipeline>>()
             .init_resource::<TestTexture>()
-            //.add_asset::<BillboardBindGoup>()
+            //.init_resource::<BillboardMeshHandle>()
             .add_system(queue_custom.in_set(RenderSet::Queue))
             .add_system(prepare_instance_buffers.in_set(RenderSet::Prepare));
     }
@@ -53,6 +53,17 @@ impl Plugin for ParticleInstancingPlugin {
 
 #[derive(Resource)]
 pub struct BillboardMeshHandle(pub Handle<Mesh>);
+
+impl FromWorld for BillboardMeshHandle {
+    fn from_world(world: &mut World) -> Self {
+        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+        let mesh_handle: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+            size: -0.5,
+            subdivisions: 0,
+        }));
+        BillboardMeshHandle(mesh_handle)
+    }
+}
 
 #[derive(Resource)]
 pub struct TestTexture(pub Handle<Image>);
@@ -70,6 +81,7 @@ impl FromWorld for TestTexture {
 pub struct ParticleBillboardInstanceData {
     pub position: Vec3,
     pub scale: f32,
+    pub rotation: [f32; 4],
     pub color: [f32; 4],
 }
 
@@ -81,7 +93,8 @@ pub struct ParticleSystemInstancedData(pub BTreeMap<Entity, ParticleBillboardIns
 /// Needed to extract the data from the BTreeMap into an array to pass to GPU for instancing
 #[derive(Component, Debug)]
 pub struct ExtractedInstancedData(pub Vec<ParticleBillboardInstanceData>);
-/// Clone the data from the world for rendering.
+
+/// Clone the particle data from the world for rendering.
 impl ExtractComponent for ParticleSystemInstancedData {
     type Query = &'static ParticleSystemInstancedData;
     type Filter = ();
@@ -153,13 +166,13 @@ pub struct ParticleInstanceBuffer {
 
 fn prepare_instance_buffers(
     mut commands: Commands,
-    query: Query<(Entity, &ExtractedInstancedData)>,
+    query: Query<(Entity, &ExtractedInstancedData, Option<&Handle<Image>>)>,
     render_device: Res<RenderDevice>,
     pipeline: Res<ParticlePipeline>,
     test_texture: Res<TestTexture>,
     textures: Res<RenderAssets<Image>>,
 ) {
-    for (entity, instance_data) in &query {
+    for (entity, instance_data, texture) in &query {
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
             contents: {
@@ -168,7 +181,11 @@ fn prepare_instance_buffers(
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
-        let my_texture = textures.get(&test_texture.0).unwrap();
+        let my_texture = if let Some(tex) = texture {
+            textures.get(&tex).unwrap()
+        } else {
+            textures.get(&test_texture.0).unwrap()
+        };
 
         let ps_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
             label: Some("particleSystemInfo BindGroup"),
@@ -259,20 +276,31 @@ impl SpecializedMeshPipeline for ParticlePipeline {
             array_stride: std::mem::size_of::<ParticleBillboardInstanceData>() as u64,
             step_mode: VertexStepMode::Instance,
             attributes: vec![
+                // [`ParticleBillboardInstanceData::position`, `ParticleBillboardInstanceData::scale`] as float32x4
                 VertexAttribute {
                     format: VertexFormat::Float32x4,
                     offset: 0,
                     shader_location: 3, // shader locations 0-2 are taken up by Position, Normal and UV attributes
                 },
+                // `ParticleBillboardInstanceData::rotation` as float32x4
                 VertexAttribute {
                     format: VertexFormat::Float32x4,
                     offset: VertexFormat::Float32x4.size(),
                     shader_location: 4,
                 },
+                // `ParticleBillboardInstanceData::color` as float32x4
+                VertexAttribute {
+                    format: VertexFormat::Float32x4,
+                    offset: VertexFormat::Float32x4.size()*2,
+                    shader_location: 5,
+                },
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
+
+        // Adds our uniform data layout
         descriptor.layout.push(self.custom_particle_layout.clone());
+
         Ok(descriptor)
     }
 }
@@ -330,15 +358,10 @@ impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
 pub(crate) fn setup_billboard_resource(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    //mut textures: ResMut<Assets<Image>>,
-    asset_server: ResMut<AssetServer>,
 ) {
     let handle = meshes.add(Mesh::from(shape::Plane {
         size: -0.5,
         subdivisions: 0,
     }));
     commands.insert_resource(BillboardMeshHandle(handle));
-
-    let texture_handle: Handle<Image> = asset_server.load("gabe-idle-run.png");
-    commands.insert_resource(TestTexture(texture_handle));
 }

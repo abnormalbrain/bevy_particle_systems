@@ -230,6 +230,10 @@ pub fn particle_spawner(
                     let particle_inst_data = ParticleBillboardInstanceData {
                         position: spawn_point.translation,
                         scale: particle_system.scale.clone().at_lifetime_pct(0.0),
+                        rotation: {
+                            let value = particle_system.initial_rotation.get_value(&mut rng);
+                            [value, value, value, value]
+                        },
                         color: particle_system.color.at_lifetime_pct(0.0).as_rgba_f32(),
                     };
 

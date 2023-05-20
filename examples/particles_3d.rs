@@ -9,7 +9,6 @@ fn main() {
         .add_plugin(ParticleSystemPlugin::default())
         .insert_resource(ClearColor(Color::BLACK))
         .add_startup_system(setup)
-        //.add_system(setup)
         .run();
 }
 
@@ -22,11 +21,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    if let Some(_) = check {
-        return;
-    } else {
-        commands.insert_resource(IsCheck);
-    }
 
     /*commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
