@@ -104,10 +104,10 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 spawn_rate_per_second: 40.0.into(),
                 velocity_modifiers: vec![
                     // this will make particles move randomly over time
-                    Noise(Noise2D {
+                    Noise2D {
                         amplitude: 100.0,
                         ..Default::default()
-                    }),
+                    }.into(),
                 ],
                 lifetime: JitteredValue::jittered(2.5, -0.2..0.2),
                 color: ColorOverTime::Constant(Color::BLUE),
@@ -138,10 +138,10 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // This will make them slow down
                     Drag(0.01.into()),
                     // this will make particles move randomly over time
-                    Noise(Noise2D {
+                    Noise2D {
                         amplitude: 200.0,
                         ..Default::default()
-                    }),
+                    }.into(),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Curve::new(vec![

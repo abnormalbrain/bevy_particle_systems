@@ -97,7 +97,7 @@ pub struct ParticleSystemPlugin;
 
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
-        //app.add_system(setup_billboard_resource.in_base_set(StartupSet::PreStartup));
+        app.add_plugin(ParticleInstancingPlugin);
         app.add_systems(
             (
                 particle_spawner,
@@ -111,9 +111,6 @@ impl Plugin for ParticleSystemPlugin {
                 .into_configs()
                 .in_set(ParticleSystemSet),
         );
-        app
-            //.add_plugin(MaterialPlugin::<BillboardMaterial>::default())
-            .add_plugin(ParticleInstancingPlugin);
         app
             .register_type::<ParticleSystem>()
             .register_type::<ParticleCount>()

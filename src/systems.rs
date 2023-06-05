@@ -13,7 +13,7 @@ use bevy_render::{
     view::{NoFrustumCulling, visibility::ComputedVisibility},
     render_resource::Texture,
 };
-use crate::{BillboardMeshHandle, TestTexture};
+use crate::{BillboardMeshHandle, ParticleRenderType};
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -99,6 +99,25 @@ pub fn particle_spawner(
             continue;
         }
 
+        if let ParticleRenderType::Billboard3D(_) = particle_system.render_type {
+            match &particle_system.texture {
+                ParticleTexture::Sprite(image_handle) => {
+                    println!("ADDED !");
+                    commands
+                        .entity(entity)
+                        .insert(image_handle.clone());
+                }
+                ParticleTexture::TextureAtlas {..} => {
+                    panic!("Particle System Error: Texture Atlas not supported for 3D billboard rendering!");
+                }
+                ParticleTexture::None => {
+                    commands
+                        .entity(entity)
+                        .remove::<Handle<Image>>();
+                }
+            }
+        }
+
         let pct = running_state.running_time / particle_system.system_duration_seconds;
         let remaining_particles = (particle_system.max_particles - particle_count.0) as f32;
         let current_spawn_rate = particle_system.spawn_rate_per_second.at_lifetime_pct(pct);
@@ -139,21 +158,27 @@ pub fn particle_spawner(
 
             let mut spawn_point = origin_pos.mul_transform(spawn_pos);
 
-            let direction = spawn_point.rotation * Vec3::X;
+            let direction = spawn_point.forward();
 
-            spawn_point.translation.z = particle_system
-                .z_value_override
-                .as_ref()
-                .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
+            // the Z axis must not be altered if we use 3D
+            let is_2d = particle_system.render_type == crate::ParticleRenderType::Sprite2D;
+            if is_2d {
+                spawn_point.translation.z = particle_system
+                    .z_value_override
+                    .as_ref()
+                    .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
+
+                if particle_system.rotate_to_movement_direction {
+                    spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
+                } else {
+                    spawn_point.rotation =
+                        Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
+                };
+            }
+
+
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
-
-            if particle_system.rotate_to_movement_direction {
-                spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
-            } else {
-                spawn_point.rotation =
-                    Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
-            };
 
             // Spawn the particle
             let mut particle_entity_commands = commands.spawn(ParticleBundle {
@@ -169,13 +194,14 @@ pub fn particle_spawner(
                 },
                 velocity: Velocity::new(
                     direction * particle_system.initial_speed.get_value(&mut rng),
-                    true,
+                    is_2d,
                 ),
                 distance: DistanceTraveled {
                     dist_squared: 0.0,
                     from: spawn_point.translation,
                 },
                 color: ParticleColor(particle_system.color.clone()),
+                transform: spawn_point,
                 ..ParticleBundle::default()
             });
 
@@ -191,6 +217,7 @@ pub fn particle_spawner(
             match &particle_system.render_type {
                 crate::ParticleRenderType::Sprite2D => {
                     match &particle_system.texture {
+                        ParticleTexture::None => (),
                         ParticleTexture::Sprite(image_handle) => {
                             particle_entity_commands.insert(SpriteBundle {
                                 sprite: Sprite {
@@ -198,7 +225,6 @@ pub fn particle_spawner(
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
                                 },
-                                transform: spawn_point,
                                 texture: image_handle.clone(),
                                 ..SpriteBundle::default()
                             });
@@ -214,7 +240,7 @@ pub fn particle_spawner(
                                     index: index.get_value(&mut rng),
                                     ..TextureAtlasSprite::default()
                                 },
-                                transform: spawn_point,
+                                //transform: spawn_point,
                                 texture_atlas: atlas_handle.clone(),
                                 ..SpriteSheetBundle::default()
                             });
@@ -225,14 +251,14 @@ pub fn particle_spawner(
                         }
                     }
                 },
-                crate::ParticleRenderType::Billboard3D => {
+                crate::ParticleRenderType::Billboard3D(should_use_frustrum_culling) => {
                     let particle_id = particle_entity_commands.id();
                     let particle_inst_data = ParticleBillboardInstanceData {
                         position: spawn_point.translation,
                         scale: particle_system.scale.clone().at_lifetime_pct(0.0),
                         rotation: {
                             let value = particle_system.initial_rotation.get_value(&mut rng);
-                            [value, value, value, value]
+                            value
                         },
                         color: particle_system.color.at_lifetime_pct(0.0).as_rgba_f32(),
                     };
@@ -253,47 +279,34 @@ pub fn particle_spawner(
                                 mesh_handle: billboard_mesh.0.clone(),
                                 computed_visibility: ComputedVisibility::default(),
                                 inst_data: ParticleSystemInstancedData(inst_data),
-                                disabled_frustrum_culling: NoFrustumCulling,
-                        });
+                            });
+
+                            /*match &particle_system.texture {
+                                ParticleTexture::Sprite(image_handle) => {
+                                    println!("ADDED !");
+                                    particle_entity_commands
+                                        .commands()
+                                        .entity(entity)
+                                        .insert(image_handle.clone());
+                                }
+                                ParticleTexture::TextureAtlas {..} => {
+                                    panic!("Particle System Error: Texture Atlas not supported for 3D billboard rendering!");
+                                }
+                                ParticleTexture::None => {
+                                    particle_entity_commands
+                                        .commands()
+                                        .entity(entity)
+                                        .remove::<Handle<Image>>();
+                                }
+                            }*/
+
+                        if !should_use_frustrum_culling {
+                            particle_entity_commands.insert(NoFrustumCulling);
+                        }
                     };
                     
                     particle_entity_commands.insert(InstancedParticle(entity));
                 },
-            }
-
-            match &particle_system.texture {
-                ParticleTexture::Sprite(image_handle) => {
-                    particle_entity_commands.insert(SpriteBundle {
-                        sprite: Sprite {
-                            custom_size: particle_system.rescale_texture,
-                            color: particle_system.color.at_lifetime_pct(0.0),
-                            ..Sprite::default()
-                        },
-                        transform: spawn_point,
-                        texture: image_handle.clone(),
-                        ..SpriteBundle::default()
-                    });
-                }
-                ParticleTexture::TextureAtlas {
-                    atlas: atlas_handle,
-                    index,
-                } => {
-                    particle_entity_commands.insert(SpriteSheetBundle {
-                        sprite: TextureAtlasSprite {
-                            custom_size: particle_system.rescale_texture,
-                            color: particle_system.color.at_lifetime_pct(0.0),
-                            index: index.get_value(&mut rng),
-                            ..TextureAtlasSprite::default()
-                        },
-                        transform: spawn_point,
-                        texture_atlas: atlas_handle.clone(),
-                        ..SpriteSheetBundle::default()
-                    });
-
-                    if let AtlasIndex::Animated(animated_index) = index {
-                        particle_entity_commands.insert(animated_index.clone());
-                    };
-                }
             }
         }
 
@@ -383,7 +396,7 @@ pub(crate) fn particle_transform(
 
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
-                use VelocityModifier::{Drag, Noise, Scalar, Vector};
+                use VelocityModifier::*;
                 match modifier {
                     Vector(v) => {
                         velocity.0 += v.at_lifetime_pct(lifetime_pct) * delta_time;
@@ -404,34 +417,51 @@ pub(crate) fn particle_transform(
                         }
                     }
 
-                    Noise(n) => {
+                    Noise2D(n) => {
                         let offset = n.sample(
                             Vec2::new(transform.translation.x, transform.translation.y),
                             elapsed_time,
                         ) * delta_time;
                         velocity.0 += Vec3::new(offset.x, offset.y, 0.0);
                     }
+
+                    Noise3D(n) => {
+                        let offset = n.sample(
+                            transform.translation,
+                            elapsed_time,
+                        ) * delta_time;
+                        velocity.0 += offset;
+                    }
                 }
             }
-            transform.translation += velocity.0 * delta_time;
 
+            // Apply velocity to translation
+            transform.translation += velocity.0 * delta_time;
+            // Apply scale
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
+            // Apply rotation
             transform.rotate_z(particle.rotation_speed * time.delta_seconds());
 
+            // Update distance travelled
             distance.dist_squared = transform.translation.distance_squared(distance.from);
         },
     );
 }
 
 pub(crate) fn update_instanced_particles(
-    particle_query: Query<(&Particle, &Transform, &ParticleColor, &Lifetime), With<InstancedParticle>>,
+    particle_query: Query<(
+        &Particle,
+        &Transform,
+        &ParticleColor,
+        &Lifetime),
+        With<InstancedParticle>>,
     mut inst_data_query: Query<Option<&mut ParticleSystemInstancedData>, With<ParticleSystem>>,
 ) {
     // Do only for each particle system with instanced data
     inst_data_query.for_each_mut( |inst_data| {
         if let Some(mut inst_data) = inst_data {
-            for (particle, instance) in inst_data.0.iter_mut() {
-                if let Ok((p, p_transform, p_color, p_lifetime)) = particle_query.get(*particle) {
+            for (&particle, instance) in inst_data.0.iter_mut() {
+                if let Ok((p, p_transform, p_color, p_lifetime)) = particle_query.get(particle) {
                     instance.position = p_transform.translation;
                     instance.scale = p_transform.scale.x;
                     let pct = p_lifetime.0 / p.max_lifetime;
@@ -459,7 +489,7 @@ pub(crate) fn particle_cleanup(
                 }
             }
             despawn_particle(
-                entity,
+                &entity,
                 inst_particle,
                 &mut instanced_data_query,
                 &mut commands
@@ -468,7 +498,7 @@ pub(crate) fn particle_cleanup(
             && commands.get_entity(particle.parent_system).is_none()
         {
             despawn_particle(
-                entity,
+                &entity,
                 inst_particle,
                 &mut instanced_data_query,
                 &mut commands
@@ -478,19 +508,19 @@ pub(crate) fn particle_cleanup(
 }
 
 fn despawn_particle(
-    particle: Entity,
+    particle_entity: &Entity,
     instance: Option<&InstancedParticle>,
     instanced_data_query: &mut Query<&mut ParticleSystemInstancedData>,
     commands: &mut Commands,
 ) {
-    // remove the particle from the instanced data if needed
+    // remove the particle entry from the instanced data if needed
     if let Some(instance) = instance {
-        if let Ok(mut instanced_data) = instanced_data_query.get_mut(instance.0) {
-            instanced_data.0.remove(&particle);
-        } else {
-            panic!("This is not supposed to happen");
-        }
+        instanced_data_query
+            .get_mut(instance.0)
+            .unwrap() // There should always be an entry corresponding to the current particle if it exists.
+            .0.remove(particle_entity);
     }
+
     // despawn the particle entity
-    commands.entity(particle).despawn();
+    commands.entity(*particle_entity).despawn();
 }

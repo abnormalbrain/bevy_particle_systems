@@ -19,7 +19,7 @@ struct Vertex {
     @location(2) uv: vec2<f32>,
 
     @location(3) i_pos_scale: vec4<f32>,
-    @location(4) i_rotation: vec4<f32>,
+    @location(4) i_rotation: f32,
     @location(5) i_color: vec4<f32>,
 };
 
@@ -46,17 +46,21 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     // cross billboard right with view to get billboard up vector
     let up: vec3<f32> = cross(view, right);
     // rotate UVs to apply the rotation
-    let rot_sin = sin(vertex.i_rotation.x);
-    let rot_cos = cos(vertex.i_rotation.x);
+    let rot_sin = sin(vertex.i_rotation);
+    let rot_cos = cos(vertex.i_rotation);
+    let centered_uvs = vec2<f32>(
+        vertex.uv.x - 0.5,
+        vertex.uv.y - 0.5
+    );
     let rotated_uvs = vec2<f32>(
-        vertex.uv.x * rot_cos - vertex.uv.y * rot_sin,
-        vertex.uv.x * rot_sin + vertex.uv.y * rot_cos,
+        centered_uvs.x * rot_cos - centered_uvs.y * rot_sin,
+        centered_uvs.x * rot_sin + centered_uvs.y * rot_cos,
     );
     // resolve billboard position using billboard up and right vector and plane uv
     let w_pos:    vec3<f32> =
         instance_position
-        + (right *  (rotated_uvs.x - 0.5) *   vertex.i_pos_scale.w)
-        + (up *     (rotated_uvs.y - 0.5) *   vertex.i_pos_scale.w);
+        + (right *  rotated_uvs.x *   vertex.i_pos_scale.w)
+        + (up *     rotated_uvs.y *   vertex.i_pos_scale.w);
     //let position = vertex.position * vertex.i_pos_scale.w + vertex.i_pos_scale.xyz;
     var out: VertexOutput;
     out.clip_position = mesh_position_world_to_clip(vec4<f32>(w_pos, 1.0));
@@ -70,5 +74,4 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let color = textureSample(instance_texture, instance_sampler, in.uv.xy);
     return color * in.color;
-    //return in.color;
 }

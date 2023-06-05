@@ -51,19 +51,22 @@ pub enum ParticleSpace {
 }
 
 /// Defines how to render particles
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(PartialEq, Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleRenderType {
     /// Standard 2D sprite
     Sprite2D,
-    /// 3D Billboard instancing
-    Billboard3D,
-    // Custom 3D Mesh instancing
-    //Mesh3D(Handle<Mesh>),
+    /// 3D Billboard instancing, set to false to disable frustrum culling.
+    /// Frustrum culling will be computed for the reference mesh (at the particle system location).
+    /// If enabled, all particles will be culled if the center of the particle system is not in the view frustrum.
+    /// Won't have any effect if mutated after spawn.
+    Billboard3D(bool),
 }
 
 /// Defines what texture to use for a particle
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleTexture {
+    /// Indicates that there is no texture to display
+    None,
     /// Indicates particles should use a given image texture
     Sprite(Handle<Image>),
     /// Indicates particles should use a given texture atlas
@@ -229,7 +232,7 @@ impl Default for ParticleSystem {
         Self {
             max_particles: 100,
             render_type: ParticleRenderType::Sprite2D,
-            texture: ParticleTexture::Sprite(Handle::default()),
+            texture: ParticleTexture::None,
             rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),
             emitter_shape: EmitterShape::default(),
@@ -439,4 +442,5 @@ pub(crate) struct ParticleBundle {
     pub velocity: Velocity,
     pub distance: DistanceTraveled,
     pub color: ParticleColor,
+    pub transform: Transform,
 }
