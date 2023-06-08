@@ -174,6 +174,11 @@ pub fn particle_spawner(
                     spawn_point.rotation =
                         Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
                 };
+            } else {
+                // If we use Billboard 3D rendering, we need to specify to the shader to align the particle with the specified velocity vector
+                if particle_system.rotate_to_movement_direction {
+                    //
+                }
             }
 
 
@@ -378,11 +383,12 @@ pub(crate) fn particle_transform(
         &mut Velocity,
         &mut DistanceTraveled,
         &mut Transform,
+        Option<&InstancedParticle>,
     )>,
     time: Res<Time>,
 ) {
     particle_query.par_iter_mut().for_each_mut(
-        |(particle, lifetime, mut velocity, mut distance, mut transform)| {
+        |(particle, lifetime, mut velocity, mut distance, mut transform, instanced_particle)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
             let (delta_time, elapsed_time) = if particle.use_scaled_time {
@@ -439,8 +445,13 @@ pub(crate) fn particle_transform(
             transform.translation += velocity.0 * delta_time;
             // Apply scale
             transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
-            // Apply rotation
-            transform.rotate_z(particle.rotation_speed * time.delta_seconds());
+
+            // Apply rotation to the particle only if its not instanced as billboard
+            // Otherwise, the rotation of the transform is ignored by the rendering pipeline
+            if let None = instanced_particle {
+                // Apply rotation
+                transform.rotate_z(particle.rotation_speed * time.delta_seconds());
+            }
 
             // Update distance travelled
             distance.dist_squared = transform.translation.distance_squared(distance.from);
@@ -452,6 +463,7 @@ pub(crate) fn update_instanced_particles(
     particle_query: Query<(
         &Particle,
         &Transform,
+        &Velocity,
         &ParticleColor,
         &Lifetime),
         With<InstancedParticle>>,
@@ -461,7 +473,7 @@ pub(crate) fn update_instanced_particles(
     inst_data_query.for_each_mut( |inst_data| {
         if let Some(mut inst_data) = inst_data {
             for (&particle, instance) in inst_data.0.iter_mut() {
-                if let Ok((p, p_transform, p_color, p_lifetime)) = particle_query.get(particle) {
+                if let Ok((p, p_transform, p_velocity, p_color, p_lifetime)) = particle_query.get(particle) {
                     instance.position = p_transform.translation;
                     instance.scale = p_transform.scale.x;
                     let pct = p_lifetime.0 / p.max_lifetime;

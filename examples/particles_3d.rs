@@ -91,7 +91,6 @@ fn setup(
 
     // Blue Particles
 
-    let texture: Handle<Image> = asset_server.load("gabe-idle-run.png");
     commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             render_type: ParticleRenderType::Billboard3D(false),
@@ -100,7 +99,7 @@ fn setup(
                 angle: (0.0..0.05).into(),
                 ..Default::default()
             }),
-            //texture: ParticleTexture::Sprite(asset_server.load("gabe-idle-run.png")),
+            texture: ParticleTexture::Sprite(asset_server.load("gabe-idle-run.png")),
             max_particles: 50_000,
             spawn_rate_per_second: 1.0.into(),
             initial_speed: JitteredValue::jittered(2.0, -1.0..1.0),
@@ -122,7 +121,6 @@ fn setup(
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
         ..ParticleSystemBundle::default()
     })
-    .insert(texture)
     .insert(Playing);
 
     // camera

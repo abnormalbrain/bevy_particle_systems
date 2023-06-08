@@ -10,7 +10,7 @@ use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
 
-use crate::{AnimatedIndex, Velocity};
+use crate::AnimatedIndex;
 
 /// Describes an oriented segment of a circle with a given radius.
 #[derive(Debug, Clone, Reflect, FromReflect)]

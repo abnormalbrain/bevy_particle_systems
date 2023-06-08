@@ -86,21 +86,28 @@ pub struct ParticleSystemInstancedData(pub BTreeMap<Entity, ParticleBillboardIns
 
 /// Extract (Clone) the particle data from the world for rendering.
 impl ExtractComponent for ParticleSystemInstancedData {
-    type Query = &'static ParticleSystemInstancedData;
+    type Query = (&'static ParticleSystemInstancedData, &'static Handle<Image>);
     type Filter = ();
     type Out = ExtractedInstancedData;
 
-    fn extract_component(item: QueryItem<'_, Self::Query>) -> Option<ExtractedInstancedData> {
+    fn extract_component((item, texture_handle): QueryItem<'_, Self::Query>) -> Option<ExtractedInstancedData> {
         // Extract all Values from the BTreeMap and make a Vec out of them.
         // This will be useful to give a slice of the data to the buffers.
         // See `[crate::render::prepare_particle_system_draw_data()]`
-        Some(ExtractedInstancedData(item.0.iter().map(|(_, v)| *v).collect::<Vec<_>>()))
+        Some(ExtractedInstancedData {
+            instance_data: item.0.iter().map(|(_, v)| *v).collect::<Vec<_>>(),
+            texture: Some(texture_handle.clone()),
+        })
     }
 }
 
 /// Needed to extract the data from the BTreeMap into an array to pass to GPU for instancing
 #[derive(Component, Debug)]
-pub struct ExtractedInstancedData(pub Vec<ParticleBillboardInstanceData>);
+//pub struct ExtractedInstancedData(pub Vec<ParticleBillboardInstanceData>);
+pub struct ExtractedInstancedData {
+    pub instance_data: Vec<ParticleBillboardInstanceData>,
+    pub texture: Option<Handle<Image>>,
+}
 
 /// Indicates that a particle must be rendered as instanced data.
 /// The entity is the particle system that owns this particle.
@@ -168,29 +175,29 @@ pub struct ParticleSystemDrawData {
 
 fn prepare_particle_system_draw_data(
     mut commands: Commands,
-    particle_system_query: Query<(Entity, &ExtractedInstancedData, Option<&Handle<Image>>)>,
+    particle_system_query: Query<(Entity, &ExtractedInstancedData)>,
     render_device: Res<RenderDevice>,
     pipeline: Res<ParticlePipeline>,
     textures: Res<RenderAssets<Image>>,
 ) {
-    for (entity, instance_data, texture) in &particle_system_query {
+    for (entity, instance_data) in &particle_system_query {
         // Retrieve the extracted instance data and make a buffer out of it
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
             contents: {
-                bytemuck::cast_slice(instance_data.0.as_slice())
+                bytemuck::cast_slice(instance_data.instance_data.as_slice())
             },
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         // If no texture was provided, use the dummy texture of the mesh pipeline `[MeshPipeline::dummy_white_gpu_image]`
-        let my_texture = if let Some(tex) = texture {
-            println!("OH SHIT");
-            textures.get(&tex).unwrap()
+        let my_texture = if let Some(tex) = &instance_data.texture {
+            textures.get(tex).unwrap()
         } else {
-            println!("THERE IS NO IMAGE HANDLE WHAT DO I DO");
             &pipeline.mesh_pipeline.dummy_white_gpu_image
         };
+
+        //let my_texture = textures.get(&instance_data.texture.as_ref().unwrap()).unwrap();
 
         // Create the bind group for the particle system
         let ps_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
@@ -212,7 +219,7 @@ fn prepare_particle_system_draw_data(
         commands.entity(entity).insert(
         ParticleSystemDrawData {
             buffer,
-            length: instance_data.0.len(),
+            length: instance_data.instance_data.len(),
             ps_bind_group,
         });
     }
