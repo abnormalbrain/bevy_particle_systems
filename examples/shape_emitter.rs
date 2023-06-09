@@ -9,7 +9,7 @@ use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, EmitterShape, JitteredValue, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityAlignedType,
 };
 
 fn main() {
@@ -48,7 +48,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ])),
                 emitter_shape: EmitterShape::line(200.0, std::f32::consts::FRAC_PI_4),
                 looping: true,
-                rotate_to_movement_direction: true,
+                align_with_velocity: Some(VelocityAlignedType::X),
                 initial_rotation: (-90.0_f32).to_radians().into(),
                 system_duration_seconds: 10.0,
                 max_distance: Some(300.0),
@@ -80,7 +80,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 }
                 .into(),
                 looping: true,
-                rotate_to_movement_direction: true,
+                align_with_velocity: Some(VelocityAlignedType::X),
                 initial_rotation: (-90.0_f32).to_radians().into(),
                 system_duration_seconds: 10.0,
                 max_distance: Some(300.0),

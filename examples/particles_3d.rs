@@ -21,15 +21,15 @@ fn setup(
     asset_server: Res<AssetServer>,
 ) {
     // Orange Particles
-    /*commands.spawn(ParticleSystemBundle {
+    commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             render_type: ParticleRenderType::Billboard3D(false),
             emitter_shape: EmitterShape::Sphere(Sphere::default()),
             max_particles: 50_000,
             spawn_rate_per_second: 1000.0.into(),
             initial_speed: JitteredValue::jittered(2.0, -1.0..1.0),
-            initial_rotation: JitteredValue::jittered(2.0, -0.2..0.2),
-            rotation_speed: 5.0.into(),
+            //initial_rotation: JitteredValue::jittered(2.0, -0.2..0.2),
+            //rotation_speed: 5.0.into(),
             velocity_modifiers: vec![
                 VelocityModifier::Drag(0.01.into()),
                 Noise3D {
@@ -41,9 +41,9 @@ fn setup(
             lifetime: 3.5.into(),
             color: ColorOverTime::Gradient(Curve::new(vec![
                 CurvePoint::new(Color::WHITE, 0.0),
-                CurvePoint::new(Color::ORANGE_RED, 0.1),
-                CurvePoint::new(Color::RED, 0.7),
-                CurvePoint::new(Color::rgba(0.5, 0.0, 0.0, 1.0), 0.9),
+                CurvePoint::new(Color::YELLOW_GREEN, 0.1),
+                CurvePoint::new(Color::BLUE, 0.7),
+                CurvePoint::new(Color::rgba(0.0, 0.0, 0.5, 1.0), 0.9),
                 CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
             ])),
             looping: true,
@@ -54,68 +54,33 @@ fn setup(
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
         ..ParticleSystemBundle::default()
     })
-    .insert(Playing);*/
+    .insert(Playing);
 
 
     // Blue Particles
-    /*commands.spawn(ParticleSystemBundle {
-        particle_system: ParticleSystem {
-            render_type: ParticleRenderType::Billboard3D(false),
-            emitter_shape: EmitterShape::Cone(Cone {
-                direction: Vec3::Z,
-                angle: (0.0..0.05).into(),
-                ..Default::default()
-            }),
-            max_particles: 50_000,
-            spawn_rate_per_second: 100.0.into(),
-            initial_speed: JitteredValue::jittered(2.0, -1.0..1.0),
-            initial_rotation: JitteredValue::jittered(2.0, -0.2..0.2),
-            rotation_speed: 5.0.into(),
-            velocity_modifiers: vec![VelocityModifier::Drag(0.01.into())],
-            lifetime: 3.5.into(),
-            color: ColorOverTime::Gradient(Curve::new(vec![
-                CurvePoint::new(Color::WHITE, 0.0),
-                CurvePoint::new(Color::BLUE, 0.1),
-                CurvePoint::new(Color::rgba(0.0, 0.0, 0.5, 1.0), 0.7),
-                CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
-            ])),
-            looping: true,
-            system_duration_seconds: 10.0,
-            scale: 0.1.into(),
-            ..ParticleSystem::default()
-        },
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-        ..ParticleSystemBundle::default()
-    })
-    .insert(Playing);*/
-
-    // Blue Particles
-
     commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
             render_type: ParticleRenderType::Billboard3D(false),
             emitter_shape: EmitterShape::Cone(Cone {
                 direction: Vec3::Z,
-                angle: (0.0..0.05).into(),
+                angle: (0.0..0.01).into(),
                 ..Default::default()
             }),
-            texture: ParticleTexture::Sprite(asset_server.load("gabe-idle-run.png")),
-            max_particles: 50_000,
-            spawn_rate_per_second: 1.0.into(),
-            initial_speed: JitteredValue::jittered(2.0, -1.0..1.0),
-            initial_rotation: JitteredValue::jittered(2.0, -0.2..0.2),
-            rotation_speed: 5.0.into(),
+            texture: ParticleTexture::Sprite(asset_server.load("arrow.png")),
+            max_particles: 100,
+            spawn_rate_per_second: 3.0.into(),
+            initial_speed: 2.0.into(),
+            align_with_velocity: Some(VelocityAlignedType::NegativeY),
             velocity_modifiers: vec![VelocityModifier::Drag(0.01.into())],
             lifetime: 3.5.into(),
             color: ColorOverTime::Gradient(Curve::new(vec![
                 CurvePoint::new(Color::WHITE, 0.0),
-                CurvePoint::new(Color::BLUE, 0.1),
-                CurvePoint::new(Color::rgba(0.0, 0.0, 0.5, 1.0), 0.7),
-                CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                CurvePoint::new(Color::WHITE, 0.5),
+                CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0),
             ])),
             looping: true,
             system_duration_seconds: 10.0,
-            scale: 10.0.into(),
+            scale: 0.5.into(),
             ..ParticleSystem::default()
         },
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),

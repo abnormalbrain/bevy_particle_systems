@@ -1404,3 +1404,41 @@ impl Default for PrecalculatedParticleVariables {
         Self::new()
     }
 }
+
+#[derive(Debug, Clone, Reflect, FromReflect)]
+/// This type describes how particles should be aligned with their velocity
+pub enum VelocityAlignedType {
+    /// X will put the particle local X axis along the velocity vector
+    X,
+    /// NegativeX will put the particle local -X axis along the velocity vector
+    NegativeX,
+    /// Y will put the particle local Y axis along the velocity vector
+    Y,
+    /// NegativeY will put the particle local -Y axis along the velocity vector
+    NegativeY,
+    /// Z will put the particle local Z axis along the velocity vector
+    Z,
+    /// NegativeZ will put the particle local -Z axis along the velocity vector
+    NegativeZ,
+    /// Custom will align with the provided local space vector. It should be normalized for it to work as intended
+    CustomLocal(Vec3),
+    /// Custom will align with the provided vector. It should be normalized for it to work as intended
+    CustomGlobal(Vec3),
+}
+
+impl VelocityAlignedType {
+    pub fn get_billboard_alignment(&self) -> Vec3 {
+        match self {
+            VelocityAlignedType::X => Vec3::X,
+            VelocityAlignedType::NegativeX => -Vec3::X,
+            VelocityAlignedType::Y => Vec3::Y,
+            VelocityAlignedType::NegativeY => -Vec3::Y,
+            VelocityAlignedType::Z => Vec3::ZERO,
+            VelocityAlignedType::NegativeZ => Vec3::ZERO,
+            VelocityAlignedType::CustomLocal(v) => Vec3::new(v.x, v.y, 0.0).normalize(),
+            VelocityAlignedType::CustomGlobal(_) => {
+                panic!("CustomGlobal alignment not supported for Billboard rendering");
+            },
+        }
+    }
+}

@@ -13,7 +13,7 @@ use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     values::{ColorOverTime, JitteredValue, ValueOverTime},
-    AtlasIndex, EmitterShape, VelocityModifier,
+    AtlasIndex, EmitterShape, VelocityModifier, VelocityAlignedType,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
@@ -191,7 +191,7 @@ pub struct ParticleSystem {
     ///
     /// This rotation for the movement direction will be added to the `initial_rotation` value,
     /// to account for needing to apply a base rotation to the sprite.
-    pub rotate_to_movement_direction: bool,
+    pub align_with_velocity: Option<VelocityAlignedType>,
 
     /// Whether or not the system will start over automatically.
     pub looping: bool,
@@ -243,7 +243,7 @@ impl Default for ParticleSystem {
             scale: 1.0.into(),
             initial_rotation: 0.0.into(),
             rotation_speed: 0.0.into(),
-            rotate_to_movement_direction: false,
+            align_with_velocity: None,
             looping: true,
             system_duration_seconds: 5.0,
             max_distance: None,
@@ -296,6 +296,11 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::velocity_modifiers`] on spawn.
     pub velocity_modifiers: Vec<VelocityModifier>,
 
+    /// The rotation, in radian, at which the particle was spawned.
+    ///
+    /// This is chosen from [`ParticleSystem::initial_rotation`] on spawn.
+    pub initial_rotation: f32,
+
     /// The speed, in radian per second, at which the particle rotates.
     ///
     /// This is chosen from [`ParticleSystem::rotation_speed`] on spawn.
@@ -313,6 +318,7 @@ impl Default for Particle {
             max_distance: None,
             use_scaled_time: true,
             scale: 1.0.into(),
+            initial_rotation: 0.0,
             rotation_speed: 0.0,
             velocity_modifiers: vec![],
             despawn_with_parent: false,
@@ -350,6 +356,7 @@ pub struct DistanceTraveled {
 /// Defines the current velocity of an individual entity particle.
 #[derive(Debug, Component, Default)]
 pub struct Velocity(pub Vec3);
+
 impl Velocity {
     /// Creates a new [`Velocity`] based on a [`Vec3`].
     ///
@@ -362,6 +369,10 @@ impl Velocity {
         }
     }
 }
+
+/// Marker component indicating that the [`Particle`] should be oriented along its velocity
+#[derive(Debug, Component, Reflect)]
+pub struct VelocityAligned(pub VelocityAlignedType);
 
 /// Marker component indicating that the [`ParticleSystem`] on the same entity is currently Playing.
 #[derive(Debug, Component)]
@@ -442,5 +453,4 @@ pub(crate) struct ParticleBundle {
     pub velocity: Velocity,
     pub distance: DistanceTraveled,
     pub color: ParticleColor,
-    pub transform: Transform,
 }

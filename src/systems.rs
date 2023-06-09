@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
+use std::f32::consts::PI;
 use bevy_asset::{Assets, AssetServer, Handle};
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With, ResMut};
 use bevy_hierarchy::BuildChildren;
-use bevy_math::{Quat, Vec2, Vec3};
+use bevy_math::{Quat, Vec2, Vec3, Vec3Swizzles};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
@@ -13,7 +14,7 @@ use bevy_render::{
     view::{NoFrustumCulling, visibility::ComputedVisibility},
     render_resource::Texture,
 };
-use crate::{BillboardMeshHandle, ParticleRenderType};
+use crate::VelocityAligned;
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -22,7 +23,8 @@ use crate::{
     values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
     DistanceTraveled, ParticleTexture, AnimatedIndex, AtlasIndex, Lerpable,
     ParticleSystemInstancedData, ParticleBillboardInstanceData,
-    ParticleSystemInstancedDataBundle, InstancedParticle
+    ParticleSystemInstancedDataBundle, InstancedParticle, BillboardMeshHandle,
+    ParticleRenderType, VelocityAlignedType,
 };
 
 /// System label attached to the `SystemSet` provided in this plugin
@@ -102,7 +104,6 @@ pub fn particle_spawner(
         if let ParticleRenderType::Billboard3D(_) = particle_system.render_type {
             match &particle_system.texture {
                 ParticleTexture::Sprite(image_handle) => {
-                    println!("ADDED !");
                     commands
                         .entity(entity)
                         .insert(image_handle.clone());
@@ -158,32 +159,82 @@ pub fn particle_spawner(
 
             let mut spawn_point = origin_pos.mul_transform(spawn_pos);
 
-            let direction = spawn_point.forward();
+            let initial_rotation = particle_system.initial_rotation.get_value(&mut rng);
+
+            // Will be useful to determine the rotation of billboard 3D particles
+            let mut world_alignment: Vec3 = Vec3::splat(0.0);
 
             // the Z axis must not be altered if we use 3D
             let is_2d = particle_system.render_type == crate::ParticleRenderType::Sprite2D;
+
+            // depending on the rendering type, we wont use the same "forward" axis
+            let direction = if is_2d {
+                spawn_point.local_x()
+            } else {
+                spawn_point.forward()
+            };
+
             if is_2d {
                 spawn_point.translation.z = particle_system
                     .z_value_override
                     .as_ref()
                     .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
 
-                if particle_system.rotate_to_movement_direction {
-                    spawn_point.rotate_z(particle_system.initial_rotation.get_value(&mut rng));
+                if let Some(alignment) = &particle_system.align_with_velocity {
+                    // The transform is already aligned on the velocity with the X axis
+                    match alignment {
+                        VelocityAlignedType::X => {
+                        }
+                        VelocityAlignedType::NegativeX => {
+                            let rotation = Quat::from_rotation_z(PI);
+                            spawn_point.rotate(rotation);
+                        }
+                        VelocityAlignedType::Y => {
+                            let rotation = Quat::from_rotation_z(PI * 0.5);
+                            spawn_point.rotate(rotation);
+                        }
+                        VelocityAlignedType::NegativeY => {
+                            let rotation = Quat::from_rotation_z(PI * 1.5);
+                            spawn_point.rotate(rotation);
+                        }
+                        VelocityAlignedType::Z => {
+                            panic!("Cannot align with Z axis with 2D particles");
+                        }
+                        VelocityAlignedType::NegativeZ => {
+                            panic!("Cannot align with -Z axis with 2D particles");
+                        }
+                        VelocityAlignedType::CustomLocal(v) => {
+                            let local_axis = spawn_point.rotation * *v;
+                            let rotation = Quat::from_rotation_arc_2d(spawn_point.local_x().xy(), local_axis.xy());
+                            spawn_point.rotate(rotation);
+                        }
+                        VelocityAlignedType::CustomGlobal(v) => {
+                            let rotation = Quat::from_rotation_arc_2d(spawn_point.local_x().xy(), v.xy());
+                            spawn_point.rotate(rotation);
+                        }
+                    };
+                    // Then we apply the initial rotation (which is often 0)
+                    if initial_rotation != 0.0 {
+                        spawn_point.rotate_z(initial_rotation);
+                    }
                 } else {
-                    spawn_point.rotation =
-                        Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
-                };
+                    // If no alignement required, we override the rotation with the provided initial_rotation
+                    if initial_rotation != 0.0 {
+                        spawn_point.rotation = Quat::from_rotation_z(initial_rotation);
+                    }
+                }
             } else {
-                // If we use Billboard 3D rendering, we need to specify to the shader to align the particle with the specified velocity vector
-                if particle_system.rotate_to_movement_direction {
-                    //
+                if let Some(alignment) = &particle_system.align_with_velocity {
+                    world_alignment += alignment.get_billboard_alignment();
                 }
             }
 
 
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
+
+            let initial_speed = particle_system.initial_speed.get_value(&mut rng);
+            let particle_velocity = direction * initial_speed;
 
             // Spawn the particle
             let mut particle_entity_commands = commands.spawn(ParticleBundle {
@@ -193,12 +244,13 @@ pub fn particle_spawner(
                     max_distance: particle_system.max_distance,
                     use_scaled_time: particle_system.use_scaled_time,
                     scale: particle_system.scale.clone(),
+                    initial_rotation: initial_rotation,
                     rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                     velocity_modifiers: particle_system.velocity_modifiers.clone(),
                     despawn_with_parent: particle_system.despawn_particles_with_system,
                 },
                 velocity: Velocity::new(
-                    direction * particle_system.initial_speed.get_value(&mut rng),
+                    particle_velocity,
                     is_2d,
                 ),
                 distance: DistanceTraveled {
@@ -206,9 +258,11 @@ pub fn particle_spawner(
                     from: spawn_point.translation,
                 },
                 color: ParticleColor(particle_system.color.clone()),
-                transform: spawn_point,
                 ..ParticleBundle::default()
             });
+            if let Some(alignment) = &particle_system.align_with_velocity {
+                particle_entity_commands.insert(VelocityAligned(alignment.clone()));
+            }
 
             // If we use local space, then parent the particle to the particle system
             if let ParticleSpace::Local = particle_system.space {
@@ -230,6 +284,7 @@ pub fn particle_spawner(
                                     color: particle_system.color.at_lifetime_pct(0.0),
                                     ..Sprite::default()
                                 },
+                                transform: spawn_point,
                                 texture: image_handle.clone(),
                                 ..SpriteBundle::default()
                             });
@@ -245,7 +300,7 @@ pub fn particle_spawner(
                                     index: index.get_value(&mut rng),
                                     ..TextureAtlasSprite::default()
                                 },
-                                //transform: spawn_point,
+                                transform: spawn_point,
                                 texture_atlas: atlas_handle.clone(),
                                 ..SpriteSheetBundle::default()
                             });
@@ -261,10 +316,9 @@ pub fn particle_spawner(
                     let particle_inst_data = ParticleBillboardInstanceData {
                         position: spawn_point.translation,
                         scale: particle_system.scale.clone().at_lifetime_pct(0.0),
-                        rotation: {
-                            let value = particle_system.initial_rotation.get_value(&mut rng);
-                            value
-                        },
+                        rotation: initial_rotation,
+                        velocity: particle_velocity,
+                        alignment: world_alignment,
                         color: particle_system.color.at_lifetime_pct(0.0).as_rgba_f32(),
                     };
 
@@ -286,31 +340,14 @@ pub fn particle_spawner(
                                 inst_data: ParticleSystemInstancedData(inst_data),
                             });
 
-                            /*match &particle_system.texture {
-                                ParticleTexture::Sprite(image_handle) => {
-                                    println!("ADDED !");
-                                    particle_entity_commands
-                                        .commands()
-                                        .entity(entity)
-                                        .insert(image_handle.clone());
-                                }
-                                ParticleTexture::TextureAtlas {..} => {
-                                    panic!("Particle System Error: Texture Atlas not supported for 3D billboard rendering!");
-                                }
-                                ParticleTexture::None => {
-                                    particle_entity_commands
-                                        .commands()
-                                        .entity(entity)
-                                        .remove::<Handle<Image>>();
-                                }
-                            }*/
-
                         if !should_use_frustrum_culling {
                             particle_entity_commands.insert(NoFrustumCulling);
                         }
                     };
                     
-                    particle_entity_commands.insert(InstancedParticle(entity));
+                    particle_entity_commands
+                        .insert(InstancedParticle(entity))
+                        .insert(spawn_point);
                 },
             }
         }
@@ -463,9 +500,9 @@ pub(crate) fn update_instanced_particles(
     particle_query: Query<(
         &Particle,
         &Transform,
-        &Velocity,
         &ParticleColor,
-        &Lifetime),
+        &Lifetime,
+        Option<&VelocityAligned>),
         With<InstancedParticle>>,
     mut inst_data_query: Query<Option<&mut ParticleSystemInstancedData>, With<ParticleSystem>>,
 ) {
@@ -473,9 +510,15 @@ pub(crate) fn update_instanced_particles(
     inst_data_query.for_each_mut( |inst_data| {
         if let Some(mut inst_data) = inst_data {
             for (&particle, instance) in inst_data.0.iter_mut() {
-                if let Ok((p, p_transform, p_velocity, p_color, p_lifetime)) = particle_query.get(particle) {
+                if let Ok((p, p_transform, p_color, p_lifetime, p_velocity_aligned)) = particle_query.get(particle) {
                     instance.position = p_transform.translation;
                     instance.scale = p_transform.scale.x;
+                    //instance.rotation = p.rotation_speed * p_lifetime.0;
+                    instance.alignment = if let Some(VelocityAligned(alignment)) = p_velocity_aligned {
+                        alignment.get_billboard_alignment()
+                    } else {
+                        Vec3::ZERO
+                    };
                     let pct = p_lifetime.0 / p.max_lifetime;
                     instance.color = p_color.0.at_lifetime_pct(pct).as_rgba_f32();
                 }

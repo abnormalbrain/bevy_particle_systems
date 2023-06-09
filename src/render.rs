@@ -12,11 +12,11 @@ use bevy_render::{
         AddRenderCommand, DrawFunctions, PhaseItem, RenderCommand,
         RenderCommandResult, RenderPhase, SetItemPipeline, TrackedRenderPass,
     },
-    view::{ExtractedView, visibility::ComputedVisibility},
+    view::{ExtractedView, visibility::ComputedVisibility, ViewTarget},
     render_resource::*,
     render_asset::RenderAssets,
     renderer::RenderDevice,
-    RenderApp, RenderSet, texture::Image, prelude::Mesh,
+    RenderApp, RenderSet, texture::{Image, BevyDefault}, prelude::Mesh,
 };
 use bevy_ecs::{
     system::{lifetimeless::*, SystemParamItem, SystemState},
@@ -73,8 +73,12 @@ pub struct ParticleBillboardInstanceData {
     pub position: Vec3,
     /// Each particle scale
     pub scale: f32,
+    /// Each particle velocity
+    pub velocity: Vec3,
     /// Each particle rotation
     pub rotation: f32,
+    /// Each particle alignment vector in world space
+    pub alignment: Vec3,
     /// Each particle color
     pub color: [f32; 4],
 }
@@ -86,7 +90,7 @@ pub struct ParticleSystemInstancedData(pub BTreeMap<Entity, ParticleBillboardIns
 
 /// Extract (Clone) the particle data from the world for rendering.
 impl ExtractComponent for ParticleSystemInstancedData {
-    type Query = (&'static ParticleSystemInstancedData, &'static Handle<Image>);
+    type Query = (&'static ParticleSystemInstancedData, Option<&'static Handle<Image>>);
     type Filter = ();
     type Out = ExtractedInstancedData;
 
@@ -96,7 +100,11 @@ impl ExtractComponent for ParticleSystemInstancedData {
         // See `[crate::render::prepare_particle_system_draw_data()]`
         Some(ExtractedInstancedData {
             instance_data: item.0.iter().map(|(_, v)| *v).collect::<Vec<_>>(),
-            texture: Some(texture_handle.clone()),
+            texture: if let Some(handle) = texture_handle {
+                Some(handle.clone())
+            } else {
+                None
+            },
         })
     }
 }
@@ -308,23 +316,47 @@ impl SpecializedMeshPipeline for ParticlePipeline {
                     offset: 0,
                     shader_location: 3, // shader locations 0-2 are taken up by Position, Normal and UV attributes
                 },
-                // `ParticleBillboardInstanceData::rotation` as float32
+                // [`ParticleBillboardInstanceData::velocity`, `ParticleBillboardInstanceData::rotation`] as float32x4
                 VertexAttribute {
-                    format: VertexFormat::Float32,
+                    format: VertexFormat::Float32x4,
                     offset: VertexFormat::Float32x4.size(),
                     shader_location: 4,
+                },
+                // Particle alignment with velocity as float32x4
+                VertexAttribute {
+                    format: VertexFormat::Float32x3,
+                    offset: VertexFormat::Float32x4.size() * 2,
+                    shader_location: 5,
                 },
                 // `ParticleBillboardInstanceData::color` as float32x4
                 VertexAttribute {
                     format: VertexFormat::Float32x4,
-                    offset: VertexFormat::Float32x4.size() + VertexFormat::Float32.size(),
-                    shader_location: 5,
+                    offset: (VertexFormat::Float32x4.size() * 2) + VertexFormat::Float32x3.size(),
+                    shader_location: 6,
                 },
             ],
         });
 
         // Use the particle fragment shader
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
+
+        // see https://github.com/bevyengine/bevy/blob/main/crates/bevy_pbr/src/render/mesh.rs
+        let format = if key.contains(MeshPipelineKey::HDR) {
+            ViewTarget::TEXTURE_FORMAT_HDR
+        } else {
+            TextureFormat::bevy_default()
+        };
+
+        // WARNING: Since particles are not sorted by depth, the alpha blending might get very weird and poppy
+        // with particles that overlap each other!
+        // The user should be able to set manually standard blending, premultiplied, and additive blending at least.
+        let blend = Some(BlendState::ALPHA_BLENDING);
+        
+        descriptor.fragment.as_mut().unwrap().targets = vec![Some(ColorTargetState {
+            write_mask:ColorWrites::ALL,
+            format,
+            blend,
+        })];
 
         // Adds the particle system data layout
         descriptor.layout.push(self.custom_particle_layout.clone());

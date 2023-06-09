@@ -19,8 +19,9 @@ struct Vertex {
     @location(2) uv: vec2<f32>,
 
     @location(3) i_pos_scale: vec4<f32>,
-    @location(4) i_rotation: f32,
-    @location(5) i_color: vec4<f32>,
+    @location(4) i_velocity_rotation: vec4<f32>,
+    @location(5) i_alignment: vec3<f32>,
+    @location(6) i_color: vec4<f32>,
 };
 
 struct VertexOutput {
@@ -31,23 +32,37 @@ struct VertexOutput {
 
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
-    // Calculate billboard positions
-    // retrieve camera position from the view uniform buffer
-    let cam_pos: vec3<f32> = view.world_position;
-    // use the inverse view projection matrix to get the camera up vector
-    let cam_up: vec3<f32> = view.inverse_view_proj[1].xyz;
-    // get the pivot of the plane in world position, we don't use the mesh model matrix because
-    //let instance_position = mesh_position_local_to_world(mesh.model, vec4<f32>(vertex.i_pos_scale.xyz, 1.0)).xyz;
+    // instance world position
     let instance_position = vertex.i_pos_scale.xyz;
-    // get the vector mesh pivot -> camera
-    let view: vec3<f32> = normalize(cam_pos - instance_position);
-    // cross with camera up to get the billboard right vector
-    let right: vec3<f32> = normalize(cross(cam_up, view));
-    // cross billboard right with view to get billboard up vector
-    let up: vec3<f32> = cross(view, right);
-    // rotate UVs to apply the rotation
-    let rot_sin = sin(vertex.i_rotation);
-    let rot_cos = cos(vertex.i_rotation);
+    // instance world scale
+    let instance_scale = vertex.i_pos_scale.w;
+    // instance rotation (in radians)
+    let instance_rotation = vertex.i_velocity_rotation.w;
+    // instance velocity
+    let instance_velocity = vertex.i_velocity_rotation.xyz;
+    // instance alignment, vector that needs to face the velocity.
+    // is (0,0,0) if no alignment required
+    let instance_alignment = vertex.i_alignment;
+
+    // resolve the rotation implied by the alignment
+    var cumulated_rotation = instance_rotation;
+    if (length(instance_alignment) > 0.5) {
+        // the clip alignment
+        let v1 = instance_alignment.xy;
+        // the clip velocity
+        let v2 = normalize((view.view_proj * vec4<f32>(instance_velocity, 0.0)).xy);
+
+        // equals cos(angle_between_vectors) since they are normalized
+        let dot = dot(v1, v2);
+        let cross = v1.x * v2.y - v1.y * v2.x;
+        let angle = atan2(cross, dot);
+
+        cumulated_rotation += angle;
+    }
+
+    // get the UVs with rotation applied
+    let rot_sin = sin(cumulated_rotation);
+    let rot_cos = cos(cumulated_rotation);
     let centered_uvs = vec2<f32>(
         vertex.uv.x - 0.5,
         vertex.uv.y - 0.5
@@ -56,15 +71,21 @@ fn vertex(vertex: Vertex) -> VertexOutput {
         centered_uvs.x * rot_cos - centered_uvs.y * rot_sin,
         centered_uvs.x * rot_sin + centered_uvs.y * rot_cos,
     );
+
+    // Get the up and right direction in world space from the projection matrix
+    // and normalize them to get a unit vector in world space
+    // For better performance, this could be done on CPU side
+    let abs_right = normalize((view.inverse_view_proj * vec4<f32>(1.0, 0.0, 0.0, 0.0)).xyz);
+    let abs_up = normalize((view.inverse_view_proj * vec4<f32>(0.0, 1.0, 0.0, 0.0)).xyz);
+
     // resolve billboard position using billboard up and right vector and plane uv
     let w_pos:    vec3<f32> =
         instance_position
-        + (right *  rotated_uvs.x *   vertex.i_pos_scale.w)
-        + (up *     rotated_uvs.y *   vertex.i_pos_scale.w);
-    //let position = vertex.position * vertex.i_pos_scale.w + vertex.i_pos_scale.xyz;
+        + (abs_right.xyz *  rotated_uvs.x *   instance_scale)
+        + (abs_up.xyz *     rotated_uvs.y *   instance_scale);
+
     var out: VertexOutput;
     out.clip_position = mesh_position_world_to_clip(vec4<f32>(w_pos, 1.0));
-    //out.clip_position = mesh_position_local_to_clip(mesh.model, vec4<f32>(vertex.position, 1.0));
     out.uv = vertex.uv;
     out.color = vertex.i_color;
     return out;
@@ -72,6 +93,6 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
-    let color = textureSample(instance_texture, instance_sampler, in.uv.xy);
+    var color = textureSample(instance_texture, instance_sampler, in.uv.xy);
     return color * in.color;
 }
