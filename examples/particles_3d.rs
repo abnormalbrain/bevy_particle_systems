@@ -1,5 +1,6 @@
 //! A shader that renders a mesh multiple times in one draw call.
 
+use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy_particle_systems::*;
 
@@ -20,16 +21,22 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // Orange Particles
+    // Blue Particles
     commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
-            render_type: ParticleRenderType::Billboard3D(false),
+            // Must be set for 3D rendering
+            // Note that this is equivalent as the default settings: ParticleRenderType::Billboard3d(default())
+            render_type: ParticleRenderType::Billboard3d(Billboard3dSettings {
+                use_frustrum_culling: false,
+                // Here, particles are almost always opaque, so we skip this expensive sorting
+                sort_particles_by_depth: false,
+            }),
             emitter_shape: EmitterShape::Sphere(Sphere::default()),
             max_particles: 50_000,
             spawn_rate_per_second: 1000.0.into(),
             initial_speed: JitteredValue::jittered(2.0, -1.0..1.0),
-            //initial_rotation: JitteredValue::jittered(2.0, -0.2..0.2),
-            //rotation_speed: 5.0.into(),
+            initial_rotation: (-PI..PI).into(),
+            rotation_speed: (-10.0..10.0).into(),
             velocity_modifiers: vec![
                 VelocityModifier::Drag(0.01.into()),
                 Noise3D {
@@ -41,14 +48,14 @@ fn setup(
             lifetime: 3.5.into(),
             color: ColorOverTime::Gradient(Curve::new(vec![
                 CurvePoint::new(Color::WHITE, 0.0),
-                CurvePoint::new(Color::YELLOW_GREEN, 0.1),
+                CurvePoint::new(Color::rgba(1.0, 1.0, 0.5, 1.0), 0.1),
                 CurvePoint::new(Color::BLUE, 0.7),
                 CurvePoint::new(Color::rgba(0.0, 0.0, 0.5, 1.0), 0.9),
                 CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
             ])),
             looping: true,
             system_duration_seconds: 10.0,
-            scale: 0.1.into(),
+            scale: (0.1..0.05).into(),
             ..ParticleSystem::default()
         },
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
@@ -57,18 +64,23 @@ fn setup(
     .insert(Playing);
 
 
-    // Blue Particles
+    // Arrows
     commands.spawn(ParticleSystemBundle {
         particle_system: ParticleSystem {
-            render_type: ParticleRenderType::Billboard3D(false),
+            render_type: ParticleRenderType::Billboard3d(Billboard3dSettings {
+                use_frustrum_culling: false,
+                // Here, the arrow particles are overlapping each other a lot with transparency,
+                // we then need to sort them before rendering or we will encounter bad alpha blending
+                sort_particles_by_depth: true,
+            }),
             emitter_shape: EmitterShape::Cone(Cone {
                 direction: Vec3::Z,
-                angle: (0.0..0.01).into(),
+                angle: (0.00..0.01).into(),
                 ..Default::default()
             }),
             texture: ParticleTexture::Sprite(asset_server.load("arrow.png")),
-            max_particles: 100,
-            spawn_rate_per_second: 3.0.into(),
+            max_particles: 1000,
+            spawn_rate_per_second: 5.0.into(),
             initial_speed: 2.0.into(),
             align_with_velocity: Some(VelocityAlignedType::NegativeY),
             velocity_modifiers: vec![VelocityModifier::Drag(0.01.into())],
@@ -88,7 +100,7 @@ fn setup(
     })
     .insert(Playing);
 
-    // camera
+    // Camera
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(10.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()

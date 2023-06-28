@@ -45,11 +45,12 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let instance_alignment = vertex.i_alignment;
 
     // resolve the rotation implied by the alignment
+    // PERFORMANCE NOTE: This branch could be more efficient with a defined #if, implemented through the pipeline key
     var cumulated_rotation = instance_rotation;
     if (length(instance_alignment) > 0.5) {
-        // the clip alignment
+        // clip alignment
         let v1 = instance_alignment.xy;
-        // the clip velocity
+        // clip velocity
         let v2 = normalize((view.view_proj * vec4<f32>(instance_velocity, 0.0)).xy);
 
         // equals cos(angle_between_vectors) since they are normalized

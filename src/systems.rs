@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::f32::consts::PI;
-use bevy_asset::{Assets, AssetServer, Handle};
-use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With, ResMut};
+use bevy_asset::Handle;
+use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3, Vec3Swizzles};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
@@ -9,12 +9,9 @@ use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
 use bevy_time::Time;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 use bevy_render::{
-    prelude::{SpatialBundle, Mesh, shape, Image},
-    color::Color,
+    prelude::Image,
     view::{NoFrustumCulling, visibility::ComputedVisibility},
-    render_resource::Texture,
 };
-use crate::VelocityAligned;
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
@@ -24,7 +21,7 @@ use crate::{
     DistanceTraveled, ParticleTexture, AnimatedIndex, AtlasIndex, Lerpable,
     ParticleSystemInstancedData, ParticleBillboardInstanceData,
     ParticleSystemInstancedDataBundle, InstancedParticle, BillboardMeshHandle,
-    ParticleRenderType, VelocityAlignedType,
+    ParticleRenderType, VelocityAlignedType, VelocityAligned, SortParticleByDepth,
 };
 
 /// System label attached to the `SystemSet` provided in this plugin
@@ -101,7 +98,7 @@ pub fn particle_spawner(
             continue;
         }
 
-        if let ParticleRenderType::Billboard3D(_) = particle_system.render_type {
+        if let ParticleRenderType::Billboard3d(_) = particle_system.render_type {
             match &particle_system.texture {
                 ParticleTexture::Sprite(image_handle) => {
                     commands
@@ -223,10 +220,8 @@ pub fn particle_spawner(
                         spawn_point.rotation = Quat::from_rotation_z(initial_rotation);
                     }
                 }
-            } else {
-                if let Some(alignment) = &particle_system.align_with_velocity {
-                    world_alignment += alignment.get_billboard_alignment();
-                }
+            } else if let Some(alignment) = &particle_system.align_with_velocity {
+                world_alignment += alignment.get_billboard_alignment();
             }
 
 
@@ -244,7 +239,7 @@ pub fn particle_spawner(
                     max_distance: particle_system.max_distance,
                     use_scaled_time: particle_system.use_scaled_time,
                     scale: particle_system.scale.clone(),
-                    initial_rotation: initial_rotation,
+                    initial_rotation,
                     rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                     velocity_modifiers: particle_system.velocity_modifiers.clone(),
                     despawn_with_parent: particle_system.despawn_particles_with_system,
@@ -311,7 +306,9 @@ pub fn particle_spawner(
                         }
                     }
                 },
-                crate::ParticleRenderType::Billboard3D(should_use_frustrum_culling) => {
+                crate::ParticleRenderType::Billboard3d(billboard_settings) => {
+
+                    // Gather particle instance data
                     let particle_id = particle_entity_commands.id();
                     let particle_inst_data = ParticleBillboardInstanceData {
                         position: spawn_point.translation,
@@ -322,26 +319,36 @@ pub fn particle_spawner(
                         color: particle_system.color.at_lifetime_pct(0.0).as_rgba_f32(),
                     };
 
+                    // Insert it into the ParticleSystemInstanceData of its owner particle system if there is one...
                     if let Some(ref mut inst_data) = instanced_data {
                         inst_data.0.insert(
                             particle_id,
                             particle_inst_data);
+                    // ...Create the ParticleSystemInstanceData and insert the particle data if there isn't
                     } else {
                         let mut inst_data = BTreeMap::new();
                         inst_data.insert(
                             particle_id,
                             particle_inst_data);
-                        particle_entity_commands
-                            .commands()
-                            .entity(entity)
+
+                        let mut particle_system_commands =
+                            particle_entity_commands
+                                .commands()
+                                .entity(entity);
+                        
+                        particle_system_commands
                             .insert(ParticleSystemInstancedDataBundle {
                                 mesh_handle: billboard_mesh.0.clone(),
                                 computed_visibility: ComputedVisibility::default(),
                                 inst_data: ParticleSystemInstancedData(inst_data),
                             });
-
-                        if !should_use_frustrum_culling {
-                            particle_entity_commands.insert(NoFrustumCulling);
+                        // Marker component that disables frustrum culling
+                        if !billboard_settings.use_frustrum_culling {
+                            particle_system_commands.insert(NoFrustumCulling);
+                        }
+                        // Marker component that enables sorting particles by depth (useful for overlapping transparency)
+                        if billboard_settings.sort_particles_by_depth {
+                            particle_system_commands.insert(SortParticleByDepth);
                         }
                     };
                     
@@ -413,6 +420,7 @@ pub(crate) fn particle_texture_atlas_color(
     );
 }
 
+#[allow(clippy::type_complexity)]
 pub(crate) fn particle_transform(
     mut particle_query: Query<(
         &Particle,
@@ -439,7 +447,7 @@ pub(crate) fn particle_transform(
 
             // Apply velocity modifiers to velocity
             for modifier in &particle.velocity_modifiers {
-                use VelocityModifier::*;
+                use VelocityModifier::{Drag, Noise2D, Noise3D, Scalar, Vector};
                 match modifier {
                     Vector(v) => {
                         velocity.0 += v.at_lifetime_pct(lifetime_pct) * delta_time;
@@ -485,7 +493,7 @@ pub(crate) fn particle_transform(
 
             // Apply rotation to the particle only if its not instanced as billboard
             // Otherwise, the rotation of the transform is ignored by the rendering pipeline
-            if let None = instanced_particle {
+            if instanced_particle.is_none() {
                 // Apply rotation
                 transform.rotate_z(particle.rotation_speed * time.delta_seconds());
             }
@@ -496,6 +504,7 @@ pub(crate) fn particle_transform(
     );
 }
 
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_instanced_particles(
     particle_query: Query<(
         &Particle,
@@ -509,11 +518,11 @@ pub(crate) fn update_instanced_particles(
     // Do only for each particle system with instanced data
     inst_data_query.for_each_mut( |inst_data| {
         if let Some(mut inst_data) = inst_data {
-            for (&particle, instance) in inst_data.0.iter_mut() {
+            for (&particle, instance) in &mut inst_data.0 {
                 if let Ok((p, p_transform, p_color, p_lifetime, p_velocity_aligned)) = particle_query.get(particle) {
                     instance.position = p_transform.translation;
                     instance.scale = p_transform.scale.x;
-                    //instance.rotation = p.rotation_speed * p_lifetime.0;
+                    instance.rotation = p.initial_rotation + p.rotation_speed * p_lifetime.0;
                     instance.alignment = if let Some(VelocityAligned(alignment)) = p_velocity_aligned {
                         alignment.get_billboard_alignment()
                     } else {
@@ -544,7 +553,7 @@ pub(crate) fn particle_cleanup(
                 }
             }
             despawn_particle(
-                &entity,
+                entity,
                 inst_particle,
                 &mut instanced_data_query,
                 &mut commands
@@ -553,7 +562,7 @@ pub(crate) fn particle_cleanup(
             && commands.get_entity(particle.parent_system).is_none()
         {
             despawn_particle(
-                &entity,
+                entity,
                 inst_particle,
                 &mut instanced_data_query,
                 &mut commands
@@ -563,7 +572,7 @@ pub(crate) fn particle_cleanup(
 }
 
 fn despawn_particle(
-    particle_entity: &Entity,
+    particle_entity: Entity,
     instance: Option<&InstancedParticle>,
     instanced_data_query: &mut Query<&mut ParticleSystemInstancedData>,
     commands: &mut Commands,
@@ -573,9 +582,9 @@ fn despawn_particle(
         instanced_data_query
             .get_mut(instance.0)
             .unwrap() // There should always be an entry corresponding to the current particle if it exists.
-            .0.remove(particle_entity);
+            .0.remove(&particle_entity);
     }
 
     // despawn the particle entity
-    commands.entity(*particle_entity).despawn();
+    commands.entity(particle_entity).despawn();
 }

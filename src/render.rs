@@ -1,11 +1,11 @@
 //! Defines Data and methods used for rendering the particles.
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, cmp::Ordering};
 use bevy_asset::{Handle, AssetServer, Assets};
 use bevy_math::Vec3;
 use bevy_app::{App, Plugin};
 use bevy_render::{
-    prelude::{Msaa, shape,},
+    prelude::{Msaa, shape, Mesh},
     extract_component::{ ExtractComponentPlugin, ExtractComponent},
     mesh::{GpuBufferInfo, MeshVertexBufferLayout},
     render_phase::{
@@ -13,13 +13,22 @@ use bevy_render::{
         RenderCommandResult, RenderPhase, SetItemPipeline, TrackedRenderPass,
     },
     view::{ExtractedView, visibility::ComputedVisibility, ViewTarget},
-    render_resource::*,
+    render_resource::{
+        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+        BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource,
+        BindingType, BlendState, Buffer, BufferInitDescriptor, BufferUsages,
+        ColorTargetState, ColorWrites, PipelineCache, RenderPipelineDescriptor,
+        SamplerBindingType, Shader, ShaderStages, SpecializedMeshPipeline,
+        SpecializedMeshPipelineError, SpecializedMeshPipelines,TextureFormat,
+        TextureSampleType, TextureViewDimension,VertexAttribute, VertexBufferLayout,
+        VertexFormat, VertexStepMode
+    },
     render_asset::RenderAssets,
     renderer::RenderDevice,
-    RenderApp, RenderSet, texture::{Image, BevyDefault}, prelude::Mesh,
+    RenderApp, RenderSet, texture::{Image, BevyDefault},
 };
 use bevy_ecs::{
-    system::{lifetimeless::*, SystemParamItem, SystemState},
+    system::{lifetimeless::{Read, SRes}, SystemParamItem, SystemState},
     prelude::*,
     query::QueryItem,
 };
@@ -30,6 +39,7 @@ use bevy_pbr::{
 use bevy_core_pipeline::core_3d::Transparent3d;
 use bytemuck::{Pod, Zeroable};
 use bevy_derive::Deref;
+use crate::{ParticleSystem, SortParticleByDepth};
 
 /// Plugin to render 3D billboard particles using instancing
 pub struct ParticleInstancingPlugin;
@@ -66,6 +76,7 @@ impl FromWorld for BillboardMeshHandle {
 }
 
 /// Per instance particle data
+#[allow(clippy::let_underscore_untyped)]
 #[derive(Clone, Copy, Pod, Zeroable, Debug)]
 #[repr(C)]
 pub struct ParticleBillboardInstanceData {
@@ -84,37 +95,37 @@ pub struct ParticleBillboardInstanceData {
 }
 
 /// All the instanced data from a single particle system.
-/// Each particle (Entity) is associated with its instance data (ParticleBillboardInstanceData)
+/// Each particle ([`Entity`]) is associated with its instance data ([`ParticleBillboardInstanceData`])
 #[derive(Component, Deref, Debug)]
 pub struct ParticleSystemInstancedData(pub BTreeMap<Entity, ParticleBillboardInstanceData>);
 
 /// Extract (Clone) the particle data from the world for rendering.
 impl ExtractComponent for ParticleSystemInstancedData {
-    type Query = (&'static ParticleSystemInstancedData, Option<&'static Handle<Image>>);
-    type Filter = ();
+    type Query = (&'static ParticleSystemInstancedData, Option<&'static Handle<Image>>, Option<&'static SortParticleByDepth>);
+    type Filter = With<ParticleSystem>;
     type Out = ExtractedInstancedData;
 
-    fn extract_component((item, texture_handle): QueryItem<'_, Self::Query>) -> Option<ExtractedInstancedData> {
+    fn extract_component((item, texture_handle, sort): QueryItem<'_, Self::Query>) -> Option<ExtractedInstancedData> {
         // Extract all Values from the BTreeMap and make a Vec out of them.
         // This will be useful to give a slice of the data to the buffers.
-        // See `[crate::render::prepare_particle_system_draw_data()]`
+        // See crate::render::prepare_particle_system_draw_data()
         Some(ExtractedInstancedData {
-            instance_data: item.0.iter().map(|(_, v)| *v).collect::<Vec<_>>(),
-            texture: if let Some(handle) = texture_handle {
-                Some(handle.clone())
-            } else {
-                None
-            },
+            instance_data: item.0.values().copied().collect::<Vec<_>>(),
+            texture: texture_handle.cloned(),
+            sort_by_depth: matches!(sort, Some(_)),
         })
     }
 }
 
-/// Needed to extract the data from the BTreeMap into an array to pass to GPU for instancing
+/// Needed to extract the data from the [`BTreeMap`] into an array to pass to GPU for instancing
 #[derive(Component, Debug)]
-//pub struct ExtractedInstancedData(pub Vec<ParticleBillboardInstanceData>);
 pub struct ExtractedInstancedData {
+    /// instance_data holds all per-particle data
     pub instance_data: Vec<ParticleBillboardInstanceData>,
+    /// texture holds the texture shared by all particles
     pub texture: Option<Handle<Image>>,
+    /// wether or not we should sort the particles by depth before rendering
+    pub sort_by_depth: bool,
 }
 
 /// Indicates that a particle must be rendered as instanced data.
@@ -183,29 +194,65 @@ pub struct ParticleSystemDrawData {
 
 fn prepare_particle_system_draw_data(
     mut commands: Commands,
-    particle_system_query: Query<(Entity, &ExtractedInstancedData)>,
+    mut particle_system_query: Query<(Entity, &mut ExtractedInstancedData)>,
+    extracted_view: Query<&ExtractedView>,
     render_device: Res<RenderDevice>,
     pipeline: Res<ParticlePipeline>,
     textures: Res<RenderAssets<Image>>,
 ) {
-    for (entity, instance_data) in &particle_system_query {
-        // Retrieve the extracted instance data and make a buffer out of it
+    for (entity, mut extracted_instance_data) in particle_system_query.iter_mut() {
+
+        // Sort the particles only if required by the provided settings
+        if extracted_instance_data.sort_by_depth {
+            // Retrieve the extracted instance data and sort it according to the first given camera (how to know its the main one ?)
+            // WARNING: Here we assume that there is only one ExtractedView at this stage
+            let camera_global_position = extracted_view.get_single().unwrap().transform.translation();
+            
+            // Create a Vec with the depth calculated
+            let distances: Vec<f32> = extracted_instance_data.instance_data.iter().map(|data| {
+                - data.position.distance_squared(camera_global_position)
+            }).collect();
+
+            // Create a Vec with indices
+            let mut indices: Vec<usize> = (0..distances.len()).collect();
+
+            // Sort the indices Vec according to the distances
+            indices.sort_unstable_by(|&a, &b|
+                distances[a].partial_cmp(&distances[b]).unwrap_or(Ordering::Less)
+            );
+
+            // We then sort the extracted_instance_data according to the indices Vec
+            for i in 0..indices.len() {
+                while i != indices[i] {
+                    let swap_idx = indices[i];
+                    extracted_instance_data.instance_data.swap(i, swap_idx);
+                    indices.swap(i, swap_idx);
+                }
+            }
+
+            // The standard sort method requires to calculate the square distance twice for each index.
+            /*extracted_instance_data.instance_data.sort_by(|&a, &b| 
+            //    b.position.distance_squared(camera_global_position)
+            //        .partial_cmp(&a.position.distance_squared(camera_global_position))
+            //        .unwrap_or(Ordering::Equal)
+            //);*/
+        }
+
+        // Make a buffer out of the extracted instance data
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
             contents: {
-                bytemuck::cast_slice(instance_data.instance_data.as_slice())
+                bytemuck::cast_slice(extracted_instance_data.instance_data.as_slice())
             },
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         // If no texture was provided, use the dummy texture of the mesh pipeline `[MeshPipeline::dummy_white_gpu_image]`
-        let my_texture = if let Some(tex) = &instance_data.texture {
+        let my_texture = if let Some(tex) = &extracted_instance_data.texture {
             textures.get(tex).unwrap()
         } else {
             &pipeline.mesh_pipeline.dummy_white_gpu_image
         };
-
-        //let my_texture = textures.get(&instance_data.texture.as_ref().unwrap()).unwrap();
 
         // Create the bind group for the particle system
         let ps_bind_group = render_device.create_bind_group(&BindGroupDescriptor {
@@ -227,7 +274,7 @@ fn prepare_particle_system_draw_data(
         commands.entity(entity).insert(
         ParticleSystemDrawData {
             buffer,
-            length: instance_data.instance_data.len(),
+            length: extracted_instance_data.instance_data.len(),
             ps_bind_group,
         });
     }
@@ -282,7 +329,7 @@ impl FromWorld for ParticlePipeline {
         let mesh_pipeline = world.resource::<MeshPipeline>();
         
         ParticlePipeline {
-            shader:                     shader,
+            shader,
             mesh_pipeline:              mesh_pipeline.clone(),
             custom_particle_layout:     bind_group_layout,
         }
@@ -310,7 +357,7 @@ impl SpecializedMeshPipeline for ParticlePipeline {
             array_stride: std::mem::size_of::<ParticleBillboardInstanceData>() as u64,
             step_mode: VertexStepMode::Instance,
             attributes: vec![
-                // [`ParticleBillboardInstanceData::position`, `ParticleBillboardInstanceData::scale`] as float32x4
+                // (`ParticleBillboardInstanceData::position`, `ParticleBillboardInstanceData::scale`) as float32x4
                 VertexAttribute {
                     format: VertexFormat::Float32x4,
                     offset: 0,
@@ -350,6 +397,7 @@ impl SpecializedMeshPipeline for ParticlePipeline {
         // WARNING: Since particles are not sorted by depth, the alpha blending might get very weird and poppy
         // with particles that overlap each other!
         // The user should be able to set manually standard blending, premultiplied, and additive blending at least.
+        //let blend = Some(BlendState::ALPHA_BLENDING);
         let blend = Some(BlendState::ALPHA_BLENDING);
         
         descriptor.fragment.as_mut().unwrap().targets = vec![Some(ColorTargetState {
@@ -391,10 +439,8 @@ impl<P: PhaseItem> RenderCommand<P> for DrawBillboardParticles {
     ) -> RenderCommandResult {
 
         // Send mesh data (vertices)
-        let gpu_mesh = match meshes.into_inner().get(mesh_handle) {
-            Some(gpu_mesh) => gpu_mesh,
-            None => return RenderCommandResult::Failure,
-        };
+        let Some(gpu_mesh) = meshes.into_inner().get(mesh_handle) else { return RenderCommandResult::Failure };
+
         pass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
 
         // Send instances data
@@ -415,10 +461,10 @@ impl<P: PhaseItem> RenderCommand<P> for DrawBillboardParticles {
                 count,
             } => {
                 pass.set_index_buffer(buffer.slice(..), 0, *index_format);
-                pass.draw_indexed(0..*count, 0, 0..ps_data.length as u32);
+                pass.draw_indexed(0..*count, 0, 0..u32::try_from(ps_data.length).unwrap());
             }
             GpuBufferInfo::NonIndexed { vertex_count } => {
-                pass.draw(0..*vertex_count, 0..ps_data.length as u32);
+                pass.draw(0..*vertex_count, 0..u32::try_from(ps_data.length).unwrap());
             }
         }
 

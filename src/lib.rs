@@ -63,9 +63,8 @@ mod systems;
 pub mod values;
 pub mod render;
 
-use bevy_app::prelude::{App, Plugin, StartupSet};
+use bevy_app::prelude::{App, Plugin};
 use bevy_ecs::prelude::IntoSystemConfigs;
-use bevy_ecs::schedule::IntoSystemConfig;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{

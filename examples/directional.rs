@@ -47,15 +47,10 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 looping: true,
                 scale: 0.07.into(),
                 system_duration_seconds: 5.0,
-                align_with_velocity: Some(VelocityAlignedType::CustomLocal(Vec3::new(0.0, 1.0, 0.0))),
+                align_with_velocity: Some(VelocityAlignedType::NegativeY),
                 ..ParticleSystem::default()
             },
             ..ParticleSystemBundle::default()
         })
         .insert(Playing);
-
-    commands.spawn(SpriteBundle {
-        texture: asset_server.load("arrow.png"),
-        ..Default::default()
-    });
 }

@@ -5,7 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::{
-    prelude::{Image, VisibilityBundle, Mesh},
+    prelude::{Image, VisibilityBundle},
 };
 
 use bevy_sprite::TextureAtlas;
@@ -50,6 +50,23 @@ pub enum ParticleSpace {
     World,
 }
 
+/// Defines settings for [`ParticleRenderType::Billboard3d`]
+#[derive(PartialEq, Debug, Clone, Reflect, FromReflect, Default)]
+pub struct Billboard3dSettings {
+    /// When using instancing, the frustrum culling will work only for the reference mesh
+    /// which is at the same location than the particle system
+    pub use_frustrum_culling: bool,
+    /// Expensive, use only when needed !
+    /// When using transparency with many overlapping particles, we need to draw
+    /// each particle from the furthest to the closest to avoid artefacts
+    /// and particles stepping over one another.
+    pub sort_particles_by_depth: bool,
+}
+
+/// Marker Component that indicates that particles must be sorted by depth before draw
+#[derive(Component)]
+pub struct SortParticleByDepth;
+
 /// Defines how to render particles
 #[derive(PartialEq, Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleRenderType {
@@ -59,7 +76,7 @@ pub enum ParticleRenderType {
     /// Frustrum culling will be computed for the reference mesh (at the particle system location).
     /// If enabled, all particles will be culled if the center of the particle system is not in the view frustrum.
     /// Won't have any effect if mutated after spawn.
-    Billboard3D(bool),
+    Billboard3d(Billboard3dSettings),
 }
 
 /// Defines what texture to use for a particle

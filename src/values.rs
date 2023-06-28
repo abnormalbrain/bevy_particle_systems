@@ -280,10 +280,10 @@ impl EmitterShape {
             EmitterShape::Cone(Cone { direction, angle, radius }) => {
                 let random_angle = rng.gen_range(0.0..1.0) * 2.0 * std::f32::consts::PI;
                 let random_rotation = Quat::from_axis_angle(*direction, random_angle);
-                let cross_axis = if *direction != Vec3::Z {
-                    Vec3::Z
-                } else {
+                let cross_axis = if *direction == Vec3::Z {
                     Vec3::Y
+                } else {
+                    Vec3::Z
                 };
                 let angle_axis = random_rotation * direction.cross(cross_axis);
                 let angle = angle.get_value(rng);
@@ -1427,14 +1427,17 @@ pub enum VelocityAlignedType {
 }
 
 impl VelocityAlignedType {
+    /// Provide a vector to calculate the particle velocity alignment for [`crate::ParticleRenderType::Billboard3d`]
+    ///  # Panics
+    /// 
+    /// Will panic if [`VelocityAlignedType::CustomGlobal`] alignment is used
     pub fn get_billboard_alignment(&self) -> Vec3 {
         match self {
             VelocityAlignedType::X => Vec3::X,
             VelocityAlignedType::NegativeX => -Vec3::X,
             VelocityAlignedType::Y => Vec3::Y,
             VelocityAlignedType::NegativeY => -Vec3::Y,
-            VelocityAlignedType::Z => Vec3::ZERO,
-            VelocityAlignedType::NegativeZ => Vec3::ZERO,
+            VelocityAlignedType::Z | VelocityAlignedType::NegativeZ => Vec3::ZERO,
             VelocityAlignedType::CustomLocal(v) => Vec3::new(v.x, v.y, 0.0).normalize(),
             VelocityAlignedType::CustomGlobal(_) => {
                 panic!("CustomGlobal alignment not supported for Billboard rendering");
