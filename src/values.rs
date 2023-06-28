@@ -1,7 +1,6 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
-
 use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
@@ -94,7 +93,7 @@ pub enum SphereParticleOrientation {
     /// Particles will be oriented away from the center of the sphere
     AwayFromCenter,
     /// Particles will be randomly oriented depending on the provided factor
-    /// 
+    ///
     /// The Factor will be clamped between 0 and 1
     /// ZERO will have the same behavior as `AwayFromCenter`, ONE will set a completely random orientation
     Random(f32),
@@ -111,12 +110,11 @@ impl Default for Sphere {
     }
 }
 
-
 /// Defines a line along which particles will be spawned.
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub struct Cone {
     /// The direction of the cone
-    /// 
+    ///
     /// Should be normalized
     pub direction: Vec3,
 
@@ -126,7 +124,7 @@ pub struct Cone {
     pub angle: JitteredValue,
 
     /// Radius within which the particle can be spawn along the cone
-    /// 
+    ///
     /// Zero indicates that the particle will spawn at the particle system position
     pub radius: JitteredValue,
 }
@@ -140,7 +138,6 @@ impl Default for Cone {
         }
     }
 }
-
 
 /// Describes the shape on which new particles get spawned
 ///
@@ -229,12 +226,12 @@ impl EmitterShape {
                 radius,
                 particle_orientation,
             }) => {
-
                 let spawn_direction = Vec3::new(
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
-                    rng.gen_range(-1.0..1.0)
-                ).normalize();
+                    rng.gen_range(-1.0..1.0),
+                )
+                .normalize();
 
                 let r = radius.get_value(rng).abs();
                 let spawn_point = if r == 0.0 {
@@ -245,11 +242,9 @@ impl EmitterShape {
                 };
 
                 match particle_orientation {
-                    SphereParticleOrientation::AwayFromCenter => {
-                        Transform::IDENTITY
-                            .looking_at(spawn_direction, spawn_direction.cross(Vec3::Z))
-                            .with_translation(spawn_point)
-                    },
+                    SphereParticleOrientation::AwayFromCenter => Transform::IDENTITY
+                        .looking_at(spawn_direction, spawn_direction.cross(Vec3::Z))
+                        .with_translation(spawn_point),
                     SphereParticleOrientation::Random(f) => {
                         let factor = f.clamp(0.0, 1.0);
                         let mut tf = Transform::IDENTITY
@@ -261,7 +256,7 @@ impl EmitterShape {
                         } else {
                             let rotation_factor = std::f32::consts::PI * 2.0 * factor;
                             let random_rotation = Quat::from_euler(
-                                bevy_math::EulerRot::XYZ, 
+                                bevy_math::EulerRot::XYZ,
                                 rng.gen_range(-1.0..1.0) * rotation_factor,
                                 rng.gen_range(-1.0..1.0) * rotation_factor,
                                 rng.gen_range(-1.0..1.0) * rotation_factor,
@@ -269,15 +264,17 @@ impl EmitterShape {
                             tf.rotate(random_rotation);
                             tf
                         }
-                    },
-                    SphereParticleOrientation::Vector(direction) => {
-                        Transform::IDENTITY
-                            .looking_at(*direction, direction.cross(Vec3::Z))
-                            .with_translation(spawn_point)
-                    },
+                    }
+                    SphereParticleOrientation::Vector(direction) => Transform::IDENTITY
+                        .looking_at(*direction, direction.cross(Vec3::Z))
+                        .with_translation(spawn_point),
                 }
             }
-            EmitterShape::Cone(Cone { direction, angle, radius }) => {
+            EmitterShape::Cone(Cone {
+                direction,
+                angle,
+                radius,
+            }) => {
                 let random_angle = rng.gen_range(0.0..1.0) * 2.0 * std::f32::consts::PI;
                 let random_rotation = Quat::from_axis_angle(*direction, random_angle);
                 let cross_axis = if *direction == Vec3::Z {
@@ -289,7 +286,8 @@ impl EmitterShape {
                 let angle = angle.get_value(rng);
                 let direction_with_angle = Quat::from_axis_angle(angle_axis, angle) * *direction;
 
-                let tf = Transform::IDENTITY.looking_at(direction_with_angle, direction_with_angle.cross(Vec3::Z));
+                let tf = Transform::IDENTITY
+                    .looking_at(direction_with_angle, direction_with_angle.cross(Vec3::Z));
 
                 let radius = radius.get_value(rng);
                 if radius == 0.0 {
@@ -1313,9 +1311,9 @@ impl Noise3D {
         let sample_z = ((sampling_position.z + n1_z) * (self.frequency * n2_z)).sin_cos();
 
         Vec3::new(
-            sample_z.0 + sample_y.1, 
-            sample_x.1 + sample_z.0, 
-            sample_x.0 + sample_y.0
+            sample_z.0 + sample_y.1,
+            sample_x.1 + sample_z.0,
+            sample_x.0 + sample_y.0,
         ) * self.amplitude
     }
 }
@@ -1429,7 +1427,7 @@ pub enum VelocityAlignedType {
 impl VelocityAlignedType {
     /// Provide a vector to calculate the particle velocity alignment for [`crate::ParticleRenderType::Billboard3d`]
     ///  # Panics
-    /// 
+    ///
     /// Will panic if [`VelocityAlignedType::CustomGlobal`] alignment is used
     pub fn get_billboard_alignment(&self) -> Vec3 {
         match self {
@@ -1441,7 +1439,7 @@ impl VelocityAlignedType {
             VelocityAlignedType::CustomLocal(v) => Vec3::new(v.x, v.y, 0.0).normalize(),
             VelocityAlignedType::CustomGlobal(_) => {
                 panic!("CustomGlobal alignment not supported for Billboard rendering");
-            },
+            }
         }
     }
 }

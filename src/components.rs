@@ -4,16 +4,14 @@ use bevy_asset::Handle;
 use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
-use bevy_render::{
-    prelude::{Image, VisibilityBundle},
-};
+use bevy_render::prelude::{Image, VisibilityBundle};
 
 use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     values::{ColorOverTime, JitteredValue, ValueOverTime},
-    AtlasIndex, EmitterShape, VelocityModifier, VelocityAlignedType,
+    AtlasIndex, EmitterShape, VelocityAlignedType, VelocityModifier,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.

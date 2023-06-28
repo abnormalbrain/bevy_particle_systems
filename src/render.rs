@@ -1,45 +1,47 @@
 //! Defines Data and methods used for rendering the particles.
 
-use std::{collections::BTreeMap, cmp::Ordering};
-use bevy_asset::{Handle, AssetServer, Assets};
-use bevy_math::Vec3;
+use crate::{ParticleSystem, SortParticleByDepth};
 use bevy_app::{App, Plugin};
-use bevy_render::{
-    prelude::{Msaa, shape, Mesh},
-    extract_component::{ ExtractComponentPlugin, ExtractComponent},
-    mesh::{GpuBufferInfo, MeshVertexBufferLayout},
-    render_phase::{
-        AddRenderCommand, DrawFunctions, PhaseItem, RenderCommand,
-        RenderCommandResult, RenderPhase, SetItemPipeline, TrackedRenderPass,
-    },
-    view::{ExtractedView, visibility::ComputedVisibility, ViewTarget},
-    render_resource::{
-        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
-        BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource,
-        BindingType, BlendState, Buffer, BufferInitDescriptor, BufferUsages,
-        ColorTargetState, ColorWrites, PipelineCache, RenderPipelineDescriptor,
-        SamplerBindingType, Shader, ShaderStages, SpecializedMeshPipeline,
-        SpecializedMeshPipelineError, SpecializedMeshPipelines,TextureFormat,
-        TextureSampleType, TextureViewDimension,VertexAttribute, VertexBufferLayout,
-        VertexFormat, VertexStepMode
-    },
-    render_asset::RenderAssets,
-    renderer::RenderDevice,
-    RenderApp, RenderSet, texture::{Image, BevyDefault},
-};
+use bevy_asset::{AssetServer, Assets, Handle};
+use bevy_core_pipeline::core_3d::Transparent3d;
+use bevy_derive::Deref;
 use bevy_ecs::{
-    system::{lifetimeless::{Read, SRes}, SystemParamItem, SystemState},
     prelude::*,
     query::QueryItem,
+    system::{
+        lifetimeless::{Read, SRes},
+        SystemParamItem, SystemState,
+    },
 };
+use bevy_math::Vec3;
 use bevy_pbr::{
-    MeshPipelineKey, MeshUniform, MeshPipeline,
-    SetMeshViewBindGroup, SetMeshBindGroup,
+    MeshPipeline, MeshPipelineKey, MeshUniform, SetMeshBindGroup, SetMeshViewBindGroup,
 };
-use bevy_core_pipeline::core_3d::Transparent3d;
+use bevy_render::{
+    extract_component::{ExtractComponent, ExtractComponentPlugin},
+    mesh::{GpuBufferInfo, MeshVertexBufferLayout},
+    prelude::{shape, Mesh, Msaa},
+    render_asset::RenderAssets,
+    render_phase::{
+        AddRenderCommand, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult,
+        RenderPhase, SetItemPipeline, TrackedRenderPass,
+    },
+    render_resource::{
+        BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
+        BindGroupLayoutEntry, BindingResource, BindingType, BlendState, Buffer,
+        BufferInitDescriptor, BufferUsages, ColorTargetState, ColorWrites, PipelineCache,
+        RenderPipelineDescriptor, SamplerBindingType, Shader, ShaderStages,
+        SpecializedMeshPipeline, SpecializedMeshPipelineError, SpecializedMeshPipelines,
+        TextureFormat, TextureSampleType, TextureViewDimension, VertexAttribute,
+        VertexBufferLayout, VertexFormat, VertexStepMode,
+    },
+    renderer::RenderDevice,
+    texture::{BevyDefault, Image},
+    view::{visibility::ComputedVisibility, ExtractedView, ViewTarget},
+    RenderApp, RenderSet,
+};
 use bytemuck::{Pod, Zeroable};
-use bevy_derive::Deref;
-use crate::{ParticleSystem, SortParticleByDepth};
+use std::{cmp::Ordering, collections::BTreeMap};
 
 /// Plugin to render 3D billboard particles using instancing
 pub struct ParticleInstancingPlugin;
@@ -50,8 +52,7 @@ impl Plugin for ParticleInstancingPlugin {
         app.add_plugin(ExtractComponentPlugin::<ParticleSystemInstancedData>::default());
         // Adds a plane needed to render billboards particles
         app.init_resource::<BillboardMeshHandle>();
-        app
-            .sub_app_mut(RenderApp)
+        app.sub_app_mut(RenderApp)
             .add_render_command::<Transparent3d, DrawParticleSystem>()
             .init_resource::<ParticlePipeline>()
             .init_resource::<SpecializedMeshPipelines<ParticlePipeline>>()
@@ -101,11 +102,17 @@ pub struct ParticleSystemInstancedData(pub BTreeMap<Entity, ParticleBillboardIns
 
 /// Extract (Clone) the particle data from the world for rendering.
 impl ExtractComponent for ParticleSystemInstancedData {
-    type Query = (&'static ParticleSystemInstancedData, Option<&'static Handle<Image>>, Option<&'static SortParticleByDepth>);
+    type Query = (
+        &'static ParticleSystemInstancedData,
+        Option<&'static Handle<Image>>,
+        Option<&'static SortParticleByDepth>,
+    );
     type Filter = With<ParticleSystem>;
     type Out = ExtractedInstancedData;
 
-    fn extract_component((item, texture_handle, sort): QueryItem<'_, Self::Query>) -> Option<ExtractedInstancedData> {
+    fn extract_component(
+        (item, texture_handle, sort): QueryItem<'_, Self::Query>,
+    ) -> Option<ExtractedInstancedData> {
         // Extract all Values from the BTreeMap and make a Vec out of them.
         // This will be useful to give a slice of the data to the buffers.
         // See crate::render::prepare_particle_system_draw_data()
@@ -156,7 +163,9 @@ fn queue_custom(
     material_meshes: Query<(Entity, &MeshUniform, &Handle<Mesh>), With<ExtractedInstancedData>>,
     mut views: Query<(&ExtractedView, &mut RenderPhase<Transparent3d>)>,
 ) {
-    let draw_custom = transparent_3d_draw_functions.read().id::<DrawParticleSystem>();
+    let draw_custom = transparent_3d_draw_functions
+        .read()
+        .id::<DrawParticleSystem>();
 
     let msaa_key = MeshPipelineKey::from_msaa_samples(msaa.samples());
 
@@ -201,25 +210,29 @@ fn prepare_particle_system_draw_data(
     textures: Res<RenderAssets<Image>>,
 ) {
     for (entity, mut extracted_instance_data) in particle_system_query.iter_mut() {
-
         // Sort the particles only if required by the provided settings
         if extracted_instance_data.sort_by_depth {
             // Retrieve the extracted instance data and sort it according to the first given camera (how to know its the main one ?)
             // WARNING: Here we assume that there is only one ExtractedView at this stage
-            let camera_global_position = extracted_view.get_single().unwrap().transform.translation();
-            
+            let camera_global_position =
+                extracted_view.get_single().unwrap().transform.translation();
+
             // Create a Vec with the depth calculated
-            let distances: Vec<f32> = extracted_instance_data.instance_data.iter().map(|data| {
-                - data.position.distance_squared(camera_global_position)
-            }).collect();
+            let distances: Vec<f32> = extracted_instance_data
+                .instance_data
+                .iter()
+                .map(|data| -data.position.distance_squared(camera_global_position))
+                .collect();
 
             // Create a Vec with indices
             let mut indices: Vec<usize> = (0..distances.len()).collect();
 
             // Sort the indices Vec according to the distances
-            indices.sort_unstable_by(|&a, &b|
-                distances[a].partial_cmp(&distances[b]).unwrap_or(Ordering::Less)
-            );
+            indices.sort_unstable_by(|&a, &b| {
+                distances[a]
+                    .partial_cmp(&distances[b])
+                    .unwrap_or(Ordering::Less)
+            });
 
             // We then sort the extracted_instance_data according to the indices Vec
             for i in 0..indices.len() {
@@ -231,7 +244,7 @@ fn prepare_particle_system_draw_data(
             }
 
             // The standard sort method requires to calculate the square distance twice for each index.
-            /*extracted_instance_data.instance_data.sort_by(|&a, &b| 
+            /*extracted_instance_data.instance_data.sort_by(|&a, &b|
             //    b.position.distance_squared(camera_global_position)
             //        .partial_cmp(&a.position.distance_squared(camera_global_position))
             //        .unwrap_or(Ordering::Equal)
@@ -241,9 +254,7 @@ fn prepare_particle_system_draw_data(
         // Make a buffer out of the extracted instance data
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
-            contents: {
-                bytemuck::cast_slice(extracted_instance_data.instance_data.as_slice())
-            },
+            contents: { bytemuck::cast_slice(extracted_instance_data.instance_data.as_slice()) },
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
@@ -271,8 +282,7 @@ fn prepare_particle_system_draw_data(
         });
 
         // Adds the prepared data to the world
-        commands.entity(entity).insert(
-        ParticleSystemDrawData {
+        commands.entity(entity).insert(ParticleSystemDrawData {
             buffer,
             length: extracted_instance_data.instance_data.len(),
             ps_bind_group,
@@ -294,32 +304,31 @@ pub struct ParticlePipeline {
 impl FromWorld for ParticlePipeline {
     fn from_world(world: &mut World) -> Self {
         // Get the render device...
-        let mut system_state: SystemState<(
-            Res<RenderDevice>,
-        )> = SystemState::new(world);
+        let mut system_state: SystemState<(Res<RenderDevice>,)> = SystemState::new(world);
         let render_device = system_state.get_mut(world).0;
         // ...And create the BindGroupLayout we will need to bind the particle system data (which is only a texture, for now)
-        let bind_group_layout = render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            label: Some("instance texture bind group layout"),
-            entries: &[
-                BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: ShaderStages::FRAGMENT,
-                    ty: BindingType::Texture {
-                        sample_type: TextureSampleType::Float { filterable: true },
-                        view_dimension: TextureViewDimension::D2,
-                        multisampled: false,
+        let bind_group_layout =
+            render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+                label: Some("instance texture bind group layout"),
+                entries: &[
+                    BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: ShaderStages::FRAGMENT,
+                        ty: BindingType::Texture {
+                            sample_type: TextureSampleType::Float { filterable: true },
+                            view_dimension: TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                }, 
-                BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: ShaderStages::FRAGMENT,
-                    ty: BindingType::Sampler(SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
+                    BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: ShaderStages::FRAGMENT,
+                        ty: BindingType::Sampler(SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         // Import the shader
         let asset_server = world.resource::<AssetServer>();
@@ -327,11 +336,11 @@ impl FromWorld for ParticlePipeline {
 
         // Get the standard mesh pipeline
         let mesh_pipeline = world.resource::<MeshPipeline>();
-        
+
         ParticlePipeline {
             shader,
-            mesh_pipeline:              mesh_pipeline.clone(),
-            custom_particle_layout:     bind_group_layout,
+            mesh_pipeline: mesh_pipeline.clone(),
+            custom_particle_layout: bind_group_layout,
         }
     }
 }
@@ -345,7 +354,6 @@ impl SpecializedMeshPipeline for ParticlePipeline {
         key: Self::Key,
         layout: &MeshVertexBufferLayout,
     ) -> Result<RenderPipelineDescriptor, SpecializedMeshPipelineError> {
-
         // Start from the standard mesh pipeline
         let mut descriptor = self.mesh_pipeline.specialize(key, layout)?;
 
@@ -399,9 +407,9 @@ impl SpecializedMeshPipeline for ParticlePipeline {
         // The user should be able to set manually standard blending, premultiplied, and additive blending at least.
         //let blend = Some(BlendState::ALPHA_BLENDING);
         let blend = Some(BlendState::ALPHA_BLENDING);
-        
+
         descriptor.fragment.as_mut().unwrap().targets = vec![Some(ColorTargetState {
-            write_mask:ColorWrites::ALL,
+            write_mask: ColorWrites::ALL,
             format,
             blend,
         })];
@@ -437,7 +445,6 @@ impl<P: PhaseItem> RenderCommand<P> for DrawBillboardParticles {
         meshes: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-
         // Send mesh data (vertices)
         let Some(gpu_mesh) = meshes.into_inner().get(mesh_handle) else { return RenderCommandResult::Failure };
 
@@ -450,7 +457,7 @@ impl<P: PhaseItem> RenderCommand<P> for DrawBillboardParticles {
         pass.set_bind_group(
             2, // 0 and 1 are used by the view and mesh bind groups, see `[DrawParticleSystem]`
             &ps_data.ps_bind_group,
-            &[]
+            &[],
         );
 
         // Draw

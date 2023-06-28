@@ -1,28 +1,28 @@
-use std::collections::BTreeMap;
-use std::f32::consts::PI;
-use bevy_asset::Handle;
-use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
-use bevy_hierarchy::BuildChildren;
-use bevy_math::{Quat, Vec2, Vec3, Vec3Swizzles};
-use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
-use bevy_time::Time;
-use bevy_transform::prelude::{GlobalTransform, Transform};
-use bevy_render::{
-    prelude::Image,
-    view::{NoFrustumCulling, visibility::ComputedVisibility},
-};
 use crate::{
     components::{
         BurstIndex, Lifetime, Particle, ParticleBundle, ParticleColor, ParticleCount,
         ParticleSpace, ParticleSystem, Playing, RunningState, Velocity,
     },
     values::{ColorOverTime, PrecalculatedParticleVariables, VelocityModifier},
-    DistanceTraveled, ParticleTexture, AnimatedIndex, AtlasIndex, Lerpable,
-    ParticleSystemInstancedData, ParticleBillboardInstanceData,
-    ParticleSystemInstancedDataBundle, InstancedParticle, BillboardMeshHandle,
-    ParticleRenderType, VelocityAlignedType, VelocityAligned, SortParticleByDepth,
+    AnimatedIndex, AtlasIndex, BillboardMeshHandle, DistanceTraveled, InstancedParticle, Lerpable,
+    ParticleBillboardInstanceData, ParticleRenderType, ParticleSystemInstancedData,
+    ParticleSystemInstancedDataBundle, ParticleTexture, SortParticleByDepth, VelocityAligned,
+    VelocityAlignedType,
 };
+use bevy_asset::Handle;
+use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
+use bevy_hierarchy::BuildChildren;
+use bevy_math::{Quat, Vec2, Vec3, Vec3Swizzles};
+use bevy_render::{
+    prelude::Image,
+    view::{visibility::ComputedVisibility, NoFrustumCulling},
+};
+use bevy_sprite::prelude::{Sprite, SpriteBundle};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
+use bevy_time::Time;
+use bevy_transform::prelude::{GlobalTransform, Transform};
+use std::collections::BTreeMap;
+use std::f32::consts::PI;
 
 /// System label attached to the `SystemSet` provided in this plugin
 ///
@@ -101,17 +101,13 @@ pub fn particle_spawner(
         if let ParticleRenderType::Billboard3d(_) = particle_system.render_type {
             match &particle_system.texture {
                 ParticleTexture::Sprite(image_handle) => {
-                    commands
-                        .entity(entity)
-                        .insert(image_handle.clone());
+                    commands.entity(entity).insert(image_handle.clone());
                 }
-                ParticleTexture::TextureAtlas {..} => {
+                ParticleTexture::TextureAtlas { .. } => {
                     panic!("Particle System Error: Texture Atlas not supported for 3D billboard rendering!");
                 }
                 ParticleTexture::None => {
-                    commands
-                        .entity(entity)
-                        .remove::<Handle<Image>>();
+                    commands.entity(entity).remove::<Handle<Image>>();
                 }
             }
         }
@@ -180,8 +176,7 @@ pub fn particle_spawner(
                 if let Some(alignment) = &particle_system.align_with_velocity {
                     // The transform is already aligned on the velocity with the X axis
                     match alignment {
-                        VelocityAlignedType::X => {
-                        }
+                        VelocityAlignedType::X => {}
                         VelocityAlignedType::NegativeX => {
                             let rotation = Quat::from_rotation_z(PI);
                             spawn_point.rotate(rotation);
@@ -202,11 +197,15 @@ pub fn particle_spawner(
                         }
                         VelocityAlignedType::CustomLocal(v) => {
                             let local_axis = spawn_point.rotation * *v;
-                            let rotation = Quat::from_rotation_arc_2d(spawn_point.local_x().xy(), local_axis.xy());
+                            let rotation = Quat::from_rotation_arc_2d(
+                                spawn_point.local_x().xy(),
+                                local_axis.xy(),
+                            );
                             spawn_point.rotate(rotation);
                         }
                         VelocityAlignedType::CustomGlobal(v) => {
-                            let rotation = Quat::from_rotation_arc_2d(spawn_point.local_x().xy(), v.xy());
+                            let rotation =
+                                Quat::from_rotation_arc_2d(spawn_point.local_x().xy(), v.xy());
                             spawn_point.rotate(rotation);
                         }
                     };
@@ -223,7 +222,6 @@ pub fn particle_spawner(
             } else if let Some(alignment) = &particle_system.align_with_velocity {
                 world_alignment += alignment.get_billboard_alignment();
             }
-
 
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
@@ -244,10 +242,7 @@ pub fn particle_spawner(
                     velocity_modifiers: particle_system.velocity_modifiers.clone(),
                     despawn_with_parent: particle_system.despawn_particles_with_system,
                 },
-                velocity: Velocity::new(
-                    particle_velocity,
-                    is_2d,
-                ),
+                velocity: Velocity::new(particle_velocity, is_2d),
                 distance: DistanceTraveled {
                     dist_squared: 0.0,
                     from: spawn_point.translation,
@@ -269,45 +264,42 @@ pub fn particle_spawner(
             }
 
             match &particle_system.render_type {
-                crate::ParticleRenderType::Sprite2D => {
-                    match &particle_system.texture {
-                        ParticleTexture::None => (),
-                        ParticleTexture::Sprite(image_handle) => {
-                            particle_entity_commands.insert(SpriteBundle {
-                                sprite: Sprite {
-                                    custom_size: particle_system.rescale_texture,
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    ..Sprite::default()
-                                },
-                                transform: spawn_point,
-                                texture: image_handle.clone(),
-                                ..SpriteBundle::default()
-                            });
-                        },
-                        ParticleTexture::TextureAtlas {
-                            atlas: atlas_handle,
-                            index,
-                        } => {
-                            particle_entity_commands.insert(SpriteSheetBundle {
-                                sprite: TextureAtlasSprite {
-                                    custom_size: particle_system.rescale_texture,
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    index: index.get_value(&mut rng),
-                                    ..TextureAtlasSprite::default()
-                                },
-                                transform: spawn_point,
-                                texture_atlas: atlas_handle.clone(),
-                                ..SpriteSheetBundle::default()
-                            });
-        
-                            if let AtlasIndex::Animated(animated_index) = index {
-                                particle_entity_commands.insert(animated_index.clone());
-                            };
-                        }
+                crate::ParticleRenderType::Sprite2D => match &particle_system.texture {
+                    ParticleTexture::None => (),
+                    ParticleTexture::Sprite(image_handle) => {
+                        particle_entity_commands.insert(SpriteBundle {
+                            sprite: Sprite {
+                                custom_size: particle_system.rescale_texture,
+                                color: particle_system.color.at_lifetime_pct(0.0),
+                                ..Sprite::default()
+                            },
+                            transform: spawn_point,
+                            texture: image_handle.clone(),
+                            ..SpriteBundle::default()
+                        });
+                    }
+                    ParticleTexture::TextureAtlas {
+                        atlas: atlas_handle,
+                        index,
+                    } => {
+                        particle_entity_commands.insert(SpriteSheetBundle {
+                            sprite: TextureAtlasSprite {
+                                custom_size: particle_system.rescale_texture,
+                                color: particle_system.color.at_lifetime_pct(0.0),
+                                index: index.get_value(&mut rng),
+                                ..TextureAtlasSprite::default()
+                            },
+                            transform: spawn_point,
+                            texture_atlas: atlas_handle.clone(),
+                            ..SpriteSheetBundle::default()
+                        });
+
+                        if let AtlasIndex::Animated(animated_index) = index {
+                            particle_entity_commands.insert(animated_index.clone());
+                        };
                     }
                 },
                 crate::ParticleRenderType::Billboard3d(billboard_settings) => {
-
                     // Gather particle instance data
                     let particle_id = particle_entity_commands.id();
                     let particle_inst_data = ParticleBillboardInstanceData {
@@ -321,27 +313,20 @@ pub fn particle_spawner(
 
                     // Insert it into the ParticleSystemInstanceData of its owner particle system if there is one...
                     if let Some(ref mut inst_data) = instanced_data {
-                        inst_data.0.insert(
-                            particle_id,
-                            particle_inst_data);
+                        inst_data.0.insert(particle_id, particle_inst_data);
                     // ...Create the ParticleSystemInstanceData and insert the particle data if there isn't
                     } else {
                         let mut inst_data = BTreeMap::new();
-                        inst_data.insert(
-                            particle_id,
-                            particle_inst_data);
+                        inst_data.insert(particle_id, particle_inst_data);
 
                         let mut particle_system_commands =
-                            particle_entity_commands
-                                .commands()
-                                .entity(entity);
-                        
-                        particle_system_commands
-                            .insert(ParticleSystemInstancedDataBundle {
-                                mesh_handle: billboard_mesh.0.clone(),
-                                computed_visibility: ComputedVisibility::default(),
-                                inst_data: ParticleSystemInstancedData(inst_data),
-                            });
+                            particle_entity_commands.commands().entity(entity);
+
+                        particle_system_commands.insert(ParticleSystemInstancedDataBundle {
+                            mesh_handle: billboard_mesh.0.clone(),
+                            computed_visibility: ComputedVisibility::default(),
+                            inst_data: ParticleSystemInstancedData(inst_data),
+                        });
                         // Marker component that disables frustrum culling
                         if !billboard_settings.use_frustrum_culling {
                             particle_system_commands.insert(NoFrustumCulling);
@@ -351,11 +336,11 @@ pub fn particle_spawner(
                             particle_system_commands.insert(SortParticleByDepth);
                         }
                     };
-                    
+
                     particle_entity_commands
                         .insert(InstancedParticle(entity))
                         .insert(spawn_point);
-                },
+                }
             }
         }
 
@@ -477,10 +462,7 @@ pub(crate) fn particle_transform(
                     }
 
                     Noise3D(n) => {
-                        let offset = n.sample(
-                            transform.translation,
-                            elapsed_time,
-                        ) * delta_time;
+                        let offset = n.sample(transform.translation, elapsed_time) * delta_time;
                         velocity.0 += offset;
                     }
                 }
@@ -506,28 +488,34 @@ pub(crate) fn particle_transform(
 
 #[allow(clippy::type_complexity)]
 pub(crate) fn update_instanced_particles(
-    particle_query: Query<(
-        &Particle,
-        &Transform,
-        &ParticleColor,
-        &Lifetime,
-        Option<&VelocityAligned>),
-        With<InstancedParticle>>,
+    particle_query: Query<
+        (
+            &Particle,
+            &Transform,
+            &ParticleColor,
+            &Lifetime,
+            Option<&VelocityAligned>,
+        ),
+        With<InstancedParticle>,
+    >,
     mut inst_data_query: Query<Option<&mut ParticleSystemInstancedData>, With<ParticleSystem>>,
 ) {
     // Do only for each particle system with instanced data
-    inst_data_query.for_each_mut( |inst_data| {
+    inst_data_query.for_each_mut(|inst_data| {
         if let Some(mut inst_data) = inst_data {
             for (&particle, instance) in &mut inst_data.0 {
-                if let Ok((p, p_transform, p_color, p_lifetime, p_velocity_aligned)) = particle_query.get(particle) {
+                if let Ok((p, p_transform, p_color, p_lifetime, p_velocity_aligned)) =
+                    particle_query.get(particle)
+                {
                     instance.position = p_transform.translation;
                     instance.scale = p_transform.scale.x;
                     instance.rotation = p.initial_rotation + p.rotation_speed * p_lifetime.0;
-                    instance.alignment = if let Some(VelocityAligned(alignment)) = p_velocity_aligned {
-                        alignment.get_billboard_alignment()
-                    } else {
-                        Vec3::ZERO
-                    };
+                    instance.alignment =
+                        if let Some(VelocityAligned(alignment)) = p_velocity_aligned {
+                            alignment.get_billboard_alignment()
+                        } else {
+                            Vec3::ZERO
+                        };
                     let pct = p_lifetime.0 / p.max_lifetime;
                     instance.color = p_color.0.at_lifetime_pct(pct).as_rgba_f32();
                 }
@@ -537,7 +525,13 @@ pub(crate) fn update_instanced_particles(
 }
 
 pub(crate) fn particle_cleanup(
-    particle_query: Query<(Entity, &Particle, &Lifetime, &DistanceTraveled, Option<&InstancedParticle>)>,
+    particle_query: Query<(
+        Entity,
+        &Particle,
+        &Lifetime,
+        &DistanceTraveled,
+        Option<&InstancedParticle>,
+    )>,
     mut particle_count_query: Query<&mut ParticleCount>,
     mut instanced_data_query: Query<&mut ParticleSystemInstancedData>,
     mut commands: Commands,
@@ -556,7 +550,7 @@ pub(crate) fn particle_cleanup(
                 entity,
                 inst_particle,
                 &mut instanced_data_query,
-                &mut commands
+                &mut commands,
             );
         } else if particle.despawn_with_parent
             && commands.get_entity(particle.parent_system).is_none()
@@ -565,7 +559,7 @@ pub(crate) fn particle_cleanup(
                 entity,
                 inst_particle,
                 &mut instanced_data_query,
-                &mut commands
+                &mut commands,
             );
         }
     }
@@ -582,7 +576,8 @@ fn despawn_particle(
         instanced_data_query
             .get_mut(instance.0)
             .unwrap() // There should always be an entry corresponding to the current particle if it exists.
-            .0.remove(&particle_entity);
+            .0
+            .remove(&particle_entity);
     }
 
     // despawn the particle entity

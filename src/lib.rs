@@ -59,20 +59,20 @@
 //! ```
 //!
 pub mod components;
+pub mod render;
 mod systems;
 pub mod values;
-pub mod render;
 
 use bevy_app::prelude::{App, Plugin};
 use bevy_ecs::prelude::IntoSystemConfigs;
 pub use components::*;
+pub use render::*;
 pub use systems::ParticleSystemSet;
 use systems::{
     particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
     particle_texture_atlas_color, particle_transform, update_instanced_particles,
 };
 pub use values::*;
-pub use render::*;
 
 /// The plugin component to be added to allow particle systems to run.
 ///
@@ -110,8 +110,7 @@ impl Plugin for ParticleSystemPlugin {
                 .into_configs()
                 .in_set(ParticleSystemSet),
         );
-        app
-            .register_type::<ParticleSystem>()
+        app.register_type::<ParticleSystem>()
             .register_type::<ParticleCount>()
             .register_type::<RunningState>()
             .register_type::<BurstIndex>();

@@ -107,7 +107,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Noise2D {
                         amplitude: 100.0,
                         ..Default::default()
-                    }.into(),
+                    }
+                    .into(),
                 ],
                 lifetime: JitteredValue::jittered(2.5, -0.2..0.2),
                 color: ColorOverTime::Constant(Color::BLUE),
@@ -141,7 +142,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Noise2D {
                         amplitude: 200.0,
                         ..Default::default()
-                    }.into(),
+                    }
+                    .into(),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Curve::new(vec![
