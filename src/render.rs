@@ -76,7 +76,7 @@ impl FromWorld for BillboardMeshHandle {
 }
 
 /// Per instance particle data
-#[allow(clippy::let_underscore_untyped)]
+#[allow(clippy::pedantic)]
 #[derive(Clone, Copy, Pod, Zeroable, Debug)]
 #[repr(C)]
 pub struct ParticleBillboardInstanceData {
