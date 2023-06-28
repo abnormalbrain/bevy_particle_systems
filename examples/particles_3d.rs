@@ -20,6 +20,8 @@ pub struct IsCheck;
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Blue Particles
     commands.spawn(ParticleSystemBundle {
@@ -80,7 +82,7 @@ fn setup(
             }),
             texture: ParticleTexture::Sprite(asset_server.load("arrow.png")),
             max_particles: 1000,
-            spawn_rate_per_second: 5.0.into(),
+            spawn_rate_per_second: 4.0.into(),
             initial_speed: 2.0.into(),
             align_with_velocity: Some(VelocityAlignedType::NegativeY),
             velocity_modifiers: vec![VelocityModifier::Drag(0.01.into())],
@@ -103,6 +105,30 @@ fn setup(
     // Camera
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(10.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
+
+    // Plane
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(shape::Plane::from_size(5.0).into()),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        transform: Transform::from_xyz(0.0, -6.0, 0.0),
+        ..default()
+    });
+    // Cube
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+        transform: Transform::from_xyz(0.0, -5.5, 0.0),
+        ..default()
+    });
+    // Light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
         ..default()
     });
 }
