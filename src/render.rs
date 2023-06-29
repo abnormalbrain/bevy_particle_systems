@@ -62,6 +62,31 @@ impl Plugin for ParticleInstancingPlugin {
 }
 
 /// The base plane for all billboard particles
+/*#[derive(Resource)]
+pub struct ParticlePipelineResources {
+    pub billboard_mesh_handle: Handle<Mesh>,
+    pub particle_system_bind_group: BindGroup,
+}
+
+impl FromWorld for ParticlePipelineResources {
+    fn from_world(world: &mut World) -> Self {
+        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+        let mesh_handle: Handle<Mesh> = meshes.add(Mesh::from(shape::Plane {
+            size: -0.5,
+            subdivisions: 0,
+        }));
+
+        let render_device = world.get_resource::<RenderDevice>().unwrap();
+        let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
+            label: Some("instance data buffer"),
+            contents: bytemuck::cast_slice(extracted_instance_data.instance_data.as_slice()),
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+        });
+
+        ParticlePipelineResources(mesh_handle)
+    }
+}*/
+
 #[derive(Resource)]
 pub struct BillboardMeshHandle(pub Handle<Mesh>);
 
@@ -212,7 +237,7 @@ fn prepare_particle_system_draw_data(
     for (entity, mut extracted_instance_data) in particle_system_query.iter_mut() {
         // Sort the particles only if required by the provided settings
         if extracted_instance_data.sort_by_depth {
-            // Retrieve the extracted instance data and sort it according to the first given camera (how to know its the main one ?)
+            // Retrieve the extracted instance data and sort it according to the camera
             // WARNING: Here we assume that there is only one ExtractedView at this stage
             let camera_global_position =
                 extracted_view.get_single().unwrap().transform.translation();
@@ -234,14 +259,20 @@ fn prepare_particle_system_draw_data(
                     .unwrap_or(Ordering::Less)
             });
 
+            let mut sorted_instance_data = Vec::with_capacity(indices.len());
+            for i in &indices {
+                sorted_instance_data.push(extracted_instance_data.instance_data[*i]);
+            }
+            extracted_instance_data.instance_data = sorted_instance_data;
+
             // We then sort the extracted_instance_data according to the indices Vec
-            for i in 0..indices.len() {
+            /*for i in 0..indices.len() {
                 while i != indices[i] {
                     let swap_idx = indices[i];
                     extracted_instance_data.instance_data.swap(i, swap_idx);
                     indices.swap(i, swap_idx);
                 }
-            }
+            }*/
 
             // The standard sort method requires to calculate the square distance twice for each index.
             /*extracted_instance_data.instance_data.sort_by(|&a, &b|
