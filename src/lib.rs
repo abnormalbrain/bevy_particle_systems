@@ -59,16 +59,18 @@
 //! ```
 //!
 pub mod components;
+pub mod render;
 mod systems;
 pub mod values;
 
 use bevy_app::prelude::{App, Plugin};
 use bevy_ecs::prelude::IntoSystemConfigs;
 pub use components::*;
+pub use render::*;
 pub use systems::ParticleSystemSet;
 use systems::{
     particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
-    particle_texture_atlas_color, particle_transform,
+    particle_texture_atlas_color, particle_transform, update_instanced_particles,
 };
 pub use values::*;
 
@@ -94,6 +96,7 @@ pub struct ParticleSystemPlugin;
 
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugin(ParticleInstancingPlugin);
         app.add_systems(
             (
                 particle_spawner,
@@ -101,6 +104,7 @@ impl Plugin for ParticleSystemPlugin {
                 particle_sprite_color,
                 particle_texture_atlas_color,
                 particle_transform,
+                update_instanced_particles,
                 particle_cleanup,
             )
                 .into_configs()

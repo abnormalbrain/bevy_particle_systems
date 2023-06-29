@@ -8,7 +8,7 @@ use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     CircleSegment, JitteredValue, ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin,
-    ParticleTexture, Playing,
+    ParticleTexture, Playing, VelocityAlignedType,
 };
 
 fn main() {
@@ -47,8 +47,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 looping: true,
                 scale: 0.07.into(),
                 system_duration_seconds: 5.0,
-                initial_rotation: (-90.0_f32).to_radians().into(),
-                rotate_to_movement_direction: true,
+                align_with_velocity: Some(VelocityAlignedType::NegativeY),
                 ..ParticleSystem::default()
             },
             ..ParticleSystemBundle::default()

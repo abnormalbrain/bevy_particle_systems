@@ -5,12 +5,13 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
+
 use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
     values::{ColorOverTime, JitteredValue, ValueOverTime},
-    AtlasIndex, EmitterShape, VelocityModifier,
+    AtlasIndex, EmitterShape, VelocityAlignedType, VelocityModifier,
 };
 
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
@@ -47,9 +48,40 @@ pub enum ParticleSpace {
     World,
 }
 
+/// Defines settings for [`ParticleRenderType::Billboard3d`]
+#[derive(PartialEq, Debug, Clone, Reflect, FromReflect, Default)]
+pub struct Billboard3dSettings {
+    /// When using instancing, the frustrum culling will work only for the reference mesh
+    /// which is at the same location than the particle system
+    pub use_frustrum_culling: bool,
+    /// Expensive, use only when needed !
+    /// When using transparency with many overlapping particles, we need to draw
+    /// each particle from the furthest to the closest to avoid artefacts
+    /// and particles stepping over one another.
+    pub sort_particles_by_depth: bool,
+}
+
+/// Marker Component that indicates that particles must be sorted by depth before draw
+#[derive(Component)]
+pub struct SortParticleByDepth;
+
+/// Defines how to render particles
+#[derive(PartialEq, Debug, Clone, Reflect, FromReflect)]
+pub enum ParticleRenderType {
+    /// Standard 2D sprite
+    Sprite2D,
+    /// 3D Billboard instancing, set to false to disable frustrum culling.
+    /// Frustrum culling will be computed for the reference mesh (at the particle system location).
+    /// If enabled, all particles will be culled if the center of the particle system is not in the view frustrum.
+    /// Won't have any effect if mutated after spawn.
+    Billboard3d(Billboard3dSettings),
+}
+
 /// Defines what texture to use for a particle
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum ParticleTexture {
+    /// Indicates that there is no texture to display
+    None,
     /// Indicates particles should use a given image texture
     Sprite(Handle<Image>),
     /// Indicates particles should use a given texture atlas
@@ -114,6 +146,9 @@ pub struct ParticleSystem {
     /// The maximum number of particles the system can have alive at any given time.
     pub max_particles: usize,
 
+    /// The render type for this particle system
+    pub render_type: ParticleRenderType,
+
     /// The texture used for each particle.
     pub texture: ParticleTexture,
 
@@ -171,7 +206,7 @@ pub struct ParticleSystem {
     ///
     /// This rotation for the movement direction will be added to the `initial_rotation` value,
     /// to account for needing to apply a base rotation to the sprite.
-    pub rotate_to_movement_direction: bool,
+    pub align_with_velocity: Option<VelocityAlignedType>,
 
     /// Whether or not the system will start over automatically.
     pub looping: bool,
@@ -211,7 +246,8 @@ impl Default for ParticleSystem {
     fn default() -> Self {
         Self {
             max_particles: 100,
-            texture: ParticleTexture::Sprite(Handle::default()),
+            render_type: ParticleRenderType::Sprite2D,
+            texture: ParticleTexture::None,
             rescale_texture: None,
             spawn_rate_per_second: 5.0.into(),
             emitter_shape: EmitterShape::default(),
@@ -222,7 +258,7 @@ impl Default for ParticleSystem {
             scale: 1.0.into(),
             initial_rotation: 0.0.into(),
             rotation_speed: 0.0.into(),
-            rotate_to_movement_direction: false,
+            align_with_velocity: None,
             looping: true,
             system_duration_seconds: 5.0,
             max_distance: None,
@@ -275,6 +311,11 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::velocity_modifiers`] on spawn.
     pub velocity_modifiers: Vec<VelocityModifier>,
 
+    /// The rotation, in radian, at which the particle was spawned.
+    ///
+    /// This is chosen from [`ParticleSystem::initial_rotation`] on spawn.
+    pub initial_rotation: f32,
+
     /// The speed, in radian per second, at which the particle rotates.
     ///
     /// This is chosen from [`ParticleSystem::rotation_speed`] on spawn.
@@ -292,6 +333,7 @@ impl Default for Particle {
             max_distance: None,
             use_scaled_time: true,
             scale: 1.0.into(),
+            initial_rotation: 0.0,
             rotation_speed: 0.0,
             velocity_modifiers: vec![],
             despawn_with_parent: false,
@@ -329,6 +371,7 @@ pub struct DistanceTraveled {
 /// Defines the current velocity of an individual entity particle.
 #[derive(Debug, Component, Default)]
 pub struct Velocity(pub Vec3);
+
 impl Velocity {
     /// Creates a new [`Velocity`] based on a [`Vec3`].
     ///
@@ -341,6 +384,10 @@ impl Velocity {
         }
     }
 }
+
+/// Marker component indicating that the [`Particle`] should be oriented along its velocity
+#[derive(Debug, Component, Reflect)]
+pub struct VelocityAligned(pub VelocityAlignedType);
 
 /// Marker component indicating that the [`ParticleSystem`] on the same entity is currently Playing.
 #[derive(Debug, Component)]

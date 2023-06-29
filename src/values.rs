@@ -77,6 +77,68 @@ impl From<Line> for EmitterShape {
     }
 }
 
+/// Defines a sphere within which particles will be spawned.
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub struct Sphere {
+    /// The lenth of the line
+    pub radius: JitteredValue,
+
+    /// How the spawned particle will be oriented
+    pub particle_orientation: SphereParticleOrientation,
+}
+
+/// Defines how particles will be oriented when spawned within a sphere shape
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub enum SphereParticleOrientation {
+    /// Particles will be oriented away from the center of the sphere
+    AwayFromCenter,
+    /// Particles will be randomly oriented depending on the provided factor
+    ///
+    /// The Factor will be clamped between 0 and 1
+    /// ZERO will have the same behavior as `AwayFromCenter`, ONE will set a completely random orientation
+    Random(f32),
+    /// Particles will be oriented towards the given direction
+    Vector(Vec3),
+}
+
+impl Default for Sphere {
+    fn default() -> Self {
+        Self {
+            radius: 0.0.into(),
+            particle_orientation: SphereParticleOrientation::AwayFromCenter,
+        }
+    }
+}
+
+/// Defines a line along which particles will be spawned.
+#[derive(Debug, Clone, Reflect, FromReflect)]
+pub struct Cone {
+    /// The direction of the cone
+    ///
+    /// Should be normalized
+    pub direction: Vec3,
+
+    /// The angle of the cone (spread) in radians
+    ///
+    /// Zero indicates straight to the direction. [`std::f32::consts::PI`] indicates a 180 degrees angle (half-sphere)
+    pub angle: JitteredValue,
+
+    /// Radius within which the particle can be spawn along the cone
+    ///
+    /// Zero indicates that the particle will spawn at the particle system position
+    pub radius: JitteredValue,
+}
+
+impl Default for Cone {
+    fn default() -> Self {
+        Self {
+            direction: Vec3::Z,
+            radius: 0.0.into(),
+            angle: (0.0..0.5).into(),
+        }
+    }
+}
+
 /// Describes the shape on which new particles get spawned
 ///
 /// For convenience, these can also be created directly from
@@ -96,10 +158,14 @@ impl From<Line> for EmitterShape {
 /// ```
 #[derive(Debug, Clone, Reflect, FromReflect)]
 pub enum EmitterShape {
-    /// An oriented segment of a circle with a given radius
+    /// An oriented 2D segment of a circle with a given radius
     CircleSegment(CircleSegment),
-    /// Emit particles from a 2d line at an angle
+    /// Emit particles from a 2D line at an angle
     Line(Line),
+    /// Emit particles within a 3D sphere given its radius
+    Sphere(Sphere),
+    /// Emit particles from a 3D cone
+    Cone(Cone),
 }
 
 impl EmitterShape {
@@ -155,6 +221,81 @@ impl EmitterShape {
 
                 Transform::from_translation(rotation * vec3(0.0, distance, 0.0))
                     .with_rotation(rotation)
+            }
+            EmitterShape::Sphere(Sphere {
+                radius,
+                particle_orientation,
+            }) => {
+                let spawn_direction = Vec3::new(
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                )
+                .normalize();
+
+                let r = radius.get_value(rng).abs();
+                let spawn_point = if r == 0.0 {
+                    Vec3::splat(0.0)
+                } else {
+                    let dist = rng.gen_range(0.0..=r);
+                    spawn_direction * dist
+                };
+
+                match particle_orientation {
+                    SphereParticleOrientation::AwayFromCenter => Transform::IDENTITY
+                        .looking_at(spawn_direction, spawn_direction.cross(Vec3::Z))
+                        .with_translation(spawn_point),
+                    SphereParticleOrientation::Random(f) => {
+                        let factor = f.clamp(0.0, 1.0);
+                        let mut tf = Transform::IDENTITY
+                            .looking_at(spawn_direction, spawn_direction.cross(Vec3::Z))
+                            .with_translation(spawn_point);
+
+                        if factor == 0.0 {
+                            tf
+                        } else {
+                            let rotation_factor = std::f32::consts::PI * 2.0 * factor;
+                            let random_rotation = Quat::from_euler(
+                                bevy_math::EulerRot::XYZ,
+                                rng.gen_range(-1.0..1.0) * rotation_factor,
+                                rng.gen_range(-1.0..1.0) * rotation_factor,
+                                rng.gen_range(-1.0..1.0) * rotation_factor,
+                            );
+                            tf.rotate(random_rotation);
+                            tf
+                        }
+                    }
+                    SphereParticleOrientation::Vector(direction) => Transform::IDENTITY
+                        .looking_at(*direction, direction.cross(Vec3::Z))
+                        .with_translation(spawn_point),
+                }
+            }
+            EmitterShape::Cone(Cone {
+                direction,
+                angle,
+                radius,
+            }) => {
+                let random_angle = rng.gen_range(0.0..1.0) * 2.0 * std::f32::consts::PI;
+                let random_rotation = Quat::from_axis_angle(*direction, random_angle);
+                let cross_axis = if *direction == Vec3::Z {
+                    Vec3::Y
+                } else {
+                    Vec3::Z
+                };
+                let angle_axis = random_rotation * direction.cross(cross_axis);
+                let angle = angle.get_value(rng);
+                let direction_with_angle = Quat::from_axis_angle(angle_axis, angle) * *direction;
+
+                let tf = Transform::IDENTITY
+                    .looking_at(direction_with_angle, direction_with_angle.cross(Vec3::Z));
+
+                let radius = radius.get_value(rng);
+                if radius == 0.0 {
+                    tf
+                } else {
+                    let position = *direction * (rng.gen_range(0.0..=1.0) * radius);
+                    tf.with_translation(position)
+                }
             }
         }
     }
@@ -1079,6 +1220,8 @@ pub struct Noise2D {
     ///
     /// Defines how much the noise will affect the particles.
     pub amplitude: f32,
+    /// How time affects the noise.
+    pub time_factor: f32,
     /// Translation of the noise.
     ///
     /// Defines how much the noise will change over time in X and Y axis.
@@ -1089,16 +1232,18 @@ impl Default for Noise2D {
         Self {
             frequency: 0.1,
             amplitude: 100.0,
+            time_factor: 1.0,
             translation: Vec2::new(10.0, 8.5),
         }
     }
 }
 impl Noise2D {
     /// Creates a new `Noise2D`
-    pub fn new(frequency: f32, amplitude: f32, translation: Vec2) -> Self {
+    pub fn new(frequency: f32, amplitude: f32, time_factor: f32, translation: Vec2) -> Self {
         Noise2D {
             frequency,
             amplitude,
+            time_factor,
             translation,
         }
     }
@@ -1107,11 +1252,69 @@ impl Noise2D {
     pub fn sample(&self, position: Vec2, time: f32) -> Vec2 {
         let n1 = 128.648; // random number useful to compute noise
         let n2 = 0.8614;
-        let sampling_position = position + self.translation * time;
+        let sampling_position = position + self.translation * time * self.time_factor;
         let sample_x = (sampling_position.x * self.frequency).sin_cos();
         let sample_y = ((sampling_position.y + n1) * (self.frequency * n2)).sin_cos();
 
-        Vec2::new(sample_x.0 + sample_y.0, sample_x.1 + sample_y.0) * self.amplitude
+        Vec2::new(sample_x.0 + sample_y.1, sample_x.1 + sample_y.0) * self.amplitude
+    }
+}
+
+#[derive(Debug, Clone, Reflect, FromReflect)]
+/// Defines a flow field that will influence particles velocity over space and time.
+pub struct Noise3D {
+    /// Frequency of the noise.
+    ///
+    /// Increase for wiggling effect, decrease for smooth waves.
+    pub frequency: f32,
+    /// Amplitude of the noise.
+    ///
+    /// Defines how much the noise will affect the particles.
+    pub amplitude: f32,
+    /// How time affects the noise.
+    pub time_factor: f32,
+    /// Translation of the noise.
+    ///
+    /// Defines how much the noise will change over time in X and Y axis.
+    pub translation: Vec3,
+}
+impl Default for Noise3D {
+    fn default() -> Self {
+        Self {
+            frequency: 1.0,
+            amplitude: 5.0,
+            time_factor: 1.0,
+            translation: Vec3::new(10.0, 8.5, 5.3),
+        }
+    }
+}
+impl Noise3D {
+    /// Creates a new `Noise2D`
+    pub fn new(frequency: f32, amplitude: f32, time_factor: f32, translation: Vec3) -> Self {
+        Noise3D {
+            frequency,
+            amplitude,
+            time_factor,
+            translation,
+        }
+    }
+
+    /// Evaluates the noise at a given position and time
+    pub fn sample(&self, position: Vec3, time: f32) -> Vec3 {
+        let n1_y = 128.648; // random numbers useful to compute noise
+        let n2_y = 0.8614;
+        let n1_z = 53.168;
+        let n2_z = 1.1359;
+        let sampling_position = position + self.translation * time * self.time_factor;
+        let sample_x = (sampling_position.x * self.frequency).sin_cos();
+        let sample_y = ((sampling_position.y + n1_y) * (self.frequency * n2_y)).sin_cos();
+        let sample_z = ((sampling_position.z + n1_z) * (self.frequency * n2_z)).sin_cos();
+
+        Vec3::new(
+            sample_z.0 + sample_y.1,
+            sample_x.1 + sample_z.0,
+            sample_x.0 + sample_y.0,
+        ) * self.amplitude
     }
 }
 
@@ -1125,10 +1328,25 @@ pub enum VelocityModifier {
     /// Force that will slow down the particles like air resistance.
     Drag(ValueOverTime),
     /// Sinusoidal 2D Noise
-    Noise(Noise2D),
+    Noise2D(Noise2D),
+    /// Sinusoidal 3D Noise
+    Noise3D(Noise3D),
+}
+
+impl From<Noise2D> for VelocityModifier {
+    fn from(value: Noise2D) -> Self {
+        Self::Noise2D(value)
+    }
+}
+
+impl From<Noise3D> for VelocityModifier {
+    fn from(value: Noise3D) -> Self {
+        Self::Noise3D(value)
+    }
 }
 
 /// Setup optional values used so that every calculated values are not re-calculated for every modifiers that uses it
+/// Use it to get particle square speed, speed and direction
 pub struct PrecalculatedParticleVariables {
     /// velocity squared length
     pub particle_sqr_speed: Option<f32>,
@@ -1182,5 +1400,46 @@ impl PrecalculatedParticleVariables {
 impl Default for PrecalculatedParticleVariables {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[derive(Debug, Clone, Reflect, FromReflect)]
+/// This type describes how particles should be aligned with their velocity
+pub enum VelocityAlignedType {
+    /// X will put the particle local X axis along the velocity vector
+    X,
+    /// NegativeX will put the particle local -X axis along the velocity vector
+    NegativeX,
+    /// Y will put the particle local Y axis along the velocity vector
+    Y,
+    /// NegativeY will put the particle local -Y axis along the velocity vector
+    NegativeY,
+    /// Z will put the particle local Z axis along the velocity vector
+    Z,
+    /// NegativeZ will put the particle local -Z axis along the velocity vector
+    NegativeZ,
+    /// Custom will align with the provided local space vector. It should be normalized for it to work as intended
+    CustomLocal(Vec3),
+    /// Custom will align with the provided vector. It should be normalized for it to work as intended
+    CustomGlobal(Vec3),
+}
+
+impl VelocityAlignedType {
+    /// Provide a vector to calculate the particle velocity alignment for [`crate::ParticleRenderType::Billboard3d`]
+    ///  # Panics
+    ///
+    /// Will panic if [`VelocityAlignedType::CustomGlobal`] alignment is used
+    pub fn get_billboard_alignment(&self) -> Vec3 {
+        match self {
+            VelocityAlignedType::X => Vec3::X,
+            VelocityAlignedType::NegativeX => -Vec3::X,
+            VelocityAlignedType::Y => Vec3::Y,
+            VelocityAlignedType::NegativeY => -Vec3::Y,
+            VelocityAlignedType::Z | VelocityAlignedType::NegativeZ => Vec3::ZERO,
+            VelocityAlignedType::CustomLocal(v) => Vec3::new(v.x, v.y, 0.0).normalize(),
+            VelocityAlignedType::CustomGlobal(_) => {
+                panic!("CustomGlobal alignment not supported for Billboard rendering");
+            }
+        }
     }
 }

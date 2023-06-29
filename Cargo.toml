@@ -20,16 +20,23 @@ bevy_ecs = "0.10"
 bevy_hierarchy = "0.10"
 bevy_math = "0.10"
 bevy_render = "0.10"
+bevy_pbr = "0.10"
 bevy_sprite = "0.10"
 bevy_time = "0.10"
 bevy_transform = "0.10"
+bevy_core_pipeline = "0.10"
 bevy_reflect = "0.10"
+bevy_derive = "0.10"
 rand = "0.8"
+bytemuck = "1.13.1"
+wgpu = "0.15.1"
 
 [dev-dependencies]
 bevy = { version = "0.10", default-features=false, features = [
     "bevy_asset",
     "bevy_sprite",
+    "bevy_render",
+    "bevy_pbr",
     "bevy_core_pipeline",
     "png",
     "bevy_winit",
