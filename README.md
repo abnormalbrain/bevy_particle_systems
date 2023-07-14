@@ -31,10 +31,9 @@ use bevy_particle_systems::ParticleSystemPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
         // ...
-        .add_startup_system(spawn_particle_system)
+        .add_systems(Startup, spawn_particle_system)
         .run();
 }
 
@@ -75,6 +74,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
 
 |`bevy_particle_systems`|`bevy`|
 |:--|:--|
+|0.10|0.11|
 |0.9|0.10|
 |0.6 - 0.8|0.9|
 |0.5|0.8|

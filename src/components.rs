@@ -16,7 +16,7 @@ use crate::{
 /// Defines a burst of a specified number of particles at the given time in a running particle system.
 ///
 /// Bursts do not count as part of the per-second spawn rate.
-#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
+#[derive(Debug, Clone, Copy, Reflect)]
 pub struct ParticleBurst {
     /// The time during the life cycle of a system that the burst should occur.
     ///
@@ -39,7 +39,7 @@ impl ParticleBurst {
 }
 
 /// Defines what space a particle should operate in.
-#[derive(Debug, Clone, Copy, Reflect, FromReflect)]
+#[derive(Debug, Clone, Copy, Reflect)]
 pub enum ParticleSpace {
     /// Indicates particles should move relative to a parent.
     Local,
@@ -48,7 +48,7 @@ pub enum ParticleSpace {
 }
 
 /// Defines what texture to use for a particle
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum ParticleTexture {
     /// Indicates particles should use a given image texture
     Sprite(Handle<Image>),
@@ -62,7 +62,7 @@ pub enum ParticleTexture {
 }
 
 /// Defines how will be animated the texture atlas index
-#[derive(Component, Debug, Clone, Reflect, FromReflect)]
+#[derive(Component, Debug, Clone, Reflect)]
 pub struct AnimatedIndex {
     /// At what indices are the different frames on a sprite sheet
     pub indices: Vec<usize>,

@@ -8,7 +8,7 @@ use bevy::{
     prelude::{Camera2dBundle, ClearColor, Color, Commands, ImagePlugin, Res, ResMut, Transform},
     DefaultPlugins,
 };
-use bevy_app::{App, PluginGroup};
+use bevy_app::{App, PluginGroup, Startup};
 use bevy_asset::{AssetServer, Assets};
 use bevy_math::Vec2;
 use bevy_particle_systems::{
@@ -21,8 +21,8 @@ fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugin(ParticleSystemPlugin)
-        .add_startup_systems((startup_system, setup_ground))
+        .add_plugins(ParticleSystemPlugin)
+        .add_systems(Startup, (startup_system, setup_ground))
         .run();
 }
 

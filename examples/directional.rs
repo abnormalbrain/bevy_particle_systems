@@ -14,9 +14,11 @@ use bevy_particle_systems::{
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .add_plugin(EntityCountDiagnosticsPlugin)
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugins((
+            EntityCountDiagnosticsPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
+            LogDiagnosticsPlugin::default(),
+        ))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 present_mode: PresentMode::AutoNoVsync,
@@ -24,8 +26,8 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
-        .add_startup_system(startup_system)
+        .add_plugins(ParticleSystemPlugin::default()) // <-- Add the plugin
+        .add_systems(Startup, startup_system)
         .run();
 }
 

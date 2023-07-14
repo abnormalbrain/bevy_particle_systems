@@ -11,6 +11,7 @@ use bevy::{
     prelude::{App, Camera2dBundle, Color, Commands, Component, Res, Transform},
     DefaultPlugins,
 };
+use bevy_app::Startup;
 use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
@@ -27,9 +28,8 @@ pub struct Targets {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
-        .add_startup_system(startup_system)
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_systems(Startup, startup_system)
         .run();
 }
 
