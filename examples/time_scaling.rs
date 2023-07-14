@@ -8,6 +8,7 @@ use bevy::{
     prelude::{App, Camera2dBundle, Color, Commands, KeyCode, Res, ResMut, Transform},
     DefaultPlugins,
 };
+use bevy_app::{Startup, Update};
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSpace, ParticleSystem,
@@ -16,10 +17,9 @@ use bevy_particle_systems::{
 use bevy_time::Time;
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
-        .add_startup_system(startup_system)
-        .add_system(time_scale_changer)
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_systems(Startup, startup_system)
+        .add_systems(Update, time_scale_changer)
         .run();
 }
 

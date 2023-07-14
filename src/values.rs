@@ -12,7 +12,7 @@ use rand::{prelude::ThreadRng, Rng};
 use crate::AnimatedIndex;
 
 /// Describes an oriented segment of a circle with a given radius.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct CircleSegment {
     /// The shape of the emitter, defined in radians.
     ///
@@ -51,7 +51,7 @@ impl From<CircleSegment> for EmitterShape {
 }
 
 /// Defines a line along which particles will be spawned.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct Line {
     /// The lenth of the line
     pub length: f32,
@@ -94,7 +94,7 @@ impl From<Line> for EmitterShape {
 ///     ..Default::default()
 /// };
 /// ```
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum EmitterShape {
     /// An oriented segment of a circle with a given radius
     CircleSegment(CircleSegment),
@@ -189,7 +189,7 @@ impl Default for EmitterShape {
 /// // Results are picked randomly from a set of values
 /// let v: RandomValue<usize> = vec![0, 2, 4, 8].into();
 /// ```
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum RandomValue<T: Reflect + Clone + FromReflect> {
     /// A constant value
     Constant(T),
@@ -240,7 +240,7 @@ impl<T: Reflect + Clone + FromReflect> RandomValue<T> {
 }
 
 /// Defines an index of a texture atlas to use for a particle
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum AtlasIndex {
     /// Constant index
     Constant(usize),
@@ -387,7 +387,7 @@ impl Default for AtlasIndex {
 ///     assert!(value >= 5.0);
 /// }
 /// ```
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct JitteredValue {
     /// The base value that specified jitter will be added to.
     pub value: f32,
@@ -574,7 +574,7 @@ impl RoughlyEqual<f64> for f64 {
 /// Defines a value at a specific point in a curve.
 ///
 /// ``point`` should be between `0.0` and `1.0` inclusive.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct CurvePoint<T>
 where
     T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
@@ -627,7 +627,7 @@ where
 /// let alpha_curve = Curve::new(vec![CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
 /// assert_eq!(alpha_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
 /// ```
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct Curve<T>
 where
     T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
@@ -810,7 +810,7 @@ where
 /// Defines how a color changes over time
 ///
 /// Colors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum ColorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Color),
@@ -866,7 +866,7 @@ impl ColorOverTime {
 /// Defines how a vector changes over time
 ///
 /// Vectors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum VectorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Vec3),
@@ -941,7 +941,7 @@ impl VectorOverTime {
 /// assert!(s.at_lifetime_pct(0.5).roughly_equal(0.0));
 /// assert!(s.at_lifetime_pct(0.75).roughly_equal(-1.0));
 /// ```
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum ValueOverTime {
     /// Specifies the value should be linearly interpolated between two values over time.
     Lerp(Lerp<f32>),
@@ -992,7 +992,7 @@ impl ValueOverTime {
 }
 
 /// Defines a value that will linearly move between ``a`` and ``b`` over its configured lifetime.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct Lerp<T: Lerpable<T>> {
     /// The starting value, returned when ``pct`` is `0.0`.
     pub a: T,
@@ -1032,7 +1032,7 @@ impl Default for Lerp<Color> {
 }
 
 /// Defines a value that will move in a sinusoidal wave pattern over it's configured lifetime.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct SinWave {
     /// The amplitude of the wave as time progresses.
     ///
@@ -1068,7 +1068,7 @@ impl Default for SinWave {
     }
 }
 
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 /// Defines a flow field that will influence particles velocity over space and time.
 pub struct Noise2D {
     /// Frequency of the noise.
@@ -1116,7 +1116,7 @@ impl Noise2D {
 }
 
 /// Defines an acceleration modifier that will affect particles velocity.
-#[derive(Debug, Clone, Reflect, FromReflect)]
+#[derive(Debug, Clone, Reflect)]
 pub enum VelocityModifier {
     /// f32 value that will use the direction of the current velocity.
     Scalar(ValueOverTime),

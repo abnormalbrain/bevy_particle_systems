@@ -62,7 +62,10 @@ pub mod components;
 mod systems;
 pub mod values;
 
-use bevy_app::prelude::{App, Plugin};
+use bevy_app::{
+    prelude::{App, Plugin},
+    Update,
+};
 use bevy_ecs::prelude::IntoSystemConfigs;
 pub use components::*;
 pub use systems::ParticleSystemSet;
@@ -83,8 +86,7 @@ pub use values::*;
 ///
 /// fn main() {
 ///   App::new()
-///     .add_plugins(DefaultPlugins)
-///     .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
+///     .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
 ///     // ...
 ///     .run();
 /// }
@@ -95,6 +97,7 @@ pub struct ParticleSystemPlugin;
 impl Plugin for ParticleSystemPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            Update,
             (
                 particle_spawner,
                 particle_lifetime,

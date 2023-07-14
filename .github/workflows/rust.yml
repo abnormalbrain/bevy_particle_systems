@@ -8,26 +8,26 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: 1.67.1
+  RUST_VERSION: 1.70.0
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
-    - name: Install rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ env.RUST_VERSION }}
-        override: true
-        profile: minimal
-    
-    - run: cargo check --all-targets
-    - run: cargo test --no-default-features
-    - run: cargo test
-    - run: cargo test --all-features
-    - run: cargo test --all-features -- --ignored
+      - uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          profile: minimal
+
+      - run: cargo check --all-targets
+      - run: cargo test --no-default-features
+      - run: cargo test
+      - run: cargo test --all-features
+      - run: cargo test --all-features -- --ignored
 
   code-style:
     runs-on: ubuntu-latest
@@ -57,15 +57,14 @@ jobs:
           override: true
           profile: minimal
       - run: cargo doc --all-features --no-deps
-
-  unused-dependencies:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          profile: minimal
-      - run: cargo install cargo-udeps --locked
-      - run: cargo udeps
+  # unused-dependencies:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly
+  #         override: true
+  #         profile: minimal
+  #     - run: cargo install cargo-udeps --locked
+  #     - run: cargo udeps

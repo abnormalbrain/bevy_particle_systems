@@ -7,6 +7,7 @@ use bevy::{
     prelude::{App, Camera2dBundle, Color, Commands, Component, Query, Res, Transform, With},
     DefaultPlugins,
 };
+use bevy_app::{Startup, Update};
 use bevy_asset::AssetServer;
 use bevy_math::Quat;
 use bevy_time::Time;
@@ -25,10 +26,9 @@ pub struct Targets {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
-        .add_startup_system(startup_system)
-        .add_system(circler)
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_systems(Startup, startup_system)
+        .add_systems(Update, circler)
         .run();
 }
 
