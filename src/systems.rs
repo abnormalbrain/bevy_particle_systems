@@ -3,7 +3,7 @@ use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
 use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
-use bevy_time::Time;
+use bevy_time::{Real, Time};
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
@@ -41,6 +41,7 @@ pub fn particle_spawner(
         ),
         With<Playing>,
     >,
+    raw_time: Res<Time<Real>>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
@@ -57,7 +58,7 @@ pub fn particle_spawner(
         if particle_system.use_scaled_time {
             running_state.running_time += time.delta_seconds();
         } else {
-            running_state.running_time += time.raw_delta_seconds();
+            running_state.running_time += raw_time.delta_seconds();
         }
 
         if running_state.running_time.floor() > running_state.current_second + 0.5 {
@@ -274,15 +275,16 @@ pub fn particle_spawner(
 
 pub(crate) fn particle_lifetime(
     mut lifetime_query: Query<(&mut Lifetime, &Particle)>,
+    raw_time: Res<Time<Real>>,
     time: Res<Time>,
 ) {
     lifetime_query
         .par_iter_mut()
-        .for_each_mut(|(mut lifetime, particle)| {
+        .for_each(|(mut lifetime, particle)| {
             if particle.use_scaled_time {
                 lifetime.0 += time.delta_seconds();
             } else {
-                lifetime.0 += time.raw_delta_seconds();
+                lifetime.0 += raw_time.delta_seconds();
             }
         });
 }
@@ -290,7 +292,7 @@ pub(crate) fn particle_lifetime(
 pub(crate) fn particle_sprite_color(
     mut particle_query: Query<(&Particle, &mut ParticleColor, &Lifetime, &mut Sprite)>,
 ) {
-    particle_query.par_iter_mut().for_each_mut(
+    particle_query.par_iter_mut().for_each(
         |(particle, mut particle_color, lifetime, mut sprite)| {
             let pct = lifetime.0 / particle.max_lifetime;
             sprite.color = match &mut particle_color.0 {
@@ -311,7 +313,7 @@ pub(crate) fn particle_texture_atlas_color(
         Option<&AnimatedIndex>,
     )>,
 ) {
-    particle_query.par_iter_mut().for_each_mut(
+    particle_query.par_iter_mut().for_each(
         |(particle, mut particle_color, lifetime, mut sprite, anim_index)| {
             let pct = lifetime.0 / particle.max_lifetime;
             sprite.color = match &mut particle_color.0 {
@@ -335,16 +337,17 @@ pub(crate) fn particle_transform(
         &mut DistanceTraveled,
         &mut Transform,
     )>,
+    raw_time: Res<Time<Real>>,
     time: Res<Time>,
 ) {
-    particle_query.par_iter_mut().for_each_mut(
+    particle_query.par_iter_mut().for_each(
         |(particle, lifetime, mut velocity, mut distance, mut transform)| {
             let lifetime_pct = lifetime.0 / particle.max_lifetime;
 
             let (delta_time, elapsed_time) = if particle.use_scaled_time {
                 (time.delta_seconds(), time.elapsed_seconds_wrapped())
             } else {
-                (time.raw_delta_seconds(), time.raw_elapsed_seconds_wrapped())
+                (raw_time.delta_seconds(), raw_time.elapsed_seconds_wrapped())
             };
 
             // inititalize precalculated values
