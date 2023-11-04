@@ -14,7 +14,7 @@ use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSpace, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
 };
-use bevy_time::Time;
+use bevy_time::{Time, Virtual};
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
@@ -87,7 +87,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Playing);
 }
 
-fn time_scale_changer(keys: Res<Input<KeyCode>>, mut time: ResMut<Time>) {
+fn time_scale_changer(keys: Res<Input<KeyCode>>, mut time: ResMut<Time<Virtual>>) {
     for key_code in keys.get_just_pressed() {
         match key_code {
             KeyCode::Key1 => time.set_relative_speed(1.0),

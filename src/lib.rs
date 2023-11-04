@@ -19,9 +19,9 @@
 //! fn main() {
 //!     App::new()
 //!         .add_plugins(DefaultPlugins)
-//!         .add_plugin(ParticleSystemPlugin::default()) // <-- Add the plugin
+//!         .add_plugins(ParticleSystemPlugin::default()) // <-- Add the plugin
 //!         // ...
-//!         .add_startup_system(spawn_particle_system)
+//!         .add_systems(Startup, spawn_particle_system)
 //!         .run();
 //! }
 //!
