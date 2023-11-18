@@ -236,6 +236,19 @@ impl Default for ParticleSystem {
     }
 }
 
+impl ParticleSystem {
+    /// A oneshot particle system, that doesn't loop and despawns when finished
+    ///
+    /// Appropriate base for collision effects etc.
+    pub fn oneshot() -> Self {
+        Self {
+            looping: false,
+            despawn_on_finish: true,
+            ..Default::default()
+        }
+    }
+}
+
 /// An individual Particle, spawned by a [`ParticleSystem`]
 ///
 /// The ``parent_entity`` should link to the entity with the spawning [`ParticleSystem`] on it.
