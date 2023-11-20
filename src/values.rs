@@ -419,11 +419,9 @@ impl JitteredValue {
     pub fn centered_range(range: Range<f32>) -> Self {
         let mid = (range.start + range.end) / 2.;
         let half_width = (range.end - range.start) / 2.;
-        let start = mid - half_width;
-        let end = mid + half_width;
         Self {
             value: mid,
-            jitter_range: Some(start..end),
+            jitter_range: Some(-half_width..half_width),
         }
     }
 
@@ -1182,5 +1180,29 @@ impl PrecalculatedParticleVariables {
 impl Default for PrecalculatedParticleVariables {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::JitteredValue;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn jittered_value_from_range() {
+        let from_range: JitteredValue = (0.0..100.0).into();
+        assert_relative_eq!(from_range.value, 50.0);
+        let range = from_range.jitter_range.unwrap();
+        assert_relative_eq!(range.start, -50.0);
+        assert_relative_eq!(range.end, 50.0);
+    }
+
+    #[test]
+    fn jittered_value_centered_range() {
+        let centered_range = JitteredValue::centered_range(0.0..100.0);
+        assert_relative_eq!(centered_range.value, 50.0);
+        let range = centered_range.jitter_range.unwrap();
+        assert_relative_eq!(range.start, -50.0);
+        assert_relative_eq!(range.end, 50.0);
     }
 }
