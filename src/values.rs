@@ -645,21 +645,6 @@ where
     ///
     /// This function panics in dev builds if this is not the case.
     pub fn new(points: Vec<CurvePoint<T>>) -> Self {
-        debug_assert!(
-            points.len() >= 2,
-            "Cannot have a gradient with less than two colors"
-        );
-
-        debug_assert!(
-            points[0].point.roughly_equal(0.0),
-            "Gradient must start at 0.0"
-        );
-
-        debug_assert!(
-            points[points.len() - 1].point.roughly_equal(1.0),
-            "Gradients must end at 1.0"
-        );
-
         #[cfg(dev)]
         for i in 1..points.len() {
             debug_assert!(
@@ -1185,7 +1170,7 @@ impl Default for PrecalculatedParticleVariables {
 
 #[cfg(test)]
 mod tests {
-    use crate::JitteredValue;
+    use super::{Curve, CurvePoint, JitteredValue};
     use approx::assert_relative_eq;
 
     #[test]
@@ -1204,5 +1189,27 @@ mod tests {
         let range = centered_range.jitter_range.unwrap();
         assert_relative_eq!(range.start, -50.0);
         assert_relative_eq!(range.end, 50.0);
+    }
+
+    #[test]
+    fn curve_points_clamp_to_last() {
+        let curve = Curve::new(vec![CurvePoint::new(1.0, 0.0)]);
+        assert_relative_eq!(curve.sample(1.0), 1.0);
+    }
+
+    #[test]
+    fn curve_points_clamp_to_first() {
+        let curve = Curve::new(vec![CurvePoint::new(1.0, 1.0)]);
+        assert_relative_eq!(curve.sample(0.0), 1.0);
+    }
+
+    #[test]
+    fn curve_points_incomplete() {
+        // start at 1, keep it until 0.5 then fade out towards the end
+        let curve = Curve::new(vec![CurvePoint::new(1.0, 0.5), CurvePoint::new(0.0, 0.0)]);
+        assert_relative_eq!(curve.sample(0.0), 1.0);
+        assert_relative_eq!(curve.sample(0.5), 1.0);
+        assert_relative_eq!(curve.sample(0.75), 0.5);
+        assert_relative_eq!(curve.sample(1.0), 0.0);
     }
 }
