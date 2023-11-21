@@ -33,6 +33,7 @@ pub fn particle_spawner(
     mut particle_systems: Query<
         (
             Entity,
+            &Transform,
             &GlobalTransform,
             &ParticleSystem,
             &mut ParticleCount,
@@ -48,6 +49,7 @@ pub fn particle_spawner(
     let mut rng = rand::thread_rng();
     for (
         entity,
+        transform,
         global_transform,
         particle_system,
         mut particle_count,
@@ -133,7 +135,9 @@ pub fn particle_spawner(
             spawn_point.translation.z = particle_system
                 .z_value_override
                 .as_ref()
-                .map_or(0.0, |jittered_value| jittered_value.get_value(&mut rng));
+                .map_or(transform.translation.z, |jittered_value| {
+                    jittered_value.get_value(&mut rng)
+                });
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
 
