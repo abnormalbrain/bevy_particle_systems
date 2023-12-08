@@ -120,12 +120,16 @@ pub fn particle_spawner(
             continue;
         }
 
-        for _ in 0..to_spawn + extra {
-            let origin_pos = match particle_system.space {
-                ParticleSpace::Local => Transform::default(),
-                ParticleSpace::World => Transform::from(*global_transform),
-            };
+        let origin_pos = match particle_system.space {
+            ParticleSpace::Local => Transform::default(),
+            ParticleSpace::World => Transform::from(*global_transform),
+        };
+        let origin_z = match particle_system.space {
+            ParticleSpace::Local => transform.translation.z,
+            ParticleSpace::World => origin_pos.translation.z,
+        };
 
+        for _ in 0..to_spawn + extra {
             let spawn_pos = particle_system.emitter_shape.sample(&mut rng);
 
             let mut spawn_point = origin_pos.mul_transform(spawn_pos);
@@ -135,7 +139,7 @@ pub fn particle_spawner(
             spawn_point.translation.z = particle_system
                 .z_value_override
                 .as_ref()
-                .map_or(transform.translation.z, |jittered_value| {
+                .map_or(origin_z, |jittered_value| {
                     jittered_value.get_value(&mut rng)
                 });
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
