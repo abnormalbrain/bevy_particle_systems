@@ -163,6 +163,8 @@ pub struct ParticleSystem {
     /// The scale or size of the particle over time.
     ///
     /// Changing this value over time shrinks or grows the particle accordingly.
+    ///
+    /// Multiplied with [`initial_scale`][`Self::initial_scale`] to produce the final scale.
     pub scale: ValueOverTime,
 
     /// The rotation of a particle around the `z` access at spawn in radian.
