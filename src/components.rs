@@ -153,9 +153,18 @@ pub struct ParticleSystem {
     /// This can vary over time and be used to modify alpha as well.
     pub color: ColorOverTime,
 
+    /// The initial scale of a particle.
+    ///
+    /// This value can be constant, or have added jitter to have particles with different sizes
+    ///
+    /// This value is multiplied with scale to produce the final scale.
+    pub initial_scale: JitteredValue,
+
     /// The scale or size of the particle over time.
     ///
     /// Changing this value over time shrinks or grows the particle accordingly.
+    ///
+    /// Multiplied with [`initial_scale`][`Self::initial_scale`] to produce the final scale.
     pub scale: ValueOverTime,
 
     /// The rotation of a particle around the `z` access at spawn in radian.
@@ -219,6 +228,7 @@ impl Default for ParticleSystem {
             velocity_modifiers: vec![],
             lifetime: 5.0.into(),
             color: ColorOverTime::default(),
+            initial_scale: 1.0.into(),
             scale: 1.0.into(),
             initial_rotation: 0.0.into(),
             rotation_speed: 0.0.into(),
@@ -278,6 +288,10 @@ pub struct Particle {
     /// This is copied from [`ParticleSystem::use_scaled_time`] on spawn.
     pub use_scaled_time: bool,
 
+    /// The initial scale of the particle, multiplied with `scale` to produce
+    /// the final scale of the particle.
+    pub initial_scale: f32,
+
     /// The scale or size of this particle over time.
     ///
     /// This is copied from [`ParticleSystem::scale`] on spawn.
@@ -304,6 +318,7 @@ impl Default for Particle {
             max_lifetime: f32::default(),
             max_distance: None,
             use_scaled_time: true,
+            initial_scale: 1.0,
             scale: 1.0.into(),
             rotation_speed: 0.0,
             velocity_modifiers: vec![],
