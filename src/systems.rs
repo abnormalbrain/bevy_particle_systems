@@ -136,7 +136,9 @@ pub fn particle_spawner(
                 .map_or(origin_pos.translation.z, |jittered_value| {
                     jittered_value.get_value(&mut rng)
                 });
-            let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
+
+            let initial_scale = particle_system.initial_scale.get_value(&mut rng);
+            let particle_scale = initial_scale * particle_system.scale.at_lifetime_pct(0.0);
             spawn_point.scale = Vec3::new(particle_scale, particle_scale, particle_scale);
 
             if particle_system.rotate_to_movement_direction {
@@ -154,6 +156,7 @@ pub fn particle_spawner(
                             max_lifetime: particle_system.lifetime.get_value(&mut rng),
                             max_distance: particle_system.max_distance,
                             use_scaled_time: particle_system.use_scaled_time,
+                            initial_scale,
                             scale: particle_system.scale.clone(),
                             rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                             velocity_modifiers: particle_system.velocity_modifiers.clone(),
@@ -214,6 +217,7 @@ pub fn particle_spawner(
                                 max_lifetime: particle_system.lifetime.get_value(&mut rng),
                                 max_distance: particle_system.max_distance,
                                 use_scaled_time: particle_system.use_scaled_time,
+                                initial_scale,
                                 scale: particle_system.scale.clone(),
                                 rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
                                 velocity_modifiers: particle_system.velocity_modifiers.clone(),
@@ -389,7 +393,8 @@ pub(crate) fn particle_transform(
             }
             transform.translation += velocity.0 * delta_time;
 
-            transform.scale = Vec3::splat(particle.scale.at_lifetime_pct(lifetime_pct));
+            transform.scale =
+                Vec3::splat(particle.initial_scale * particle.scale.at_lifetime_pct(lifetime_pct));
             transform.rotate_z(particle.rotation_speed * time.delta_seconds());
 
             distance.dist_squared = transform.translation.distance_squared(distance.from);
