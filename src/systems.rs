@@ -33,7 +33,6 @@ pub fn particle_spawner(
     mut particle_systems: Query<
         (
             Entity,
-            &Transform,
             &GlobalTransform,
             &ParticleSystem,
             &mut ParticleCount,
@@ -49,7 +48,6 @@ pub fn particle_spawner(
     let mut rng = rand::thread_rng();
     for (
         entity,
-        transform,
         global_transform,
         particle_system,
         mut particle_count,
@@ -124,10 +122,6 @@ pub fn particle_spawner(
             ParticleSpace::Local => Transform::default(),
             ParticleSpace::World => Transform::from(*global_transform),
         };
-        let origin_z = match particle_system.space {
-            ParticleSpace::Local => transform.translation.z,
-            ParticleSpace::World => origin_pos.translation.z,
-        };
 
         for _ in 0..to_spawn + extra {
             let spawn_pos = particle_system.emitter_shape.sample(&mut rng);
@@ -139,7 +133,7 @@ pub fn particle_spawner(
             spawn_point.translation.z = particle_system
                 .z_value_override
                 .as_ref()
-                .map_or(origin_z, |jittered_value| {
+                .map_or(origin_pos.translation.z, |jittered_value| {
                     jittered_value.get_value(&mut rng)
                 });
             let particle_scale = particle_system.scale.at_lifetime_pct(0.0);
