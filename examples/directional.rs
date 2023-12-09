@@ -8,7 +8,7 @@ use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
 use bevy_particle_systems::{
     CircleSegment, JitteredValue, ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin,
-    ParticleTexture, Playing,
+    Playing,
 };
 
 fn main() {
@@ -36,7 +36,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
-                texture: ParticleTexture::Sprite(asset_server.load("arrow.png")),
+                texture: asset_server.load("arrow.png").into(),
                 spawn_rate_per_second: 25.0.into(),
                 initial_speed: JitteredValue::jittered(70.0, -3.0..3.0),
                 lifetime: JitteredValue::jittered(5.0, -1.0..1.0),

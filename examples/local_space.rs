@@ -14,7 +14,7 @@ use bevy_time::Time;
 
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleSpace, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing,
 };
 
 #[derive(Debug, Component)]
@@ -44,7 +44,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 }
                 .into(),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
@@ -75,7 +75,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 }
                 .into(),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 35.0.into(),
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
