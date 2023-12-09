@@ -6,7 +6,7 @@ use bevy::{
 };
 use bevy_particle_systems::{
     ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleBurst, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing, VelocityModifier::*,
 };
 
 fn main() {
@@ -36,7 +36,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(ParticleSystemBundle {
             particle_system: ParticleSystem {
                 max_particles: 50_000,
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 1000.0.into(),
                 initial_speed: JitteredValue::jittered(200.0, -50.0..50.0),
                 velocity_modifiers: vec![Drag(0.01.into())],

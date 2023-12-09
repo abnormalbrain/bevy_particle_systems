@@ -16,7 +16,7 @@ use bevy_asset::AssetServer;
 
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, Noise2D, ParticleSystem,
-    ParticleSystemBundle, ParticleSystemPlugin, ParticleTexture, Playing, VelocityModifier::*,
+    ParticleSystemBundle, ParticleSystemPlugin, Playing, VelocityModifier::*,
 };
 
 #[derive(Debug, Component)]
@@ -45,7 +45,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 }
                 .into(),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 40.0.into(),
                 initial_speed: JitteredValue::jittered(300.0, -100.0..100.0),
                 velocity_modifiers: vec![
@@ -72,7 +72,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 }
                 .into(),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 40.0.into(),
                 initial_speed: JitteredValue::jittered(300.0, -100.0..100.0),
                 velocity_modifiers: vec![
@@ -100,7 +100,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 }
                 .into(),
                 initial_speed: JitteredValue::jittered(100.0, -5.0..5.0),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 40.0.into(),
                 velocity_modifiers: vec![
                     // this will make particles move randomly over time
@@ -129,7 +129,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 }
                 .into(),
-                texture: ParticleTexture::Sprite(asset_server.load("px.png")),
+                texture: asset_server.load("px.png").into(),
                 spawn_rate_per_second: 40.0.into(),
                 initial_speed: JitteredValue::jittered(300.0, -100.0..100.0),
                 velocity_modifiers: vec![
