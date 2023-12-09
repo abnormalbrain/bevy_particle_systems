@@ -640,8 +640,7 @@ where
 {
     /// Creates a new Curve from given [`CurvePoint`]s.
     ///
-    /// Points should be in sorted, ascending order. There must be at least two points.
-    /// The first point must be at 0.0 and the last at 1.0.
+    /// Points should be in sorted, ascending order.
     ///
     /// This function panics in dev builds if this is not the case.
     pub fn new(points: Vec<CurvePoint<T>>) -> Self {
