@@ -61,6 +61,12 @@ pub enum ParticleTexture {
     },
 }
 
+impl From<Handle<Image>> for ParticleTexture {
+    fn from(value: Handle<Image>) -> Self {
+        ParticleTexture::Sprite(value)
+    }
+}
+
 /// Defines how will be animated the texture atlas index
 #[derive(Component, Debug, Clone, Reflect)]
 pub struct AnimatedIndex {
