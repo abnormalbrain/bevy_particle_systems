@@ -2,6 +2,7 @@
 use std::ops::Range;
 
 use bevy_math::{vec3, Quat, Vec2, Vec3};
+use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
 use bevy_sprite::TextureAtlas;
@@ -626,17 +627,26 @@ where
 /// assert_eq!(alpha_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
 /// ```
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub struct Curve<T>
 where
-    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect + Default,
 {
     points: Vec<CurvePoint<T>>,
     index_hint: usize,
 }
 
+impl<T: Default + Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect> Default
+    for Curve<T>
+{
+    fn default() -> Self {
+        Self::new(vec![CurvePoint::new(Default::default(), 0.0)])
+    }
+}
+
 impl<T> Curve<T>
 where
-    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect,
+    T: Lerpable<T> + ErrorDefault<T> + Copy + Reflect + FromReflect + Default,
 {
     /// Creates a new Curve from given [`CurvePoint`]s.
     ///
@@ -793,6 +803,7 @@ where
 ///
 /// Colors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub enum ColorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Color),
@@ -849,6 +860,7 @@ impl ColorOverTime {
 ///
 /// Vectors can either be constant, linearly interpolated, or follow a [`crate::values::Curve`].
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub enum VectorOverTime {
     /// Specifies that a color should remain a constant color over time.
     Constant(Vec3),
@@ -924,6 +936,7 @@ impl VectorOverTime {
 /// assert!(s.at_lifetime_pct(0.75).roughly_equal(-1.0));
 /// ```
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub enum ValueOverTime {
     /// Specifies the value should be linearly interpolated between two values over time.
     Lerp(Lerp<f32>),
@@ -938,6 +951,12 @@ pub enum ValueOverTime {
 
     /// Specifies that the value should remain constant.
     Constant(f32),
+}
+
+impl Default for ValueOverTime {
+    fn default() -> Self {
+        Self::Constant(0.)
+    }
 }
 
 impl From<f32> for ValueOverTime {
@@ -1015,6 +1034,7 @@ impl Default for Lerp<Color> {
 
 /// Defines a value that will move in a sinusoidal wave pattern over it's configured lifetime.
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub struct SinWave {
     /// The amplitude of the wave as time progresses.
     ///
@@ -1051,6 +1071,7 @@ impl Default for SinWave {
 }
 
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 /// Defines a flow field that will influence particles velocity over space and time.
 pub struct Noise2D {
     /// Frequency of the noise.
@@ -1099,6 +1120,7 @@ impl Noise2D {
 
 /// Defines an acceleration modifier that will affect particles velocity.
 #[derive(Debug, Clone, Reflect)]
+#[reflect(Default)]
 pub enum VelocityModifier {
     /// f32 value that will use the direction of the current velocity.
     Scalar(ValueOverTime),
@@ -1108,6 +1130,12 @@ pub enum VelocityModifier {
     Drag(ValueOverTime),
     /// Sinusoidal 2D Noise
     Noise(Noise2D),
+}
+
+impl Default for VelocityModifier {
+    fn default() -> Self {
+        Self::Scalar(Default::default())
+    }
 }
 
 /// Setup optional values used so that every calculated values are not re-calculated for every modifiers that uses it
