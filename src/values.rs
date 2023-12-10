@@ -1134,7 +1134,7 @@ pub enum VelocityModifier {
 
 impl Default for VelocityModifier {
     fn default() -> Self {
-        Self::Scalar(Default::default())
+        Self::Scalar(ValueOverTime::default())
     }
 }
 
