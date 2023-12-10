@@ -67,6 +67,9 @@ use bevy_app::{
     Update,
 };
 use bevy_ecs::prelude::IntoSystemConfigs;
+use bevy_math::Vec3;
+use bevy_reflect::std_traits::ReflectDefault;
+use bevy_render::color::Color;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{
@@ -109,7 +112,22 @@ impl Plugin for ParticleSystemPlugin {
                 .into_configs()
                 .in_set(ParticleSystemSet),
         );
-        app.register_type::<ParticleSystem>()
+        app.register_type::<Curve<f32>>()
+            .register_type::<Curve<Vec3>>()
+            .register_type::<Curve<Color>>()
+            .register_type::<Lerp<f32>>()
+            .register_type_data::<Lerp<f32>, ReflectDefault>()
+            .register_type::<Lerp<Vec3>>()
+            .register_type_data::<Lerp<Vec3>, ReflectDefault>()
+            .register_type::<Lerp<Color>>()
+            .register_type_data::<Lerp<Color>, ReflectDefault>()
+            .register_type::<ValueOverTime>()
+            .register_type::<VectorOverTime>()
+            .register_type::<ColorOverTime>()
+            .register_type::<VelocityModifier>()
+            .register_type::<Noise2D>()
+            .register_type::<SinWave>()
+            .register_type::<ParticleSystem>()
             .register_type::<ParticleCount>()
             .register_type::<RunningState>()
             .register_type::<BurstIndex>();
