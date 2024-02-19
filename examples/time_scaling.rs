@@ -17,7 +17,7 @@ use bevy_particle_systems::{
 use bevy_time::{Time, Virtual};
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin)) // <-- Add the plugin
         .add_systems(Startup, startup_system)
         .add_systems(Update, time_scale_changer)
         .run();
