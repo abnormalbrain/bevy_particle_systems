@@ -5,7 +5,6 @@ use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::{FromReflect, Reflect};
 use bevy_render::prelude::Color;
-use bevy_sprite::TextureAtlas;
 use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
@@ -326,26 +325,6 @@ impl From<(Vec<usize>, f32, usize)> for AtlasIndex {
             indices,
             time_step: time,
             step_offset: step,
-        })
-    }
-}
-
-impl From<&TextureAtlas> for AtlasIndex {
-    fn from(atlas: &TextureAtlas) -> Self {
-        AtlasIndex::Animated(AnimatedIndex {
-            indices: { (0..(atlas.len())).collect() },
-            time_step: 1.0 / 6.0, // 1/6 seconds is fine
-            step_offset: 0,
-        })
-    }
-}
-
-impl From<(&TextureAtlas, f32)> for AtlasIndex {
-    fn from((atlas, time): (&TextureAtlas, f32)) -> Self {
-        AtlasIndex::Animated(AnimatedIndex {
-            indices: { (0..atlas.len()).collect() },
-            time_step: time,
-            step_offset: 0,
         })
     }
 }

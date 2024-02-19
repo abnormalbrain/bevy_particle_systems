@@ -4,7 +4,7 @@
 //! Time scale can be controls with the 1-5 keys. The 0 key sets the Time Scale to 0.0
 //! which effectively pauses the system.
 use bevy::{
-    input::Input,
+    input::ButtonInput,
     prelude::{App, Camera2dBundle, Color, Commands, KeyCode, Res, ResMut, Transform},
     DefaultPlugins,
 };
@@ -87,15 +87,15 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Playing);
 }
 
-fn time_scale_changer(keys: Res<Input<KeyCode>>, mut time: ResMut<Time<Virtual>>) {
+fn time_scale_changer(keys: Res<ButtonInput<KeyCode>>, mut time: ResMut<Time<Virtual>>) {
     for key_code in keys.get_just_pressed() {
         match key_code {
-            KeyCode::Key1 => time.set_relative_speed(1.0),
-            KeyCode::Key2 => time.set_relative_speed(2.0),
-            KeyCode::Key3 => time.set_relative_speed(4.0),
-            KeyCode::Key4 => time.set_relative_speed(8.0),
-            KeyCode::Key5 => time.set_relative_speed(10.0),
-            KeyCode::Key0 => time.set_relative_speed(0.0),
+            KeyCode::Digit1 => time.set_relative_speed(1.0),
+            KeyCode::Digit2 => time.set_relative_speed(2.0),
+            KeyCode::Digit3 => time.set_relative_speed(4.0),
+            KeyCode::Digit4 => time.set_relative_speed(8.0),
+            KeyCode::Digit5 => time.set_relative_speed(10.0),
+            KeyCode::Digit0 => time.set_relative_speed(0.0),
             _ => {}
         }
     }

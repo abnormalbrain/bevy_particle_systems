@@ -1,8 +1,8 @@
 [package]
 name = "bevy_particle_systems"
-version = "0.11.2"
+version = "0.12.0"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.76"
 authors = ["Abnormal Brain Studios"]
 license = "MIT"
 description = "A particle system plugin for Bevy"
@@ -14,20 +14,20 @@ categories = ["game-development"]
 debug = true
 
 [dependencies]
-bevy_app = "0.12"
-bevy_asset = "0.12"
-bevy_ecs = "0.12"
-bevy_hierarchy = "0.12"
-bevy_math = "0.12"
-bevy_render = "0.12"
-bevy_sprite = "0.12"
-bevy_time = "0.12"
-bevy_transform = "0.12"
-bevy_reflect = "0.12"
+bevy_app = "0.13"
+bevy_asset = "0.13"
+bevy_ecs = "0.13"
+bevy_hierarchy = "0.13"
+bevy_math = "0.13"
+bevy_render = "0.13"
+bevy_sprite = "0.13"
+bevy_time = "0.13"
+bevy_transform = "0.13"
+bevy_reflect = "0.13"
 rand = "0.8"
 
 [dev-dependencies]
-bevy = { version = "0.12", default-features=false, features = [
+bevy = { version = "0.13", default-features=false, features = [
     "bevy_asset",
     "bevy_sprite",
     "bevy_core_pipeline",

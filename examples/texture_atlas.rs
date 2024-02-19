@@ -15,7 +15,7 @@ use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, ParticleSystem, ParticleSystemBundle,
     ParticleSystemPlugin, ParticleTexture, Playing,
 };
-use bevy_sprite::{Sprite, SpriteBundle, TextureAtlas};
+use bevy_sprite::{Sprite, SpriteBundle, TextureAtlasLayout};
 
 fn main() {
     App::new()
@@ -29,11 +29,10 @@ fn main() {
 fn startup_system(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut atlases: ResMut<Assets<TextureAtlas>>,
+    mut atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let projectiles = asset_server.load("gabe-idle-run.png");
-    let particle_atlas = atlases.add(TextureAtlas::from_grid(
-        projectiles,
+    let particle_atlas = atlases.add(TextureAtlasLayout::from_grid(
         Vec2::new(24.0, 24.0),
         7,
         1,
@@ -53,6 +52,7 @@ fn startup_system(
                 // Here we tell the atlas to ignore the first frame (which is not part of the run animation loop)
                 // And we display every frame for 0.1 second
                 texture: ParticleTexture::TextureAtlas {
+                    texture: projectiles.clone(),
                     atlas: particle_atlas,
                     index: (1..7, 0.1).into(),
                 },
