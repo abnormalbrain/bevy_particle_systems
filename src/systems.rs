@@ -53,7 +53,7 @@ pub fn particle_spawner(
         mut particle_count,
         mut running_state,
         mut burst_index,
-    ) in particle_systems.iter_mut()
+    ) in &mut particle_systems
     {
         if particle_system.use_scaled_time {
             running_state.running_time += time.delta_seconds();
@@ -202,7 +202,6 @@ pub fn particle_spawner(
                                 atlas: TextureAtlas {
                                     layout: atlas_handle.clone(),
                                     index: index.get_value(&mut rng),
-                                    ..TextureAtlas::default()
                                 },
                                 transform: spawn_point,
                                 ..SpriteSheetBundle::default()
@@ -268,7 +267,6 @@ pub fn particle_spawner(
                                     atlas: TextureAtlas {
                                         layout: atlas_handle.clone(),
                                         index: index.get_value(&mut rng),
-                                        ..TextureAtlas::default()
                                     },
                                     transform: spawn_point,
                                     ..SpriteSheetBundle::default()

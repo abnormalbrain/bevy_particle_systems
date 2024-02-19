@@ -2,7 +2,8 @@
 #![allow(
     clippy::must_use_candidate,
     clippy::return_self_not_must_use,
-    clippy::needless_pass_by_value
+    clippy::needless_pass_by_value,
+    clippy::type_complexity
 )]
 //! A particle system plugin for [bevy](https://bevyengine.org)
 //!
