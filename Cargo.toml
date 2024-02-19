@@ -22,7 +22,7 @@ bevy_math = "0.12"
 bevy_render = "0.12"
 bevy_sprite = "0.12"
 bevy_time = "0.12"
-bevy_transform = "0.12"
+bevy_transform = "0.13"
 bevy_reflect = "0.12"
 rand = "0.8"
 
