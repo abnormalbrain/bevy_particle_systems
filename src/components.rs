@@ -5,7 +5,7 @@ use bevy_ecs::prelude::{Bundle, Component, Entity, ReflectComponent};
 use bevy_math::{Vec2, Vec3};
 use bevy_reflect::prelude::*;
 use bevy_render::prelude::{Image, VisibilityBundle};
-use bevy_sprite::TextureAtlas;
+use bevy_sprite::TextureAtlasLayout;
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
 use crate::{
@@ -54,8 +54,10 @@ pub enum ParticleTexture {
     Sprite(Handle<Image>),
     /// Indicates particles should use a given texture atlas
     TextureAtlas {
+        /// The texture the atlas layout refers to.
+        texture: Handle<Image>,
         /// The handle to the texture atlas
-        atlas: Handle<TextureAtlas>,
+        atlas: Handle<TextureAtlasLayout>,
         /// The index in the atlas can constant, or be chosen randomly
         index: AtlasIndex,
     },

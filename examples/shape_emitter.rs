@@ -17,7 +17,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins((
             EntityCountDiagnosticsPlugin,
-            FrameTimeDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
         ))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -27,7 +27,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(ParticleSystemPlugin::default()) // <-- Add the plugin
+        .add_plugins(ParticleSystemPlugin) // <-- Add the plugin
         .add_systems(Startup, startup_system)
         .run();
 }

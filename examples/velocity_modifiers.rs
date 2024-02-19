@@ -28,7 +28,7 @@ pub struct Targets {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin)) // <-- Add the plugin
         .add_systems(Startup, startup_system)
         .run();
 }

@@ -2,7 +2,7 @@ use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_sprite::{SpriteSheetBundle, TextureAtlasSprite};
+use bevy_sprite::{SpriteSheetBundle, TextureAtlas};
 use bevy_time::{Real, Time};
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
@@ -53,7 +53,7 @@ pub fn particle_spawner(
         mut particle_count,
         mut running_state,
         mut burst_index,
-    ) in particle_systems.iter_mut()
+    ) in &mut particle_systems
     {
         if particle_system.use_scaled_time {
             running_state.running_time += time.delta_seconds();
@@ -188,18 +188,22 @@ pub fn particle_spawner(
                             });
                         }
                         ParticleTexture::TextureAtlas {
+                            texture: texture_handle,
                             atlas: atlas_handle,
                             index,
                         } => {
                             entity_commands.insert(SpriteSheetBundle {
-                                sprite: TextureAtlasSprite {
-                                    custom_size: particle_system.rescale_texture,
+                                texture: texture_handle.clone(),
+                                sprite: Sprite {
                                     color: particle_system.color.at_lifetime_pct(0.0),
+                                    custom_size: particle_system.rescale_texture,
+                                    ..Sprite::default()
+                                },
+                                atlas: TextureAtlas {
+                                    layout: atlas_handle.clone(),
                                     index: index.get_value(&mut rng),
-                                    ..TextureAtlasSprite::default()
                                 },
                                 transform: spawn_point,
-                                texture_atlas: atlas_handle.clone(),
                                 ..SpriteSheetBundle::default()
                             });
 
@@ -249,18 +253,22 @@ pub fn particle_spawner(
                                 });
                             }
                             ParticleTexture::TextureAtlas {
+                                texture: texture_handle,
                                 atlas: atlas_handle,
                                 index,
                             } => {
                                 entity_commands.insert(SpriteSheetBundle {
-                                    sprite: TextureAtlasSprite {
-                                        custom_size: particle_system.rescale_texture,
+                                    texture: texture_handle.clone(),
+                                    sprite: Sprite {
                                         color: particle_system.color.at_lifetime_pct(0.0),
+                                        custom_size: particle_system.rescale_texture,
+                                        ..Sprite::default()
+                                    },
+                                    atlas: TextureAtlas {
+                                        layout: atlas_handle.clone(),
                                         index: index.get_value(&mut rng),
-                                        ..TextureAtlasSprite::default()
                                     },
                                     transform: spawn_point,
-                                    texture_atlas: atlas_handle.clone(),
                                     ..SpriteSheetBundle::default()
                                 });
 
@@ -315,12 +323,13 @@ pub(crate) fn particle_texture_atlas_color(
         &Particle,
         &mut ParticleColor,
         &Lifetime,
-        &mut TextureAtlasSprite,
+        &mut Sprite,
+        &mut TextureAtlas,
         Option<&AnimatedIndex>,
     )>,
 ) {
     particle_query.par_iter_mut().for_each(
-        |(particle, mut particle_color, lifetime, mut sprite, anim_index)| {
+        |(particle, mut particle_color, lifetime, mut sprite, mut texture_atlas, anim_index)| {
             let pct = lifetime.0 / particle.max_lifetime;
             sprite.color = match &mut particle_color.0 {
                 ColorOverTime::Constant(color) => *color,
@@ -329,7 +338,7 @@ pub(crate) fn particle_texture_atlas_color(
             };
 
             if let Some(anim_index) = anim_index {
-                sprite.index = anim_index.get_at_time(lifetime.0);
+                texture_atlas.index = anim_index.get_at_time(lifetime.0);
             }
         },
     );
