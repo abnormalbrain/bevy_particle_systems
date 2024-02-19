@@ -31,7 +31,7 @@ use bevy_particle_systems::ParticleSystemPlugin;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ParticleSystemPlugin::default())) // <-- Add the plugin
+        .add_plugins((DefaultPlugins, ParticleSystemPlugin)) // <-- Add the plugin
         // ...
         .add_systems(Startup, spawn_particle_system)
         .run();
