@@ -13,6 +13,39 @@ categories = ["game-development"]
 [profile.release]
 debug = true
 
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "local_space"
+path = "examples/local_space.rs"
+
+[[example]]
+name = "shape_emitter"
+path = "examples/shape_emitter.rs"
+
+[[example]]
+name = "time_scaling"
+path = "examples/time_scaling.rs"
+
+[[example]]
+name = "directional"
+path = "examples/directional.rs"
+
+[[example]]
+name = "oneshot"
+path = "examples/oneshot.rs"
+
+[[example]]
+name = "texture_atlas"
+path = "examples/texture_atlas.rs"
+
+[[example]]
+name = "velocity_modifiers"
+path = "examples/velocity_modifiers.rs"
+
+
 [dependencies]
 bevy_app = "0.13"
 bevy_asset = "0.13"
