@@ -1,8 +1,7 @@
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
-use bevy_sprite::prelude::{Sprite, SpriteBundle};
-use bevy_sprite::{SpriteSheetBundle, TextureAtlas};
+use bevy_sprite::prelude::{Sprite, SpriteBundle, TextureAtlas};
 use bevy_time::{Real, Time};
 use bevy_transform::prelude::{GlobalTransform, Transform};
 
@@ -192,20 +191,23 @@ pub fn particle_spawner(
                             atlas: atlas_handle,
                             index,
                         } => {
-                            entity_commands.insert(SpriteSheetBundle {
-                                texture: texture_handle.clone(),
-                                sprite: Sprite {
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    custom_size: particle_system.rescale_texture,
-                                    ..Sprite::default()
+                            entity_commands.insert((
+                                SpriteBundle {
+                                    texture: texture_handle.clone(),
+                                    sprite: Sprite {
+                                        color: particle_system.color.at_lifetime_pct(0.0),
+                                        custom_size: particle_system.rescale_texture,
+                                        ..Sprite::default()
+                                    },
+
+                                    transform: spawn_point,
+                                    ..SpriteBundle::default()
                                 },
-                                atlas: TextureAtlas {
+                                TextureAtlas {
                                     layout: atlas_handle.clone(),
                                     index: index.get_value(&mut rng),
                                 },
-                                transform: spawn_point,
-                                ..SpriteSheetBundle::default()
-                            });
+                            ));
 
                             if let AtlasIndex::Animated(animated_index) = index {
                                 entity_commands.insert(animated_index.clone());
@@ -257,20 +259,22 @@ pub fn particle_spawner(
                                 atlas: atlas_handle,
                                 index,
                             } => {
-                                entity_commands.insert(SpriteSheetBundle {
-                                    texture: texture_handle.clone(),
-                                    sprite: Sprite {
-                                        color: particle_system.color.at_lifetime_pct(0.0),
-                                        custom_size: particle_system.rescale_texture,
-                                        ..Sprite::default()
+                                entity_commands.insert((
+                                    SpriteBundle {
+                                        texture: texture_handle.clone(),
+                                        sprite: Sprite {
+                                            color: particle_system.color.at_lifetime_pct(0.0),
+                                            custom_size: particle_system.rescale_texture,
+                                            ..Sprite::default()
+                                        },
+                                        transform: spawn_point,
+                                        ..SpriteBundle::default()
                                     },
-                                    atlas: TextureAtlas {
+                                    TextureAtlas {
                                         layout: atlas_handle.clone(),
                                         index: index.get_value(&mut rng),
                                     },
-                                    transform: spawn_point,
-                                    ..SpriteSheetBundle::default()
-                                });
+                                ));
 
                                 if let AtlasIndex::Animated(animated_index) = index {
                                     entity_commands.insert(animated_index.clone());
