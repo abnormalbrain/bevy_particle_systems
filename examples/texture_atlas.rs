@@ -10,7 +10,8 @@ use bevy::{
 };
 use bevy_app::{App, PluginGroup, Startup};
 use bevy_asset::{AssetServer, Assets};
-use bevy_math::Vec2;
+use bevy_color::{Gray, Srgba};
+use bevy_math::{UVec2, Vec2};
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, ParticleSystem, ParticleSystemBundle,
     ParticleSystemPlugin, ParticleTexture, Playing,
@@ -33,7 +34,7 @@ fn startup_system(
 ) {
     let projectiles = asset_server.load("gabe-idle-run.png");
     let particle_atlas = atlases.add(TextureAtlasLayout::from_grid(
-        Vec2::new(24.0, 24.0),
+        UVec2::new(24, 24),
         7,
         1,
         None,
@@ -61,10 +62,10 @@ fn startup_system(
                 initial_speed: (150.0..250.0).into(),
                 scale: 8.5.into(),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 0.0),
+                    CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 0.0), 0.0),
                     CurvePoint::new(Color::WHITE, 0.1),
                     CurvePoint::new(Color::WHITE, 0.9),
-                    CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 0.0), 1.0),
                 ])),
                 ..Default::default()
             },
@@ -78,7 +79,7 @@ fn startup_system(
 fn setup_ground(mut commands: Commands) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
-            color: Color::DARK_GRAY,
+            color: Srgba::gray(0.25).into(),
             custom_size: Some(Vec2 { x: 1000.0, y: 40.0 }),
             ..Default::default()
         },

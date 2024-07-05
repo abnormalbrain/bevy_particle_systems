@@ -14,6 +14,7 @@ use bevy::{
 use bevy_app::Startup;
 use bevy_asset::AssetServer;
 
+use bevy_color::palettes::css::{BLUE, LIME, RED};
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, JitteredValue, Noise2D, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, VelocityModifier::*,
@@ -53,7 +54,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Vector(Vec3::new(0.0, 250.0, 0.0).into()),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
-                color: ColorOverTime::Constant(Color::RED),
+                color: ColorOverTime::Constant(RED.into()),
                 scale: 10.0.into(),
                 rotation_speed: 2.0.into(),
                 ..ParticleSystem::default()
@@ -80,7 +81,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     Drag(0.01.into()),
                 ],
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
-                color: ColorOverTime::Constant(Color::GREEN),
+                color: ColorOverTime::Constant(LIME.into()),
                 scale: 10.0.into(),
                 rotation_speed: 2.0.into(),
                 ..ParticleSystem::default()
@@ -110,7 +111,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                     }),
                 ],
                 lifetime: JitteredValue::jittered(2.5, -0.2..0.2),
-                color: ColorOverTime::Constant(Color::BLUE),
+                color: ColorOverTime::Constant(BLUE.into()),
                 scale: (10.0..0.1).into(),
                 rotation_speed: 2.0.into(),
                 ..ParticleSystem::default()
@@ -146,9 +147,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Curve::new(vec![
                     CurvePoint::new(Color::WHITE, 0.0),
-                    CurvePoint::new(Color::rgba(0.8, 0.2, 0.0, 1.0), 0.05),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.25), 0.5),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(0.8, 0.2, 0.0, 1.0), 0.05),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 0.0, 0.25), 0.5),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 scale: (8.0..50.0).into(),
                 rotation_speed: 2.0.into(),

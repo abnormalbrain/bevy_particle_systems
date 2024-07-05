@@ -1,10 +1,11 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
+use bevy_color::prelude::Color;
+use bevy_color::Srgba;
 use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::{FromReflect, Reflect};
-use bevy_render::prelude::Color;
 use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
@@ -475,14 +476,14 @@ impl Lerpable<Color> for Color {
         // copies the entire struct every time, whereas this should only copy once each.
         // This whas showing up in the hot path when profiling the `basic` example when
         // calling each individually, due to the excessive copies.
-        let rgba = self.as_rgba_f32();
-        let other_rgba = other.as_rgba_f32();
+        let rgba = Srgba::from(*self);
+        let other_rgba = Srgba::from(other);
 
-        Color::rgba(
-            rgba[0].lerp(other_rgba[0], clamped_pct),
-            rgba[1].lerp(other_rgba[1], clamped_pct),
-            rgba[2].lerp(other_rgba[2], clamped_pct),
-            rgba[3].lerp(other_rgba[3], clamped_pct),
+        Color::srgba(
+            rgba.red.lerp(other_rgba.red, clamped_pct),
+            rgba.green.lerp(other_rgba.green, clamped_pct),
+            rgba.blue.lerp(other_rgba.blue, clamped_pct),
+            rgba.alpha.lerp(other_rgba.alpha, clamped_pct),
         )
     }
 }
@@ -515,7 +516,7 @@ impl ErrorDefault<Vec3> for Vec3 {
 
 impl ErrorDefault<Color> for Color {
     fn get_error_default() -> Color {
-        Color::FUCHSIA
+        bevy_color::palettes::css::FUCHSIA.into()
     }
 }
 
