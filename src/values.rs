@@ -1,10 +1,11 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
+use bevy_color::palettes::basic::*;
+use bevy_color::{Color, ColorRange};
 use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::{FromReflect, Reflect};
-use bevy_render::prelude::Color;
 use bevy_transform::prelude::Transform;
 use rand::seq::SliceRandom;
 use rand::{prelude::ThreadRng, Rng};
@@ -443,9 +444,9 @@ impl From<Range<f32>> for JitteredValue {
 ///
 /// ```
 /// # use bevy_particle_systems::values::Lerpable;
-/// # use bevy::prelude::Color;
+/// # use bevy::prelude::{Color};
 /// assert_eq!(0.0_f32.lerp(1.0, 0.5), 0.5);
-/// assert_eq!(Color::WHITE.lerp(Color::BLACK, 0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
+/// assert_eq!(Color::WHITE.lerp(Color::BLACK, 0.5), Color::linear_rgba(0.5, 0.5, 0.5, 1.0).into());
 /// ```
 pub trait Lerpable<T> {
     /// Linearly interpolate between the current value and the ``other`` value by ``pct`` percent.
@@ -475,15 +476,7 @@ impl Lerpable<Color> for Color {
         // copies the entire struct every time, whereas this should only copy once each.
         // This whas showing up in the hot path when profiling the `basic` example when
         // calling each individually, due to the excessive copies.
-        let rgba = self.as_rgba_f32();
-        let other_rgba = other.as_rgba_f32();
-
-        Color::rgba(
-            rgba[0].lerp(other_rgba[0], clamped_pct),
-            rgba[1].lerp(other_rgba[1], clamped_pct),
-            rgba[2].lerp(other_rgba[2], clamped_pct),
-            rgba[3].lerp(other_rgba[3], clamped_pct),
-        )
+        (*self..other).at(clamped_pct)
     }
 }
 
@@ -515,7 +508,7 @@ impl ErrorDefault<Vec3> for Vec3 {
 
 impl ErrorDefault<Color> for Color {
     fn get_error_default() -> Color {
-        Color::FUCHSIA
+        FUCHSIA.into()
     }
 }
 
@@ -596,11 +589,11 @@ where
 /// # use bevy::prelude::Color;
 /// # use bevy_particle_systems::values::{CurvePoint, Curve};
 /// let curve = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 1.0)]);
-/// assert_eq!(curve.sample(0.5), Color::rgba(0.5, 0.5, 0.5, 1.0));
+/// assert_eq!(curve.sample(0.5), Color::linear_rgba(0.5, 0.5, 0.5, 1.0));
 ///
 /// let three_color_curve = Curve::new(vec![CurvePoint::new(Color::BLACK, 0.0), CurvePoint::new(Color::WHITE, 0.5), CurvePoint::new(Color::BLACK, 1.0)]);
-/// assert_eq!(three_color_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 1.0));
-/// assert_eq!(three_color_curve.sample(0.75), Color::rgba(0.5, 0.5, 0.5, 1.0));
+/// assert_eq!(three_color_curve.sample(0.5), Color::linear_rgba(1.0, 1.0, 1.0, 1.0));
+/// assert_eq!(three_color_curve.sample(0.75), Color::linear_rgba(0.5, 0.5, 0.5, 1.0));
 ///
 /// let alpha_curve = Curve::new(vec![CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
 /// assert_eq!(alpha_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));

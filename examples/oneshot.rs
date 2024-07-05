@@ -2,6 +2,7 @@
 //! automatically despawned when finished.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*, window::PrimaryWindow};
+use bevy_color::palettes::basic::*;
 use bevy_particle_systems::{
     ParticleBurst, ParticleSystem, ParticleSystemBundle, ParticleSystemPlugin, Playing,
     VelocityModifier,
@@ -48,7 +49,7 @@ fn spawn_particle_systems(
                         VelocityModifier::Drag(0.001.into()),
                         VelocityModifier::Vector(Vec3::new(0.0, -400.0, 0.0).into()),
                     ],
-                    color: (Color::BLUE..Color::rgba(1.0, 0.0, 0.0, 0.0)).into(),
+                    color: (BLUE.into()..Color::rgba(1.0, 0.0, 0.0, 0.0)).into(),
                     bursts: vec![ParticleBurst {
                         time: 0.0,
                         count: 1000,

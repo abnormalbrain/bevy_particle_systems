@@ -10,7 +10,8 @@ use bevy::{
 };
 use bevy_app::{App, PluginGroup, Startup};
 use bevy_asset::{AssetServer, Assets};
-use bevy_math::Vec2;
+use bevy_color::palettes::css::DARK_GRAY;
+use bevy_math::{UVec2, Vec2};
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, ParticleSystem, ParticleSystemBundle,
     ParticleSystemPlugin, ParticleTexture, Playing,
@@ -33,7 +34,7 @@ fn startup_system(
 ) {
     let projectiles = asset_server.load("gabe-idle-run.png");
     let particle_atlas = atlases.add(TextureAtlasLayout::from_grid(
-        Vec2::new(24.0, 24.0),
+        UVec2::new(24, 24),
         7,
         1,
         None,
@@ -78,7 +79,7 @@ fn startup_system(
 fn setup_ground(mut commands: Commands) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
-            color: Color::DARK_GRAY,
+            color: DARK_GRAY.into(),
             custom_size: Some(Vec2 { x: 1000.0, y: 40.0 }),
             ..Default::default()
         },

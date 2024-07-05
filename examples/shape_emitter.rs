@@ -6,6 +6,7 @@ use bevy::{
 };
 use bevy_app::PluginGroup;
 use bevy_asset::AssetServer;
+use bevy_color::palettes::basic::*;
 
 use bevy_particle_systems::{
     CircleSegment, ColorOverTime, Curve, CurvePoint, EmitterShape, JitteredValue, ParticleSystem,
@@ -44,8 +45,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(70.0, -3.0..3.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::PURPLE, 0.0),
-                    CurvePoint::new(Color::RED, 0.5),
+                    CurvePoint::new(PURPLE.into(), 0.0),
+                    CurvePoint::new(RED.into(), 0.5),
                     CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 emitter_shape: EmitterShape::line(200.0, std::f32::consts::FRAC_PI_4),
@@ -71,8 +72,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(70.0, -3.0..3.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::PURPLE, 0.0),
-                    CurvePoint::new(Color::RED, 0.5),
+                    CurvePoint::new(PURPLE.into(), 0.0),
+                    CurvePoint::new(RED.into(), 0.5),
                     CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 emitter_shape: CircleSegment {

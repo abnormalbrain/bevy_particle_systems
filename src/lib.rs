@@ -67,10 +67,10 @@ use bevy_app::{
     prelude::{App, Plugin},
     Update,
 };
+use bevy_color::Color;
 use bevy_ecs::prelude::IntoSystemConfigs;
 use bevy_math::Vec3;
 use bevy_reflect::std_traits::ReflectDefault;
-use bevy_render::color::Color;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{

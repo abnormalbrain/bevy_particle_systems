@@ -9,6 +9,7 @@ use bevy::{
 };
 use bevy_app::{Startup, Update};
 use bevy_asset::AssetServer;
+use bevy_color::palettes::basic::*;
 use bevy_math::Quat;
 use bevy_time::Time;
 
@@ -49,7 +50,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::RED, 0.0),
+                    CurvePoint::new(RED.into(), 0.0),
                     CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,
@@ -80,7 +81,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 initial_speed: JitteredValue::jittered(25.0, 0.0..5.0),
                 lifetime: JitteredValue::jittered(3.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::GREEN, 0.0),
+                    CurvePoint::new(GREEN.into(), 0.0),
                     CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 looping: true,

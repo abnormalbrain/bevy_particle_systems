@@ -4,6 +4,7 @@ use bevy::{
     window::{PresentMode, WindowPlugin},
     DefaultPlugins,
 };
+use bevy_color::palettes::basic::*;
 use bevy_particle_systems::{
     ColorOverTime, Curve, CurvePoint, JitteredValue, ParticleBurst, ParticleSystem,
     ParticleSystemBundle, ParticleSystemPlugin, Playing, VelocityModifier::*,
@@ -42,8 +43,8 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 velocity_modifiers: vec![Drag(0.01.into())],
                 lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::PURPLE, 0.0),
-                    CurvePoint::new(Color::RED, 0.5),
+                    CurvePoint::new(PURPLE.into(), 0.0),
+                    CurvePoint::new(RED.into(), 0.5),
                     CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 looping: true,
