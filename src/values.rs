@@ -444,7 +444,7 @@ impl From<Range<f32>> for JitteredValue {
 ///
 /// ```
 /// # use bevy_particle_systems::values::Lerpable;
-/// # use bevy::prelude::{Color};
+/// # use bevy::prelude::Color;
 /// assert_eq!(0.0_f32.lerp(1.0, 0.5), 0.5);
 /// assert_eq!(Color::WHITE.lerp(Color::BLACK, 0.5), Color::linear_rgba(0.5, 0.5, 0.5, 1.0).into());
 /// ```
