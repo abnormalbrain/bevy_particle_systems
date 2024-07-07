@@ -1,7 +1,7 @@
 //! Different value types and controls used in particle systems.
 use std::ops::Range;
 
-use bevy_color::palettes::basic::*;
+use bevy_color::palettes::basic::FUCHSIA;
 use bevy_color::{Color, ColorRange};
 use bevy_math::{vec3, Quat, Vec2, Vec3};
 use bevy_reflect::std_traits::ReflectDefault;
