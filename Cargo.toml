@@ -16,7 +16,7 @@ debug = true
 [dependencies]
 bevy_app = "0.13"
 bevy_asset = "0.13"
-bevy_ecs = "0.13"
+bevy_ecs = "0.14"
 bevy_hierarchy = "0.13"
 bevy_math = "0.13"
 bevy_render = "0.13"
