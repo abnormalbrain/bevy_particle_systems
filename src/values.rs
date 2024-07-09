@@ -630,17 +630,7 @@ where
     /// Creates a new Curve from given [`CurvePoint`]s.
     ///
     /// Points should be in sorted, ascending order.
-    ///
-    /// This function panics in dev builds if this is not the case.
     pub fn new(points: Vec<CurvePoint<T>>) -> Self {
-        #[cfg(debug_assertions)]
-        for i in 1..points.len() {
-            debug_assert!(
-                points[i - 1].point < points[i].point,
-                "Gradient points must be sorted, with no identical points"
-            );
-        }
-
         Self {
             points,
             index_hint: 0,
