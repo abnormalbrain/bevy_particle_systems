@@ -633,7 +633,7 @@ where
     ///
     /// This function panics in dev builds if this is not the case.
     pub fn new(points: Vec<CurvePoint<T>>) -> Self {
-        #[cfg(dev)]
+        #[cfg(debug_assertions)]
         for i in 1..points.len() {
             debug_assert!(
                 points[i - 1].point < points[i].point,
