@@ -472,10 +472,6 @@ impl Lerpable<Color> for Color {
     fn lerp(&self, other: Color, pct: f32) -> Color {
         let clamped_pct = pct.clamp(0.0, 1.0);
 
-        // Convert both colors to float arrays first. Calling `r()`, `g()`, `b()` and `a()`
-        // copies the entire struct every time, whereas this should only copy once each.
-        // This whas showing up in the hot path when profiling the `basic` example when
-        // calling each individually, due to the excessive copies.
         (*self..other).at(clamped_pct)
     }
 }
