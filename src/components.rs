@@ -156,7 +156,7 @@ pub struct ParticleSystem {
 
     /// The color of each particle over time.
     ///
-    /// Color is used to modify the ``default_sprite``. A constant value of [`bevy_render::prelude::Color::WHITE`] will make the sprite appear with no modifications.
+    /// Color is used to modify the ``default_sprite``. A constant value of [`bevy_color::prelude::Color::WHITE`] will make the sprite appear with no modifications.
     ///
     /// This can vary over time and be used to modify alpha as well.
     pub color: ColorOverTime,
