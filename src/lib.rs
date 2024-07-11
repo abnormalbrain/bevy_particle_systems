@@ -3,7 +3,8 @@
     clippy::must_use_candidate,
     clippy::return_self_not_must_use,
     clippy::needless_pass_by_value,
-    clippy::type_complexity
+    clippy::type_complexity,
+    clippy::used_underscore_binding
 )]
 //! A particle system plugin for [bevy](https://bevyengine.org)
 //!
@@ -46,7 +47,7 @@
 //!             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
 //!             color: ColorOverTime::Gradient(Curve::new(vec![
 //!                 CurvePoint::new(Color::WHITE, 0.0),
-//!                 CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+//!                 CurvePoint::new(Color::srgba(0.0, 0.0, 1.0, 0.0), 1.0),
 //!             ])),
 //!             looping: true,
 //!             system_duration_seconds: 10.0,
@@ -67,10 +68,10 @@ use bevy_app::{
     prelude::{App, Plugin},
     Update,
 };
+use bevy_color::Color;
 use bevy_ecs::prelude::IntoSystemConfigs;
 use bevy_math::Vec3;
 use bevy_reflect::std_traits::ReflectDefault;
-use bevy_render::color::Color;
 pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{
