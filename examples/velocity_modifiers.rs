@@ -147,9 +147,9 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 lifetime: JitteredValue::jittered(1.5, -0.2..0.2),
                 color: ColorOverTime::Gradient(Curve::new(vec![
                     CurvePoint::new(Color::WHITE, 0.0),
-                    CurvePoint::new(Color::rgba(0.8, 0.2, 0.0, 1.0), 0.05),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.25), 0.5),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 0.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(0.8, 0.2, 0.0, 1.0), 0.05),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 0.0, 0.25), 0.5),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 0.0, 0.0), 1.0),
                 ])),
                 scale: (8.0..50.0).into(),
                 rotation_speed: 2.0.into(),

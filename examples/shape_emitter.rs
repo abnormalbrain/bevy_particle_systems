@@ -47,7 +47,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 color: ColorOverTime::Gradient(Curve::new(vec![
                     CurvePoint::new(PURPLE.into(), 0.0),
                     CurvePoint::new(RED.into(), 0.5),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 emitter_shape: EmitterShape::line(200.0, std::f32::consts::FRAC_PI_4),
                 looping: true,
@@ -74,7 +74,7 @@ fn startup_system(mut commands: Commands, asset_server: Res<AssetServer>) {
                 color: ColorOverTime::Gradient(Curve::new(vec![
                     CurvePoint::new(PURPLE.into(), 0.0),
                     CurvePoint::new(RED.into(), 0.5),
-                    CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(0.0, 0.0, 1.0, 0.0), 1.0),
                 ])),
                 emitter_shape: CircleSegment {
                     radius: 10.0.into(),

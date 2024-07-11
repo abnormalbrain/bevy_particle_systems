@@ -62,10 +62,10 @@ fn startup_system(
                 initial_speed: (150.0..250.0).into(),
                 scale: 8.5.into(),
                 color: ColorOverTime::Gradient(Curve::new(vec![
-                    CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 0.0),
+                    CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 0.0), 0.0),
                     CurvePoint::new(Color::WHITE, 0.1),
                     CurvePoint::new(Color::WHITE, 0.9),
-                    CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0),
+                    CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 0.0), 1.0),
                 ])),
                 ..Default::default()
             },

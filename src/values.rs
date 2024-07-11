@@ -591,8 +591,8 @@ where
 /// assert_eq!(three_color_curve.sample(0.5), Color::linear_rgba(1.0, 1.0, 1.0, 1.0));
 /// assert_eq!(three_color_curve.sample(0.75), Color::linear_rgba(0.5, 0.5, 0.5, 1.0));
 ///
-/// let alpha_curve = Curve::new(vec![CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 1.0), 0.0), CurvePoint::new(Color::rgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
-/// assert_eq!(alpha_curve.sample(0.5), Color::rgba(1.0, 1.0, 1.0, 0.5));
+/// let alpha_curve = Curve::new(vec![CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 1.0), 0.0), CurvePoint::new(Color::srgba(1.0, 1.0, 1.0, 0.0), 1.0)]);
+/// assert_eq!(alpha_curve.sample(0.5), Color::srgba(1.0, 1.0, 1.0, 0.5));
 /// ```
 #[derive(Debug, Clone, Reflect)]
 #[reflect(Default)]

@@ -47,7 +47,7 @@
 //!             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
 //!             color: ColorOverTime::Gradient(Curve::new(vec![
 //!                 CurvePoint::new(Color::WHITE, 0.0),
-//!                 CurvePoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+//!                 CurvePoint::new(Color::srgba(0.0, 0.0, 1.0, 0.0), 1.0),
 //!             ])),
 //!             looping: true,
 //!             system_duration_seconds: 10.0,

@@ -57,7 +57,7 @@ fn spawn_particle_system(mut commands: Commands, asset_server: Res<AssetServer>)
             lifetime: JitteredValue::jittered(8.0, -2.0..2.0),
             color: ColorOverTime::Gradient(Gradient::new(vec![
                 ColorPoint::new(Color::WHITE, 0.0),
-                ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+                ColorPoint::new(Color::srgba(0.0, 0.0, 1.0, 0.0), 1.0),
             ])),
             looping: true,
             system_duration_seconds: 10.0,
