@@ -147,31 +147,33 @@ pub fn particle_spawner(
                     Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
             };
 
+            let particle_bundle = ParticleBundle {
+                particle: Particle {
+                    parent_system: entity,
+                    max_lifetime: particle_system.lifetime.get_value(&mut rng),
+                    max_distance: particle_system.max_distance,
+                    use_scaled_time: particle_system.use_scaled_time,
+                    initial_scale,
+                    scale: particle_system.scale.clone(),
+                    rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
+                    velocity_modifiers: particle_system.velocity_modifiers.clone(),
+                    despawn_with_parent: particle_system.despawn_particles_with_system,
+                },
+                velocity: Velocity::new(
+                    direction * particle_system.initial_speed.get_value(&mut rng),
+                    true,
+                ),
+                distance: DistanceTraveled {
+                    dist_squared: 0.0,
+                    from: spawn_point.translation,
+                },
+                color: ParticleColor(particle_system.color.clone()),
+                ..ParticleBundle::default()
+            };
+
             match particle_system.space {
                 ParticleSpace::World => {
-                    let mut entity_commands = commands.spawn(ParticleBundle {
-                        particle: Particle {
-                            parent_system: entity,
-                            max_lifetime: particle_system.lifetime.get_value(&mut rng),
-                            max_distance: particle_system.max_distance,
-                            use_scaled_time: particle_system.use_scaled_time,
-                            initial_scale,
-                            scale: particle_system.scale.clone(),
-                            rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            velocity_modifiers: particle_system.velocity_modifiers.clone(),
-                            despawn_with_parent: particle_system.despawn_particles_with_system,
-                        },
-                        velocity: Velocity::new(
-                            direction * particle_system.initial_speed.get_value(&mut rng),
-                            true,
-                        ),
-                        distance: DistanceTraveled {
-                            dist_squared: 0.0,
-                            from: spawn_point.translation,
-                        },
-                        color: ParticleColor(particle_system.color.clone()),
-                        ..ParticleBundle::default()
-                    });
+                    let mut entity_commands = commands.spawn(particle_bundle);
 
                     match &particle_system.texture {
                         ParticleTexture::Sprite(image_handle) => {
@@ -217,29 +219,7 @@ pub fn particle_spawner(
                 }
                 ParticleSpace::Local => {
                     commands.entity(entity).with_children(|parent| {
-                        let mut entity_commands = parent.spawn(ParticleBundle {
-                            particle: Particle {
-                                parent_system: entity,
-                                max_lifetime: particle_system.lifetime.get_value(&mut rng),
-                                max_distance: particle_system.max_distance,
-                                use_scaled_time: particle_system.use_scaled_time,
-                                initial_scale,
-                                scale: particle_system.scale.clone(),
-                                rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                velocity_modifiers: particle_system.velocity_modifiers.clone(),
-                                despawn_with_parent: particle_system.despawn_particles_with_system,
-                            },
-                            velocity: Velocity::new(
-                                direction * particle_system.initial_speed.get_value(&mut rng),
-                                true,
-                            ),
-                            distance: DistanceTraveled {
-                                dist_squared: 0.0,
-                                from: spawn_point.translation,
-                            },
-                            color: ParticleColor(particle_system.color.clone()),
-                            ..ParticleBundle::default()
-                        });
+                        let mut entity_commands = parent.spawn(particle_bundle);
 
                         match &particle_system.texture {
                             ParticleTexture::Sprite(image_handle) => {
