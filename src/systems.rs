@@ -300,7 +300,7 @@ pub(crate) fn particle_transform(
                 (raw_time.delta_seconds(), raw_time.elapsed_seconds_wrapped())
             };
 
-            // inititalize precalculated values
+            // initialize precalculated values
             let mut ppv = PrecalculatedParticleVariables::new();
 
             // Apply velocity modifiers to velocity
