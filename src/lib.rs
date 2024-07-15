@@ -76,7 +76,7 @@ pub use components::*;
 pub use systems::ParticleSystemSet;
 use systems::{
     particle_cleanup, particle_lifetime, particle_spawner, particle_sprite_color,
-    particle_texture_atlas_color, particle_transform,
+    particle_texture_atlas_index, particle_transform,
 };
 pub use values::*;
 
@@ -107,7 +107,7 @@ impl Plugin for ParticleSystemPlugin {
                 particle_spawner,
                 particle_lifetime,
                 particle_sprite_color,
-                particle_texture_atlas_color,
+                particle_texture_atlas_index,
                 particle_transform,
                 particle_cleanup,
             )

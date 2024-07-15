@@ -322,30 +322,16 @@ pub(crate) fn particle_sprite_color(
     );
 }
 
-pub(crate) fn particle_texture_atlas_color(
-    mut particle_query: Query<(
-        &Particle,
-        &mut ParticleColor,
-        &Lifetime,
-        &mut Sprite,
-        &mut TextureAtlas,
-        Option<&AnimatedIndex>,
-    )>,
+pub(crate) fn particle_texture_atlas_index(
+    mut particle_query: Query<(&Lifetime, &mut TextureAtlas, Option<&AnimatedIndex>)>,
 ) {
-    particle_query.par_iter_mut().for_each(
-        |(particle, mut particle_color, lifetime, mut sprite, mut texture_atlas, anim_index)| {
-            let pct = lifetime.0 / particle.max_lifetime;
-            sprite.color = match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => *color,
-                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
-                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
-            };
-
+    particle_query
+        .par_iter_mut()
+        .for_each(|(lifetime, mut texture_atlas, anim_index)| {
             if let Some(anim_index) = anim_index {
                 texture_atlas.index = anim_index.get_at_time(lifetime.0);
             }
-        },
-    );
+        });
 }
 
 pub(crate) fn particle_transform(
