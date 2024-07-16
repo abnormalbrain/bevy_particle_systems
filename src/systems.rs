@@ -1,6 +1,8 @@
+use bevy_asset::Handle;
 use bevy_ecs::prelude::{Commands, Entity, Query, Res, SystemSet, With};
 use bevy_hierarchy::BuildChildren;
 use bevy_math::{Quat, Vec2, Vec3};
+use bevy_render::texture::Image;
 use bevy_sprite::prelude::{Sprite, SpriteBundle, TextureAtlas};
 use bevy_time::{Real, Time};
 use bevy_transform::prelude::{GlobalTransform, Transform};
@@ -147,141 +149,84 @@ pub fn particle_spawner(
                     Quat::from_rotation_z(particle_system.initial_rotation.get_value(&mut rng));
             };
 
+            let particle_bundle = ParticleBundle {
+                particle: Particle {
+                    parent_system: entity,
+                    max_lifetime: particle_system.lifetime.get_value(&mut rng),
+                    max_distance: particle_system.max_distance,
+                    use_scaled_time: particle_system.use_scaled_time,
+                    initial_scale,
+                    scale: particle_system.scale.clone(),
+                    rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
+                    velocity_modifiers: particle_system.velocity_modifiers.clone(),
+                    despawn_with_parent: particle_system.despawn_particles_with_system,
+                },
+                velocity: Velocity::new(
+                    direction * particle_system.initial_speed.get_value(&mut rng),
+                    true,
+                ),
+                distance: DistanceTraveled {
+                    dist_squared: 0.0,
+                    from: spawn_point.translation,
+                },
+                color: ParticleColor(particle_system.color.clone()),
+                ..ParticleBundle::default()
+            };
+
+            let texture: &Handle<Image> = match &particle_system.texture {
+                ParticleTexture::Sprite(image_handle) => image_handle,
+                ParticleTexture::TextureAtlas { texture, .. } => texture,
+            };
+
+            let sprite_bundle = SpriteBundle {
+                sprite: Sprite {
+                    color: particle_system.color.at_lifetime_pct(0.0),
+                    custom_size: particle_system.rescale_texture,
+                    ..Sprite::default()
+                },
+                texture: texture.clone(),
+                transform: spawn_point,
+                ..SpriteBundle::default()
+            };
+
             match particle_system.space {
-                ParticleSpace::World => {
-                    let mut entity_commands = commands.spawn(ParticleBundle {
-                        particle: Particle {
-                            parent_system: entity,
-                            max_lifetime: particle_system.lifetime.get_value(&mut rng),
-                            max_distance: particle_system.max_distance,
-                            use_scaled_time: particle_system.use_scaled_time,
-                            initial_scale,
-                            scale: particle_system.scale.clone(),
-                            rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                            velocity_modifiers: particle_system.velocity_modifiers.clone(),
-                            despawn_with_parent: particle_system.despawn_particles_with_system,
-                        },
-                        velocity: Velocity::new(
-                            direction * particle_system.initial_speed.get_value(&mut rng),
-                            true,
-                        ),
-                        distance: DistanceTraveled {
-                            dist_squared: 0.0,
-                            from: spawn_point.translation,
-                        },
-                        color: ParticleColor(particle_system.color.clone()),
-                        ..ParticleBundle::default()
-                    });
+                ParticleSpace::Local => {
+                    commands.entity(entity).with_children(|parent| {
+                        let mut entity_commands = parent.spawn(particle_bundle);
 
-                    match &particle_system.texture {
-                        ParticleTexture::Sprite(image_handle) => {
-                            entity_commands.insert(SpriteBundle {
-                                sprite: Sprite {
-                                    custom_size: particle_system.rescale_texture,
-                                    color: particle_system.color.at_lifetime_pct(0.0),
-                                    ..Sprite::default()
-                                },
-                                transform: spawn_point,
-                                texture: image_handle.clone(),
-                                ..SpriteBundle::default()
+                        entity_commands.insert(sprite_bundle);
+
+                        if let ParticleTexture::TextureAtlas { atlas, index, .. } =
+                            &particle_system.texture
+                        {
+                            entity_commands.insert(TextureAtlas {
+                                layout: atlas.clone(),
+                                index: index.get_value(&mut rng),
                             });
-                        }
-                        ParticleTexture::TextureAtlas {
-                            texture: texture_handle,
-                            atlas: atlas_handle,
-                            index,
-                        } => {
-                            entity_commands.insert((
-                                SpriteBundle {
-                                    texture: texture_handle.clone(),
-                                    sprite: Sprite {
-                                        color: particle_system.color.at_lifetime_pct(0.0),
-                                        custom_size: particle_system.rescale_texture,
-                                        ..Sprite::default()
-                                    },
-
-                                    transform: spawn_point,
-                                    ..SpriteBundle::default()
-                                },
-                                TextureAtlas {
-                                    layout: atlas_handle.clone(),
-                                    index: index.get_value(&mut rng),
-                                },
-                            ));
 
                             if let AtlasIndex::Animated(animated_index) = index {
                                 entity_commands.insert(animated_index.clone());
                             };
                         }
-                    }
+                    });
                 }
-                ParticleSpace::Local => {
-                    commands.entity(entity).with_children(|parent| {
-                        let mut entity_commands = parent.spawn(ParticleBundle {
-                            particle: Particle {
-                                parent_system: entity,
-                                max_lifetime: particle_system.lifetime.get_value(&mut rng),
-                                max_distance: particle_system.max_distance,
-                                use_scaled_time: particle_system.use_scaled_time,
-                                initial_scale,
-                                scale: particle_system.scale.clone(),
-                                rotation_speed: particle_system.rotation_speed.get_value(&mut rng),
-                                velocity_modifiers: particle_system.velocity_modifiers.clone(),
-                                despawn_with_parent: particle_system.despawn_particles_with_system,
-                            },
-                            velocity: Velocity::new(
-                                direction * particle_system.initial_speed.get_value(&mut rng),
-                                true,
-                            ),
-                            distance: DistanceTraveled {
-                                dist_squared: 0.0,
-                                from: spawn_point.translation,
-                            },
-                            color: ParticleColor(particle_system.color.clone()),
-                            ..ParticleBundle::default()
+                ParticleSpace::World => {
+                    let mut entity_commands = commands.spawn(particle_bundle);
+
+                    entity_commands.insert(sprite_bundle);
+
+                    if let ParticleTexture::TextureAtlas { atlas, index, .. } =
+                        &particle_system.texture
+                    {
+                        entity_commands.insert(TextureAtlas {
+                            layout: atlas.clone(),
+                            index: index.get_value(&mut rng),
                         });
 
-                        match &particle_system.texture {
-                            ParticleTexture::Sprite(image_handle) => {
-                                entity_commands.insert(SpriteBundle {
-                                    sprite: Sprite {
-                                        custom_size: particle_system.rescale_texture,
-                                        color: particle_system.color.at_lifetime_pct(0.0),
-                                        ..Sprite::default()
-                                    },
-                                    transform: spawn_point,
-                                    texture: image_handle.clone(),
-                                    ..SpriteBundle::default()
-                                });
-                            }
-                            ParticleTexture::TextureAtlas {
-                                texture: texture_handle,
-                                atlas: atlas_handle,
-                                index,
-                            } => {
-                                entity_commands.insert((
-                                    SpriteBundle {
-                                        texture: texture_handle.clone(),
-                                        sprite: Sprite {
-                                            color: particle_system.color.at_lifetime_pct(0.0),
-                                            custom_size: particle_system.rescale_texture,
-                                            ..Sprite::default()
-                                        },
-                                        transform: spawn_point,
-                                        ..SpriteBundle::default()
-                                    },
-                                    TextureAtlas {
-                                        layout: atlas_handle.clone(),
-                                        index: index.get_value(&mut rng),
-                                    },
-                                ));
-
-                                if let AtlasIndex::Animated(animated_index) = index {
-                                    entity_commands.insert(animated_index.clone());
-                                };
-                            }
-                        }
-                    });
+                        if let AtlasIndex::Animated(animated_index) = index {
+                            entity_commands.insert(animated_index.clone());
+                        };
+                    }
                 }
             }
         }
@@ -322,30 +267,16 @@ pub(crate) fn particle_sprite_color(
     );
 }
 
-pub(crate) fn particle_texture_atlas_color(
-    mut particle_query: Query<(
-        &Particle,
-        &mut ParticleColor,
-        &Lifetime,
-        &mut Sprite,
-        &mut TextureAtlas,
-        Option<&AnimatedIndex>,
-    )>,
+pub(crate) fn particle_texture_atlas_index(
+    mut particle_query: Query<(&Lifetime, &mut TextureAtlas, Option<&AnimatedIndex>)>,
 ) {
-    particle_query.par_iter_mut().for_each(
-        |(particle, mut particle_color, lifetime, mut sprite, mut texture_atlas, anim_index)| {
-            let pct = lifetime.0 / particle.max_lifetime;
-            sprite.color = match &mut particle_color.0 {
-                ColorOverTime::Constant(color) => *color,
-                ColorOverTime::Lerp(lerp) => lerp.a.lerp(lerp.b, pct),
-                ColorOverTime::Gradient(curve) => curve.sample_mut(pct),
-            };
-
+    particle_query
+        .par_iter_mut()
+        .for_each(|(lifetime, mut texture_atlas, anim_index)| {
             if let Some(anim_index) = anim_index {
                 texture_atlas.index = anim_index.get_at_time(lifetime.0);
             }
-        },
-    );
+        });
 }
 
 pub(crate) fn particle_transform(
@@ -369,7 +300,7 @@ pub(crate) fn particle_transform(
                 (raw_time.delta_seconds(), raw_time.elapsed_seconds_wrapped())
             };
 
-            // inititalize precalculated values
+            // initialize precalculated values
             let mut ppv = PrecalculatedParticleVariables::new();
 
             // Apply velocity modifiers to velocity
