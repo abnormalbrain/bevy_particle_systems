@@ -2,7 +2,7 @@
 name = "bevy_particle_systems"
 version = "0.13.0"
 edition = "2021"
-rust-version = "1.76"
+rust-version = "1.79"
 authors = ["Abnormal Brain Studios"]
 license = "MIT"
 description = "A particle system plugin for Bevy"
