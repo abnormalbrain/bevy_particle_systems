@@ -14,7 +14,7 @@ categories = ["game-development"]
 debug = true
 
 [dependencies]
-bevy_app = "0.14"
+bevy_app = "0.15"
 bevy_asset = "0.14"
 bevy_ecs = "0.14"
 bevy_hierarchy = "0.14"
