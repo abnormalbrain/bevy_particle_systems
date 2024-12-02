@@ -24,7 +24,7 @@ bevy_color = "0.14"
 bevy_sprite = "0.14"
 bevy_time = "0.14"
 bevy_transform = "0.14"
-bevy_reflect = "0.14"
+bevy_reflect = "0.15"
 rand = "0.8"
 
 [dev-dependencies]
